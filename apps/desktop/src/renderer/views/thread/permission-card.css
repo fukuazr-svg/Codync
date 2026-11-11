@@ -1,10 +1,17 @@
 /* The approval card in the chat, and the command and diff boxes it shares with the trace. */
 .permission-card {
-  width: fit-content;
-  max-width: min(100%, 420px);
-  padding: 16px;
-  background: var(--bubble-agent);
-  border-radius: var(--radius-xl);
+  /* As wide as the reply it interrupts: a sheet of paper, not a bubble. */
+  width: 100%;
+  max-width: 100%;
+  padding: 18px 20px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+/* Answered: one dim line in the transcript, taking no card with it. */
+.permission-outcome {
+  padding: 2px 0;
+  min-height: 0;
 }
 .permission-card-dot {
   width: 7px;
@@ -19,17 +26,15 @@
   padding-top: 6px;
 }
 .permission-card-options {
-  background: var(--background);
-  border-radius: 14px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 .permission-option {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 46px;
-  padding: 0 14px;
+  min-height: 44px;
+  padding: 0 2px;
 }
 /* The other answers while one is on its way. */
 .permission-option.dimmed {
@@ -44,6 +49,19 @@
   border-radius: 8px;
   overflow: auto;
   max-height: 240px;
+}
+/* The card's command line: a hairline box on the page, no fill of its own. */
+.code-box.quiet {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+}
+.code-box.quiet .code-box-text {
+  padding: 10px 12px;
+  font-size: calc(12px * var(--scale));
+  width: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .code-box.diff-box {
   max-height: 260px;
