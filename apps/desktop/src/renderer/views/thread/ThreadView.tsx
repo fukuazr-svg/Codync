@@ -20,7 +20,6 @@ import { CallConversationView, CallLineRow } from '../call/CallRows'
 import { hidingCalls } from '@shared/calls'
 import { devServerSummary } from '@shared/dev-servers'
 import { ChatRow, TimeSeparator } from './ChatRows'
-import { DevServerTitle } from './DevServersSection'
 import { WorkingTransition } from './WorkingTransition'
 import { RoutineNotice } from './RoutineNotice'
 import { Composer } from './Composer'
@@ -198,7 +197,6 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
           <button className="top-crumb" onClick={openFromTitle} aria-label={tr('{name}, view details').replaceAll('{name}', () => bot?.name ?? tr('Conversation'))} title="View conversation details">
             {bot ? isGroup(bot) ? <GroupAvatar members={store.members(bot)} size={18} /> : <BotAvatar bot={bot} size={18} /> : null}
             <Text size="body" weight="medium" tone="text" truncate>{bot?.name ?? ''}</Text>
-            <DevServerTitle summary={devServers} />
             {/* Offline or updating still says so, inline beside the name instead of under a pill. */}
             {store.shownConnection.kind !== 'online' || store.mismatch ? <ConnectionSubtitle /> : null}
           </button>
