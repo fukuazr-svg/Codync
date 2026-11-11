@@ -13,19 +13,21 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 12px 2px 4px;
+  /* Even breathing between headings: two points above and below, like the roster's menu rows. */
+  padding: 2px 2px;
 }
 
 .computer-roster-toggle {
   display: flex;
   align-items: center;
-  gap: 5px;
+  /* The distance from a device's icon to its name, as the reference sidebar has it. */
+  gap: 10px;
   flex: 1;
   min-width: 0;
-  padding: 5px 4px;
-  /* A group heading whispers: it labels the rows, it doesn't compete with them. */
-  color: color-mix(in srgb, var(--text) 46%, transparent);
-  border-radius: var(--radius-s);
+  min-height: 38px;
+  padding: 5px 8px;
+  color: var(--text);
+  border-radius: 8px;
   cursor: grab;
 }
 
@@ -43,20 +45,24 @@
   min-width: 0;
   align-items: baseline;
   gap: 6px;
-  font-size: var(--text-caption);
+  /* A device's name reads as a menu row, not as a footnote: 14 points, medium, solid ink. */
+  font-size: calc(14px * var(--scale));
+  font-weight: 500;
+  color: var(--text);
   text-align: left;
 }
 
 .computer-roster-label strong {
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .computer-roster-label > span {
-  /* "3 connected" is a footnote, not a state badge. */
-  color: color-mix(in srgb, var(--text) 34%, transparent);
-  font-size: var(--text-caption);
+  /* The connection stays a footnote beside the name. */
+  color: var(--secondary);
+  font-size: var(--text-callout);
   white-space: nowrap;
 }
 
@@ -67,6 +73,12 @@
 
 .computer-roster-label > .warning {
   color: var(--attention);
+}
+
+/* The glyph itself: 20 points, so a device reads at a glance without outgrowing its row. */
+.computer-roster-toggle .computer-badge svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* A computer's own Extensions, always beside its heading. */
@@ -125,14 +137,17 @@
 
 .sidebar.compact .computer-roster-toggle {
   justify-content: center;
-  padding: 4px 0;
   gap: 2px;
+  padding: 6px 0;
+  min-height: 40px;
 }
 /* The rail's headings only separate one computer from the next: they don't need the roster's breath. */
 .sidebar.compact .computer-roster-heading {
-  padding: 6px 2px 2px;
+  padding: 2px 2px;
 }
 
 .roster-section-toggle,
 button.roster-label { cursor: grab; }
 .pointer-dragging .roster-section-toggle:hover { background: none; }
+
+
