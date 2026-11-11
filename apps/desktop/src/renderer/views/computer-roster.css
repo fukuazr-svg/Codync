@@ -145,6 +145,11 @@
 .sidebar.compact .computer-roster-heading {
   padding: 2px 2px;
 }
+/* The rail shows the device's own icon alone: the icon toggles the section, and an arrow beside it
+   only crowded the 76-point column. */
+.sidebar.compact .computer-roster-chevron {
+  display: none;
+}
 
 .roster-section-toggle,
 button.roster-label { cursor: grab; }
