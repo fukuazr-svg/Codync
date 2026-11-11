@@ -69,17 +69,34 @@
   pointer-events: auto;
   -webkit-app-region: no-drag;
 }
+/* On Windows the caption buttons sit over this band's trailing edge when no panel is open. */
+html[data-platform="win32"] .top-crumb-bar {
+  padding-right: 150px;
+}
 /* The bot's name as a flat crumb: no pill, no shadow, a tint only on hover. */
 .top-crumb {
   display: flex;
   align-items: center;
   gap: 7px;
   min-width: 0;
-  max-width: 46%;
+  /* The row is left-aligned and the band keeps clear of the caption buttons, so the crumb may use
+     whatever width is left: a fixed share of it cut the name short once the inspector narrowed
+     the conversation. */
+  max-width: 100%;
   height: 32px;
   padding: 0 8px;
   border-radius: 8px;
   color: var(--text);
+}
+/* The name never gives up width; the port and any status beside it are what truncate. */
+.top-crumb > .truncate {
+  flex: 0 0 auto;
+}
+.top-crumb .title-pill-port {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .top-crumb:hover {
   background: rgba(var(--text-rgb), 0.06);
