@@ -3,10 +3,10 @@
 :root {
   color-scheme: light dark;
   --background: #ffffff;
-  --surface: #f4f4f4;
-  --bubble-agent: #f0f0f0;
+  --surface: #f7f7f7;
+  --bubble-agent: #f2f2f2;
   --bubble-user: #e2e2e2;
-  --border: #e6e6e6;
+  --border: #ededed;
   --text: #141414;
   --text-rgb: 20, 20, 20;
   --secondary: #6b6b6b;
@@ -28,16 +28,16 @@
   --removed: #c62828;
   /* Floating menus and account panel. */
   --panel: #fafafa;
-  /* The Mac chat's bubbles (a step stronger than the iPhone's). */
-  --chat-agent: #eeeeee;
-  --chat-user: #e2e2e2;
+  /* A reply is plain type on the page; only what the person wrote keeps a small bubble. */
+  --chat-agent: transparent;
+  --chat-user: #f0f0f0;
   /* Floating transcript controls (chevrons, Jump to latest, inspector actions). */
   --chat-button: #eeeeee;
   /* Light: the message box is the page color; dark: a lighter fill. */
   --composer-fill: var(--background);
   /* The 1px outline on floating layers: the message box, sheets, dialogs and menus. */
   --outline: color-mix(in srgb, var(--text) 18%, transparent);
-  --chrome-fill: #f3f3f3;
+  --chrome-fill: #f7f7f7;
   --chrome-stroke: rgba(0, 0, 0, 0.09);
   --stroke-strong: rgba(0, 0, 0, 0.14);
   --roster-selected: #ececec;
@@ -84,7 +84,8 @@
   --spring: linear(0, 0.0712, 0.2244, 0.3992, 0.5638, 0.7018, 0.8077, 0.8834, 0.9342, 0.9663, 0.9853, 0.9958, 1.0009, 1.0028, 1.0029, 1);
   --layout: 0.3s var(--spring);
 
-  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', system-ui, sans-serif;
+  /* T3 Code's stack: the system face first (Segoe UI on Windows), Chinese to YaHei, no bundled font. */
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, 'DejaVu Sans Mono', monospace;
 }
 
@@ -104,10 +105,10 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #070707;
-    --surface: #111111;
-    --bubble-agent: #1c1c1c;
+    --surface: #0b0b0b;
+    --bubble-agent: #1a1a1a;
     --bubble-user: #3a3a3a;
-    --border: #262626;
+    --border: #1f1f1f;
     --text: #fafafa;
     --star: #f5c542;
     --text-rgb: 250, 250, 250;
@@ -124,8 +125,8 @@
     --added: #8fd18b;
     --removed: #f0a7a7;
     --panel: #1b1b1b;
-    --chat-agent: #262626;
-    --chat-user: #363636;
+    --chat-agent: transparent;
+    --chat-user: #1f1f1f;
     --chat-button: #303030;
     --composer-fill: #2f2f2f;
     --chrome-fill: #181818;

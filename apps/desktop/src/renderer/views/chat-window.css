@@ -110,6 +110,14 @@
 html[data-platform="darwin"] .sidebar-header {
   padding-left: 80px;
 }
+/* Windows draws min/max/close itself over the page's top-right corner (titleBarOverlay); keep the
+   conversation's floating chrome and the inspector's corner buttons clear of them. */
+html[data-platform="win32"] .top-chrome {
+  padding-right: 150px;
+}
+html[data-platform="win32"] .details-actions {
+  right: 150px;
+}
 .sidebar.compact .sidebar-header {
   padding-left: 0;
   opacity: 0;

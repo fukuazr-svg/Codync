@@ -23,7 +23,8 @@
   flex: 1;
   min-width: 0;
   padding: 5px 4px;
-  color: var(--secondary);
+  /* A group heading whispers: it labels the rows, it doesn't compete with them. */
+  color: color-mix(in srgb, var(--text) 46%, transparent);
   border-radius: var(--radius-s);
   cursor: grab;
 }
@@ -53,7 +54,8 @@
 }
 
 .computer-roster-label > span {
-  color: var(--tertiary);
+  /* "3 connected" is a footnote, not a state badge. */
+  color: color-mix(in srgb, var(--text) 34%, transparent);
   font-size: var(--text-caption);
   white-space: nowrap;
 }
@@ -106,7 +108,7 @@
   width: 100%;
   margin-top: 8px;
   padding: 5px 8px;
-  color: var(--secondary);
+  color: color-mix(in srgb, var(--text) 46%, transparent);
   border-radius: var(--radius-s);
   text-align: left;
 }

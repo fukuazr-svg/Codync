@@ -244,8 +244,9 @@
 }
 .message.agent .message-body {
   align-items: flex-start;
-  max-width: var(--agent-bubble-max);
-  margin-right: 88px;
+  /* Without a bubble the reply takes the reading column; the right margin leaves its actions room. */
+  max-width: 100%;
+  margin-right: 40px;
 }
 .bubble {
   padding: 8px 10px;
@@ -257,12 +258,17 @@
   background: var(--chat-user);
   color: var(--text);
   font-size: var(--conversation);
-  line-height: 1.5;
+  line-height: 1.55;
+  /* A small, quiet bubble: the words matter, the shape doesn't. */
+  padding: 6px 11px;
+  border-radius: var(--radius-m);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .bubble.agent {
-  background: var(--chat-agent);
+  /* A reply reads as the page's own type: no fill, no bubble padding. */
+  background: transparent;
+  padding: 0;
 }
 .file-message-cards {
   display: grid;
