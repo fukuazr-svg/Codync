@@ -370,7 +370,7 @@ function ChatSplitView() {
     )
   }
 
-  const width = compact ? 76 : sidebarWidth
+  const width = compact ? 64 : sidebarWidth
   return (
     <div className={`split ${showAccount || context ? 'covered' : ''}`}>
       <aside className={`sidebar ${compact ? 'compact' : ''} ${resizing ? 'resizing' : ''}`} style={{ width }}>
@@ -508,4 +508,5 @@ function ChatSplitView() {
     </div>
   )
 }
+
 

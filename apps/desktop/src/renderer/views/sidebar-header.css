@@ -1,3 +1,8 @@
+/* The rail's two 28-point buttons share 64 points: the toggle matches the filter square there. */
+.sidebar.compact .sidebar-toggle {
+  width: 28px;
+  height: 28px;
+}
 /* The rail's own toggle: the same 32-point ghost square as the roster's other actions. */
 .sidebar-toggle {
   width: 32px;
@@ -78,8 +83,9 @@
   color: var(--secondary);
 }
 .computer-filter-action {
-  height: 32px;
-  padding: 0 9px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   justify-content: center;
   flex: none;
   border: none;
@@ -89,5 +95,7 @@
 .computer-filter-action:hover {
   background: rgba(var(--text-rgb), 0.05);
 }
+
+
 
 

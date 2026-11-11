@@ -72,7 +72,9 @@ export function ComputerFilterHeader({ hidden, setHidden, manage, compact = fals
   return (
     <DropdownMenu items={items} title={text} className={`computer-filter ${compact ? 'computer-filter-action' : ''}`}>
       {compact ? <Icon name="slider.horizontal.3" size={13} weight="medium" /> : <Text truncate aria-label={tr('Computers, {filter}. Filter conversations').replaceAll('{filter}', () => text)}>{text}</Text>}
-      <Icon name="chevron.down" size={8} weight="semibold" />
+      {/* The icon-only button has no room for a fold arrow; the picker opens on click either way. */}
+      {compact ? null : <Icon name="chevron.down" size={8} weight="semibold" />}
     </DropdownMenu>
   )
 }
+
