@@ -119,13 +119,17 @@ html[data-platform="win32"] .details-actions {
   right: 150px;
 }
 .sidebar.compact .sidebar-header {
-  padding-left: 0;
-  opacity: 0;
+  /* The rail draws its own header; the wide one must not leave its 54px behind. */
+  display: none;
 }
-/* The rail's computer filter. */
+/* The rail's computer filter, on the same 54px band as the expanded header, so the two line up. */
 .rail-header {
   width: 70px;
+  height: 54px;
+  flex: none;
   align-self: center;
+  display: flex;
+  align-items: center;
 }
 
 .roster {
@@ -143,7 +147,11 @@ html[data-platform="win32"] .details-actions {
   outline-offset: -2px;
 }
 .sidebar.compact .roster {
-  padding-top: 4px;
+  padding-top: 0;
+}
+/* The rail is denser than the roster: icons sit closer together under the filter. */
+.sidebar.compact .bot-row {
+  padding: 5px 0;
 }
 .roster-row {
   width: 100%;
