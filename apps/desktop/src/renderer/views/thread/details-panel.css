@@ -8,14 +8,15 @@
   container: details / size;
 }
 
-/* The top band moves the window; the actions live in the chat's top bar now. */
+/* Only the top's fade now: the window's drag band is the chat's top bar, which spans the whole
+   window. Chromium stacks drag regions in DOM order, so a second one here (later in the tree)
+   swallowed clicks meant for that bar's share and panel buttons. */
 .details-drag {
   position: absolute;
   inset: 0 0 auto;
   height: 40px;
-  z-index: 1;
   background: linear-gradient(var(--background) 70%, transparent);
-  -webkit-app-region: drag;
+  pointer-events: none;
 }
 
 
