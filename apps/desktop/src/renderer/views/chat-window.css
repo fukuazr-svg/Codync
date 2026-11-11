@@ -100,7 +100,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 54px;
+  height: 40px;
   padding-left: 18px;
   padding-right: 14px;
   flex: none;
@@ -115,17 +115,14 @@ html[data-platform="darwin"] .sidebar-header {
 html[data-platform="win32"] .top-chrome {
   padding-right: 150px;
 }
-html[data-platform="win32"] .details-actions {
-  right: 150px;
-}
 .sidebar.compact .sidebar-header {
   /* The rail draws its own header; the wide one must not leave its 54px behind. */
   display: none;
 }
-/* The rail's computer filter, on the same 54px band as the expanded header, so the two line up. */
+/* The rail's computer filter, on the same 40px band as the expanded header, so the two line up. */
 .rail-header {
   width: 70px;
-  height: 54px;
+  height: 40px;
   flex: none;
   align-self: center;
   display: flex;
@@ -425,3 +422,5 @@ html[data-platform="win32"] .details-actions {
   right: 0;
   height: 40px;
 }
+
+

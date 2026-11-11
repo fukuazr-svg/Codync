@@ -8,25 +8,16 @@
   container: details / size;
 }
 
-/* The top band moves the window, like the chat's top chrome; the corner buttons stay clickable. */
+/* The top band moves the window; the actions live in the chat's top bar now. */
 .details-drag {
   position: absolute;
   inset: 0 0 auto;
-  height: 54px;
+  height: 40px;
   z-index: 1;
-  /* What scrolls under it fades out, like the chat's top edge. */
   background: linear-gradient(var(--background) 70%, transparent);
   -webkit-app-region: drag;
 }
-.details-actions {
-  position: absolute;
-  top: 11px;
-  right: 11px;
-  z-index: 2;
-  display: flex;
-  gap: 8px;
-  -webkit-app-region: no-drag;
-}
+
 
 .details-scroll {
   height: 100%;
@@ -137,3 +128,4 @@
 .details-members {
   padding: 0 20px;
 }
+

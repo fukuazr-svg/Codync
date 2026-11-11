@@ -150,6 +150,11 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
   const presentAgent = useCallback((id: string) => (id === botId ? presentRoutine(null) : setEditingMember(id)), [botId, presentRoutine])
   const member = editingMember ? store.bots.get(editingMember) : undefined
 
+  // The panel's share sits in the top bar with its other actions, not on the panel itself.
+  const shareDetails = () => {
+    setCompactDetails(false)
+    if (bot) setTemplateDraft(draftOf(bot))
+  }
   const details = (
     <DetailsPanel
       key={routineRequest}
@@ -159,39 +164,32 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
       setTab={setDetailsTab}
       editGroup={() => setEditingGroup(true)}
       openArtifact={openArtifact}
-      share={() => {
-        setCompactDetails(false)
-        if (bot) setTemplateDraft(draftOf(bot))
-      }}
-      close={() => {
-        setShowSettings(false)
-        setCompactDetails(false)
-      }}
     />
   )
 
   return (
     <div className="thread-view" ref={root}>
+      {/* The right-hand actions live at window level, beside the caption buttons, whichever pane
+          sits under them. */}
+      <div className="top-chrome">
+        <TopFade />
+        <div className="top-chrome-row">
+          <Spacer />
+          {/* The panel's own actions live here, flush with the window's caption buttons. */}
+          {panelOpen && bot && !isGroup(bot) ? (
+            <MacChatButton title="Create template" icon="square.and.arrow.up" onClick={shareDetails} />
+          ) : null}
+          <MacChatButton title="Conversation details" icon="chevron.left.2" direction={[-1, 0]} onClick={toggleDetails} />
+        </div>
+      </div>
       <div className="conversation">
-        <div className="top-chrome">
-          <TopFade />
-          <div className="top-chrome-row">
-            <Spacer />
-            {(!showSettings || !wide) && !compactDetails ? (
-              <MacChatButton className="ringed" title="Conversation details" icon="chevron.left.2" direction={[-1, 0]} onClick={toggleDetails} />
-            ) : null}
-          </div>
-          {/* The call bar takes the pill's place; its frosted glass would show the name blurred. */}
-          <button className={`title-pill ${calling ? 'hidden-by-call' : ''}`} inert={calling} onClick={openFromTitle} aria-label={tr('{name}, view details').replaceAll('{name}', () => bot?.name ?? tr('Conversation'))} title="View conversation details">
-            <HStack as="span" gap={7}>
-              {bot ? isGroup(bot) ? <GroupAvatar members={store.members(bot)} size={22} /> : <BotAvatar bot={bot} size={22} /> : null}
-              <Text size="body" weight="medium" tone="text" truncate>{bot?.name ?? ''}</Text>
-              <DevServerTitle summary={devServers} />
-              {/* Grok Bot's hint on hover: the pill opens the details. */}
-              <span className="title-pill-chevron">
-                <Icon name="chevron.right" size={10} weight="semibold" color="var(--secondary)" />
-              </span>
-            </HStack>
+        {/* A flat breadcrumb where a shadowed pill used to float. */}
+        <div className="top-crumb-bar">
+          <button className="top-crumb" onClick={openFromTitle} aria-label={tr('{name}, view details').replaceAll('{name}', () => bot?.name ?? tr('Conversation'))} title="View conversation details">
+            {bot ? isGroup(bot) ? <GroupAvatar members={store.members(bot)} size={18} /> : <BotAvatar bot={bot} size={18} /> : null}
+            <Text size="body" weight="medium" tone="text" truncate>{bot?.name ?? ''}</Text>
+            <DevServerTitle summary={devServers} />
+            {/* Offline or updating still says so, inline beside the name instead of under a pill. */}
             {store.shownConnection.kind !== 'online' || store.mismatch ? <ConnectionSubtitle /> : null}
           </button>
         </div>

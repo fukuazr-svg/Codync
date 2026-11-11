@@ -14,7 +14,6 @@ import { MemoryCard } from '../bots/MemoryView'
 import { RoutinesView } from '../routines/RoutinesView'
 import { LibraryView } from '../library/LibraryView'
 import { DevServersSection } from './DevServersSection'
-import { MacChatButton } from './MacChatButton'
 import '../bots/bots.css'
 import './details-panel.css'
 import { useTr } from '../../lib/use-language'
@@ -30,15 +29,13 @@ const TABS: { id: DetailsTab; label: string }[] = [
 ]
 
 /** The inspector beside a conversation (Grok Bot's): who the bot is, then its details, library, memory and settings. */
-export function DetailsPanel({ botId, routineId, tab, setTab, editGroup, openArtifact, share, close }: {
+export function DetailsPanel({ botId, routineId, tab, setTab, editGroup, openArtifact }: {
   botId: string
   routineId: string | null
   tab: DetailsTab
   setTab: (tab: DetailsTab) => void
   editGroup: () => void
   openArtifact: (artifactId: string) => void
-  share: () => void
-  close: () => void
 }) {
   const store = useStore()
   const bot = store.bots.get(botId) ?? null
@@ -47,10 +44,6 @@ export function DetailsPanel({ botId, routineId, tab, setTab, editGroup, openArt
   return (
     <div className="details-panel">
       <div className="details-drag" />
-      <div className="details-actions">
-        {bot && !group ? <MacChatButton className="ringed" title="Create template" icon="square.and.arrow.up" onClick={share} /> : null}
-        <MacChatButton className="ringed" title="Close details" icon="xmark" onClick={close} />
-      </div>
       <div className="details-scroll">
         {bot ? <Identity bot={bot} /> : null}
         {bot && group ? (

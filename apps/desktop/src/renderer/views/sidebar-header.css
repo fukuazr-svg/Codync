@@ -9,8 +9,8 @@
   timeline-scope: --roster;
 }
 .sidebar:not(.compact) .roster {
-  padding-top: 54px;
-  scroll-padding-top: 54px;
+  padding-top: 40px;
+  scroll-padding-top: 40px;
   scroll-timeline: --roster block;
 }
 /* The fade comes in as the roster scrolls under the header; at rest it stays off the first row. */
@@ -71,3 +71,4 @@
 .computer-filter-action:hover {
   background: rgba(var(--text-rgb), 0.05);
 }
+
