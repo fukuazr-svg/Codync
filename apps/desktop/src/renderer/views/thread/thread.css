@@ -60,8 +60,11 @@
   z-index: 30;
   pointer-events: none;
 }
+/* The bar itself is only a band: its children take the clicks, and being no-drag they are
+   clickable on a real window too (the top bar's drag region would otherwise swallow them). */
 .top-crumb-bar > * {
   pointer-events: auto;
+  -webkit-app-region: no-drag;
 }
 /* The bot's name as a flat crumb: no pill, no shadow, a tint only on hover. */
 .top-crumb {
