@@ -1,3 +1,21 @@
+/* The rail's own toggle: the same 32-point ghost square as the roster's other actions. */
+.sidebar-toggle {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--secondary);
+  transition: background-color 120ms var(--ease), color 120ms var(--ease), transform 120ms var(--ease);
+}
+.sidebar-toggle:hover {
+  background: rgba(var(--text-rgb), 0.06);
+  color: var(--text);
+}
+.sidebar-toggle:active {
+  transform: scale(0.96);
+}
 /* The reference uses lightly outlined circular actions, not bare toolbar glyphs. */
 .sidebar:not(.compact) .sidebar-header {
   position: absolute;
@@ -71,4 +89,5 @@
 .computer-filter-action:hover {
   background: rgba(var(--text-rgb), 0.05);
 }
+
 

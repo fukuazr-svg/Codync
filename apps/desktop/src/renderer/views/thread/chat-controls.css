@@ -1,3 +1,29 @@
+/* Window-bar actions, drawn like T3 Code's: a 28-point ghost square, 16-point glyph, a tint only
+   on hover, and the same small press scale their buttons use. */
+.caption-button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 8px;
+  color: var(--secondary);
+  transition: background-color 120ms var(--ease), color 120ms var(--ease), transform 120ms var(--ease);
+}
+.caption-button:hover {
+  background: rgba(var(--text-rgb), 0.06);
+  color: var(--text);
+}
+.caption-button.pressed {
+  background: rgba(var(--text-rgb), 0.08);
+  color: var(--text);
+}
+.caption-button:active {
+  transform: scale(0.96);
+}
+@media (prefers-reduced-motion: reduce) {
+  .caption-button:active { transform: none; }
+}
 .mac-chat-button {
   border-radius: 50%;
   background: var(--chat-button);
@@ -73,16 +99,15 @@
   top: -24px;
   bottom: 0;
   pointer-events: none;
-  backdrop-filter: blur(20px);
-  -webkit-mask-image: linear-gradient(to top, #000 40%, transparent);
-  mask-image: linear-gradient(to top, #000 40%, transparent);
-  background: linear-gradient(to top, color-mix(in srgb, var(--background) 90%, transparent) 0%, color-mix(in srgb, var(--background) 45%, transparent) 40%, transparent 100%);
-}
-@media (prefers-reduced-transparency: reduce) {
-  .composer-fade {
-    backdrop-filter: none;
-    background: linear-gradient(to top, var(--background) 40%, transparent);
-  }
+  /* A gradient, not a live blur: on Windows a 20-point backdrop-filter over scrolling text
+     re-samples every frame and costs the scroll its smoothness. */
+  background: linear-gradient(
+    to top,
+    var(--background) 0%,
+    var(--background) 55%,
+    color-mix(in srgb, var(--background) 70%, transparent) 80%,
+    transparent 100%
+  );
 }
 .jump-to-latest {
   position: absolute;
@@ -100,3 +125,4 @@
   opacity: 1;
   translate: none;
 }
+

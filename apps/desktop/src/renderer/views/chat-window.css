@@ -88,6 +88,8 @@
   flex: none;
   height: 100%;
   background: var(--surface);
+  /* T3's hairline between the roster and the page. */
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -422,5 +424,6 @@ html[data-platform="win32"] .top-chrome {
   right: 0;
   height: 40px;
 }
+
 
 

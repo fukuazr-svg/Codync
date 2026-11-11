@@ -1,6 +1,8 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { draftOf, isGroup, isWorking, isWorkingIn, type Bot, type BotDraft, type Entry } from '@shared/models'
 import { BotAvatar, GroupAvatar } from '../../components/Avatar'
+import { CaptionButton } from '../../components/CaptionButton'
+import { PanelIcon } from '../../components/LayoutIcons'
 import { Spinner } from '../../components/Controls'
 import { Icon } from '../../components/Icon'
 import { Sheet, usePresence } from '../../components/Overlay'
@@ -177,9 +179,17 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
           <Spacer />
           {/* The panel's own actions live here, flush with the window's caption buttons. */}
           {panelOpen && bot && !isGroup(bot) ? (
-            <MacChatButton title="Create template" icon="square.and.arrow.up" onClick={shareDetails} />
+            <CaptionButton title="Create template" onClick={shareDetails}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="M17 8l-5-5-5 5" />
+                <path d="M12 3v12" />
+              </svg>
+            </CaptionButton>
           ) : null}
-          <MacChatButton title="Conversation details" icon="chevron.left.2" direction={[-1, 0]} onClick={toggleDetails} />
+          <CaptionButton title="Conversation details" pressed={panelOpen} onClick={toggleDetails}>
+            <PanelIcon side="right" />
+          </CaptionButton>
         </div>
       </div>
       <div className="conversation">
@@ -479,3 +489,4 @@ function IntroCard({ bot }: { bot: Bot }) {
     </div>
   )
 }
+

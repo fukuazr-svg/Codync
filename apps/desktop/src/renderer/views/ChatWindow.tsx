@@ -3,6 +3,7 @@ import type { WindowCommand } from '@shared/ipc'
 import { isSSHConnecting, showsChat as shouldShowChat } from '@shared/ssh-startup'
 import { draftOf, type Bot, type BotDraft } from '@shared/models'
 import { CharacterAvatar } from '../components/Avatar'
+import { SidebarToggleIcon } from '../components/LayoutIcons'
 import { Button, IconButton, ResizeHandle } from '../components/Controls'
 import { Dialog, ModalHeader, Sheet } from '../components/Overlay'
 import { AnchoredMenu, type MenuItem } from '../components/Menu'
@@ -374,8 +375,11 @@ function ChatSplitView() {
     <div className={`split ${showAccount || context ? 'covered' : ''}`}>
       <aside className={`sidebar ${compact ? 'compact' : ''} ${resizing ? 'resizing' : ''}`} style={{ width }}>
         <div className="sidebar-header drag" inert={compact}>
-          {/* The computer picker takes the leading edge; search and New keep the trailing one. */}
+          {/* The rail's toggle leads, then the computer picker; search and New keep the trailing edge. */}
           <HStack gap={6} className="no-drag">
+            <button className="sidebar-toggle" title="Compact sidebar" aria-label="Compact sidebar" onClick={() => setCompact(true)}>
+              <SidebarToggleIcon open />
+            </button>
             <ComputerFilterHeader hidden={hidden} setHidden={setHidden} manage={() => setSettings('computers')} compact />
           </HStack>
           <Spacer />
@@ -387,7 +391,10 @@ function ChatSplitView() {
         </div>
         {compact ? (
           <div className="rail-header drag">
-            <HStack align="stretch" justify="center" className="no-drag">
+            <HStack align="center" justify="center" gap={2} className="no-drag">
+              <button className="sidebar-toggle" title="Expand sidebar" aria-label="Expand sidebar" onClick={() => setCompact(false)}>
+                <SidebarToggleIcon open={false} />
+              </button>
               <ComputerFilterHeader hidden={hidden} setHidden={setHidden} manage={() => setSettings('computers')} compact />
             </HStack>
           </div>
@@ -501,3 +508,4 @@ function ChatSplitView() {
     </div>
   )
 }
+

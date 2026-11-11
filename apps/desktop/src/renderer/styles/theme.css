@@ -23,11 +23,11 @@
    from the bots; amber marks "needs you" and red marks errors. (kit Palette) */
 :root {
   color-scheme: light dark;
-  --background: #ffffff;
-  --surface: #f7f7f7;
-  --bubble-agent: #f2f2f2;
+  --background: #fdfdfd;
+  --surface: #fafafa;
+  --bubble-agent: #f4f4f5;
   --bubble-user: #e2e2e2;
-  --border: #ededed;
+  --border: #e4e4e7;
   --text: #141414;
   --text-rgb: 20, 20, 20;
   --secondary: #6b6b6b;
@@ -44,24 +44,24 @@
   --star: #b88700;
   --on-warning: #000000;
   --attention: #936000;
-  --code-background: #f4f4f4;
+  --code-background: #f4f4f5;
   --added: #2e7d32;
   --removed: #c62828;
   /* Floating menus and account panel. */
-  --panel: #fafafa;
+  --panel: #ffffff;
   /* A reply is plain type on the page; only what the person wrote keeps a small bubble. */
   --chat-agent: transparent;
-  --chat-user: #f0f0f0;
+  --chat-user: #ececee;
   /* Floating transcript controls (chevrons, Jump to latest, inspector actions). */
   --chat-button: #eeeeee;
   /* Light: the message box is the page color; dark: a lighter fill. */
   --composer-fill: var(--background);
   /* The 1px outline on floating layers: the message box, sheets, dialogs and menus. */
   --outline: color-mix(in srgb, var(--text) 18%, transparent);
-  --chrome-fill: #f7f7f7;
+  --chrome-fill: #fafafa;
   --chrome-stroke: rgba(0, 0, 0, 0.09);
   --stroke-strong: rgba(0, 0, 0, 0.14);
-  --roster-selected: #ececec;
+  --roster-selected: #ffffff;
   /* Grok's frosted floating surfaces (title pill, call bar). */
   --frosted: rgba(244, 244, 244, 0.82);
   /* The frost behind a sheet: a white veil the page shows through, as T3 Code's does. */
@@ -125,11 +125,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #070707;
-    --surface: #0b0b0b;
+    --background: #000000;
+    --surface: #050505;
     --bubble-agent: #1a1a1a;
     --bubble-user: #3a3a3a;
-    --border: #1f1f1f;
+    --border: #161616;
     --text: #fafafa;
     --star: #f5c542;
     --text-rgb: 250, 250, 250;
@@ -145,18 +145,18 @@
     --attention: #ecaf52;
     --added: #8fd18b;
     --removed: #f0a7a7;
-    --panel: #1b1b1b;
+    --panel: #0d0d0d;
     --chat-agent: transparent;
-    --chat-user: #1f1f1f;
+    --chat-user: #1c1c1c;
     --chat-button: #303030;
     --composer-fill: #2f2f2f;
     --chrome-fill: #181818;
     --chrome-stroke: rgba(255, 255, 255, 0.10);
     --stroke-strong: rgba(255, 255, 255, 0.17);
-    --roster-selected: #292929;
+    --roster-selected: #1a1a1a;
     --frosted: rgba(35, 35, 35, 0.82);
     --scrim: rgba(9, 9, 9, 0.74);
-    --sheet: #161616;
+    --sheet: #0d0d0d;
     --group: rgba(var(--text-rgb), 0.045);
     --field: rgba(var(--text-rgb), 0.075);
     --chip-on: rgba(var(--text-rgb), 0.15);
@@ -328,3 +328,4 @@ h3 {
 .no-drag {
   -webkit-app-region: no-drag;
 }
+

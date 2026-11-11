@@ -40,6 +40,9 @@
   grid-area: 1 / 1;
 }
 .top-chrome-row {
+  /* Above the fade: a positioned sibling would otherwise paint over these buttons. */
+  position: relative;
+  z-index: 1;
   display: flex;
   width: 100%;
   height: 32px;
@@ -95,7 +98,8 @@
 }
 .top-fade {
   /* The whole 40-point bar is opaque and only the strip below it fades, so scrolled text never
-     shows through at the very top. */
+     shows through at the very top. No backdrop-filter here: on Windows it re-samples the whole
+     strip on every scroll frame, which is what made the list feel heavy. */
   grid-area: auto !important;
   position: absolute;
   inset: 0 0 -24px;
@@ -108,18 +112,15 @@
     transparent 100%
   );
 }
-.top-fade::before {
+/* The header's hairline, the way T3's title bar sits on one. */
+.top-chrome::after {
   content: '';
   position: absolute;
-  inset: 0;
-  backdrop-filter: blur(20px);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 40px, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0, #000 40px, transparent 100%);
-}
-@media (prefers-reduced-transparency: reduce) {
-  .top-fade::before {
-    backdrop-filter: none;
-  }
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0.5px;
+  background: var(--border);
 }
 .title-pill {
   position: relative;
@@ -504,6 +505,7 @@
     animation: fade-in 0.12s both;
   }
 }
+
 
 
 

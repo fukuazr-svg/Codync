@@ -70,8 +70,9 @@ const isWindows = process.platform === 'win32'
 function windowControls() {
   const dark = nativeTheme.shouldUseDarkColors
   return {
-    color: dark ? '#080808' : '#FCFCFC',
-    symbolColor: dark ? '#FAFAFA' : '#141414',
+    // T3's overlay is the page itself: a 1/255 alpha, not pure zero (which breaks on Linux).
+    color: '#01000000',
+    symbolColor: dark ? '#F8FAFC' : '#1F2937',
     height: 40,
   }
 }
@@ -82,7 +83,7 @@ function rendererURL(page: string) {
     : `file://${join(__dirname, '../renderer/index.html')}?window=${page}`
 }
 
-const background = () => (nativeTheme.shouldUseDarkColors ? '#0A0A0A' : '#FFFFFF')
+const background = () => (nativeTheme.shouldUseDarkColors ? '#000000' : '#FDFDFD')
 
 function snapshot(): HostSnapshot {
   return { state: host.state, local: host.local, dev: devPort !== null, logPath: host.logPath }
@@ -356,3 +357,4 @@ if (yieldsToInstall()) {
     openChat()
   })
 }
+
