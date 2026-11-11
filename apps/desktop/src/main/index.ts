@@ -62,11 +62,16 @@ const isMac = process.platform === 'darwin'
 // Windows draws its own title bar: the window controls sit over the page's top-right corner.
 const isWindows = process.platform === 'win32'
 
-/** The Windows window-controls overlay follows the app's appearance, like the page behind it. */
+/**
+ * The Windows window-controls overlay follows the app's appearance. It takes the colour of the
+ * frost a sheet lays over the page (`--scrim` in theme.css), so the buttons stay part of the same
+ * surface when a settings sheet is open, and read as the page colour when none is.
+ */
 function windowControls() {
+  const dark = nativeTheme.shouldUseDarkColors
   return {
-    color: background(),
-    symbolColor: nativeTheme.shouldUseDarkColors ? '#FAFAFA' : '#141414',
+    color: dark ? '#080808' : '#FCFCFC',
+    symbolColor: dark ? '#FAFAFA' : '#141414',
     height: 40,
   }
 }

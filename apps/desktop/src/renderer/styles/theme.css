@@ -1,3 +1,24 @@
+/* Inter (SIL OFL 1.1, assets/fonts/OFL.txt) is the face T3 Code renders English in; it carries
+   Latin only, so Chinese still lands on the system face below. */
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../assets/fonts/Inter-latin-wght.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../assets/fonts/Inter-latin-ext-wght.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 /* Black and white: a pure black (or white) ground, grey bubbles, and color that comes only
    from the bots; amber marks "needs you" and red marks errors. (kit Palette) */
 :root {
@@ -43,8 +64,8 @@
   --roster-selected: #ececec;
   /* Grok's frosted floating surfaces (title pill, call bar). */
   --frosted: rgba(244, 244, 244, 0.82);
-  /* The dim behind sheets and dialogs. */
-  --scrim: rgba(0, 0, 0, 0.4);
+  /* The frost behind a sheet: a white veil the page shows through, as T3 Code's does. */
+  --scrim: rgba(252, 252, 252, 0.74);
   /* Sheets and dialogs: a card a step above the page, groups of rows and text fields as quiet
      tints over it (they stack, so a field inside a group reads a step stronger). */
   --sheet: #ffffff;
@@ -84,8 +105,8 @@
   --spring: linear(0, 0.0712, 0.2244, 0.3992, 0.5638, 0.7018, 0.8077, 0.8834, 0.9342, 0.9663, 0.9853, 0.9958, 1.0009, 1.0028, 1.0029, 1);
   --layout: 0.3s var(--spring);
 
-  /* T3 Code's stack: the system face first (Segoe UI on Windows), Chinese to YaHei, no bundled font. */
-  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+  /* English is Inter, as in T3 Code; Chinese falls through to the system face. */
+  --font: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, 'DejaVu Sans Mono', monospace;
 }
 
@@ -134,7 +155,7 @@
     --stroke-strong: rgba(255, 255, 255, 0.17);
     --roster-selected: #292929;
     --frosted: rgba(35, 35, 35, 0.82);
-    --scrim: rgba(0, 0, 0, 0.55);
+    --scrim: rgba(9, 9, 9, 0.74);
     --sheet: #161616;
     --group: rgba(var(--text-rgb), 0.045);
     --field: rgba(var(--text-rgb), 0.075);
