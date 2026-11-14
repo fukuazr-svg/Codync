@@ -255,7 +255,7 @@ function ProviderVoiceSettings({ provider, dictationOnly = false }: { provider: 
           <HStack gap={8} className="settings-row">
             <input
               type="password"
-              aria-label="API key"
+              aria-label={tr('API key')}
               placeholder={info.keyPrompt}
               value={key}
               spellCheck={false}

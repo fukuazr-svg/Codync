@@ -5,6 +5,7 @@ import { Icon } from '../components/Icon'
 import { Sheet } from '../components/Overlay'
 import { VStack } from '../components/Stack'
 import { Text } from '../components/Text'
+import { useTr } from '../lib/use-language'
 import { refKey, type BotRef, type RosterItem } from '../store/app-model'
 import './search-palette.css'
 
@@ -28,6 +29,7 @@ export function SearchPalette({ open, items, onPick, onClose }: { open: boolean;
 }
 
 function PaletteBody({ items, onPick, onClose }: { items: RosterItem[]; onPick: (ref: BotRef) => void; onClose: () => void }) {
+  const tr = useTr()
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const list = useRef<HTMLDivElement>(null)
@@ -63,7 +65,7 @@ function PaletteBody({ items, onPick, onClose }: { items: RosterItem[]; onPick: 
     <div className="palette" onKeyDown={onKey}>
       <div className="palette-field">
         <Icon name="magnifyingglass" size={15} color="var(--secondary)" />
-        <input autoFocus value={query} placeholder="Search" aria-label="Search bots" spellCheck={false} onChange={(e) => setQuery(e.target.value)} />
+        <input autoFocus value={query} placeholder={tr('Search')} aria-label={tr('Search bots')} spellCheck={false} onChange={(e) => setQuery(e.target.value)} />
       </div>
       <div className="palette-list" ref={list} role="listbox">
         {results.map((item, i) => (
