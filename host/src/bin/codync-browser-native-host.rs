@@ -230,10 +230,23 @@ fn native_manifest(executable: &std::path::Path, extension_id: &str) -> Value {
     json!({
         "name": NATIVE_HOST,
         "description": "Codync Browser native-messaging bridge",
-        "path": executable.to_string_lossy(),
+        "path": native_manifest_path(executable),
         "type": "stdio",
         "allowed_origins": [format!("chrome-extension://{extension_id}/")]
     })
+}
+
+fn native_manifest_path(executable: &std::path::Path) -> String {
+    // Chrome's Windows native-messaging launcher rejects the `\\?\` NT namespace prefix that
+    // `canonicalize` adds, even though the same path opens normally in Rust and Explorer.
+    let path = executable.to_string_lossy();
+    if let Some(path) = path.strip_prefix(r"\\?\UNC\") {
+        format!(r"\\{path}")
+    } else if let Some(path) = path.strip_prefix(r"\\?\") {
+        path.to_owned()
+    } else {
+        path.into_owned()
+    }
 }
 
 fn read_native(input: &mut impl Read) -> Result<Option<String>> {
@@ -312,6 +325,18 @@ mod tests {
         assert_eq!(decoded["name"], NATIVE_HOST);
         assert_eq!(decoded["path"], r"C:\Users\Example User\Codync\codync-browser-native-host.exe");
         assert_eq!(decoded["allowed_origins"][0], format!("chrome-extension://{EXTENSION_ID}/"));
+    }
+
+    #[test]
+    fn native_manifest_removes_windows_verbatim_path_prefixes() {
+        let drive_path = native_manifest_path(std::path::Path::new(
+            r"\\?\C:\Users\Example User\Codync\codync-browser-native-host.exe",
+        ));
+        assert_eq!(drive_path, r"C:\Users\Example User\Codync\codync-browser-native-host.exe");
+
+        let unc_path =
+            native_manifest_path(std::path::Path::new(r"\\?\UNC\server\share\Codync\codync-browser-native-host.exe"));
+        assert_eq!(unc_path, r"\\server\share\Codync\codync-browser-native-host.exe");
     }
 
     #[test]
