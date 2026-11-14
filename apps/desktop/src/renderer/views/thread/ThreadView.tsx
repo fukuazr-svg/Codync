@@ -257,7 +257,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
         {details}
       </ChatSidePanel>
 
-      <Sheet open={compactDetails} onClose={() => setCompactDetails(false)} width={400} height={600}>
+      <Sheet open={compactDetails} onClose={() => setCompactDetails(false)} width={400} height={600} dismissOnDim>
         {details}
       </Sheet>
       <Sheet open={botChat !== null} onClose={() => setBotChat(null)} width={620} height={560}>
