@@ -383,6 +383,7 @@ impl Actor {
         }
         let (session, routine) = (self.turn_session.clone(), self.active_routine.is_some());
         let failed = done.as_ref().is_err_and(acp::may_end_session);
+        self.hub.screen.cancel_browsers(&self.cfg.id).await;
         self.finish_turn(&done);
         match session {
             // A task's session is spent like a run's until its bot tells it more.
