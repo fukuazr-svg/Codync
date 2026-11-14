@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { testLanguage } from '../../lib/test-language.ts'
 import type { SharedFile } from '@shared/models'
 import type { DownloadState } from '../../store/file-downloads.ts'
 import { byteCount, cardActions, cardDetail, cardKeyAction, clickRunsFirstAction, clock } from './file-card.ts'
@@ -26,7 +27,8 @@ test('clock writes m:ss, and h:mm:ss past an hour', () => {
   assert.equal(clock(3725), '1:02:05')
 })
 
-test('a card that could not play says so before anything else', () => {
+test('a card that could not play says so before anything else', (t) => {
+  testLanguage(t, 'en-US')
   const downloading: DownloadState = { kind: 'downloading', received: 500 }
   assert.equal(cardDetail(downloading, file(1000), audio('failed')), `Couldn't play. Click to retry.`)
 })
@@ -75,7 +77,8 @@ test('a card without a loaded sound or download keeps the file detail', () => {
   assert.equal(cardDetail(saved, file(380030), audio('idle')), '380 KB · Saved')
 })
 
-test("a card's first action is a voice note's play (also after a failure), then a picture's view, then the download", () => {
+test("a card's first action is a voice note's play (also after a failure), then a picture's view, then the download", (t) => {
+  testLanguage(t, 'en-US')
   const noop = () => {}
   const titles = (args: Partial<Parameters<typeof cardActions>[0]>) => cardActions({ state: undefined, download: noop, ...args }).map((a) => a.title)
   assert.deepEqual(titles({ audio: audio('failed'), toggle: noop }), ['Play', 'Download'])

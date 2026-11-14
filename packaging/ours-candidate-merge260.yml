@@ -1,0 +1,377 @@
+# Prepared only: not uploaded and not dispatched. Private self-use; no release or installation job.
+# Candidate: ours/merge-20261112 @ e66e8ef7 (official dev 2.45.1 + #403 + #409/goals), version 2.45.2.
+name: ours-candidate-merge260
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Build every platform, or recover only one
+        type: choice
+        options: [all, gates, windows, linux-host, linux-desktop]
+        default: all
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ours-sync
+  cancel-in-progress: false
+
+env:
+  CANDIDATE_COMMIT: e66e8ef7c94e86d3c7a51f688ac1d0ee7902115d
+  CANDIDATE_TREE: 2761b41f39849e5df45499b1b9300796cc051f57
+  CANDIDATE_VERSION: 2.45.2
+  BASE_SHA: 2911c8bcd2c4a0c1815f4df9977ff83f4c99cfb7
+
+jobs:
+  gates:
+    if: inputs.platform == 'all' || inputs.platform == 'gates'
+    runs-on: windows-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: e66e8ef7c94e86d3c7a51f688ac1d0ee7902115d
+          fetch-depth: 1
+
+      - name: Verify private repository and frozen candidate
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "fukuazr-svg/codync-ours"
+          test "$REPOSITORY_PRIVATE" = "true"
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_COMMIT"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$CANDIDATE_TREE"
+          grep -q 'const oursBuild: boolean = true' apps/desktop/src/main/updates.ts
+          grep -q 'codync-ours: this build never updates' host/src/update/mod.rs
+          test "$(git status --porcelain)" = ""
+          test "$(node -p "require('./apps/desktop/package.json').version")" = "$CANDIDATE_VERSION"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      - name: 装 Rust（按 host/rust-toolchain.toml）
+        working-directory: host
+        run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: host
+          key: merge260-host-gates
+
+      - name: host fmt and clippy
+        working-directory: host
+        run: |
+          set -euo pipefail
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+
+      - name: host library and bin unit tests
+        working-directory: host
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          cargo test --locked --bin codync-host -- --test-threads=1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo test --locked --lib -- --test-threads=1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: host integration tests for our patches
+        working-directory: host
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Write-Output "python:"; python --version
+          cargo test --locked --test always_allow_e2e -- --test-threads=1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo test --locked --test goal_e2e -- --test-threads=1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: desktop typecheck and unit tests
+        working-directory: apps/desktop
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          npm ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run typecheck
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify tracked source unchanged
+        run: git diff --exit-code HEAD --
+
+  windows:
+    if: inputs.platform == 'all' || inputs.platform == 'windows'
+    runs-on: windows-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    env:
+      CODYNC_HOST_PROFILE: release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: e66e8ef7c94e86d3c7a51f688ac1d0ee7902115d
+          fetch-depth: 1
+
+      - name: Verify private repository and frozen candidate
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "fukuazr-svg/codync-ours"
+          test "$REPOSITORY_PRIVATE" = "true"
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_COMMIT"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$CANDIDATE_TREE"
+          grep -q 'oursBuild' apps/desktop/src/main/updates.ts
+          grep -q 'codync-ours: this build never updates' host/src/update/mod.rs
+          test "$(git status --porcelain)" = ""
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      - name: 装 Rust（按 host/rust-toolchain.toml）
+        working-directory: host
+        run: rustup toolchain install
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: host
+          key: merge260-windows
+
+      - name: 出 Windows x64 安装包
+        working-directory: apps/desktop
+        run: |
+          set -euo pipefail
+          grep -q 'oursBuild' src/main/updates.ts
+          npm ci
+          npm run dist:win:main -- --x64 --publish never
+          cd dist
+          sha256sum codync-windows-x64.exe > codync-windows-x64.exe.sha256
+          cat codync-windows-x64.exe.sha256
+
+      - name: Record windows payload bytes and hashes
+        env:
+          ARTIFACT_KIND: windows
+          ARTIFACT_DIRECTORY: apps/desktop/dist
+        run: |
+          set -euo pipefail
+          cd apps/desktop
+          node - <<'JS'
+          const asar = require('@electron/asar');
+          const entries = asar.listPackage('dist/win-unpacked/resources/app.asar');
+          if(entries.some(x => /acceptance_api_driver|protocol-acceptance|real-model-inspection|(^|[\\/])host[\\/](examples|tests)([\\/]|$)/i.test(x))) throw Error('Test-only payload leaked');
+          JS
+          cd ../..
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          kind=os.environ['ARTIFACT_KIND']; directory=pathlib.Path(os.environ['ARTIFACT_DIRECTORY'])
+          paths=[p for p in directory.glob('*') if p.is_file() and p.name.startswith('codync-') and p.name.endswith(('.exe','.tar.gz','.AppImage','.deb','.sha256'))]
+          inner=[pathlib.Path('apps/desktop/dist/win-unpacked/resources')/n for n in ('codync-host.exe','codync-hostw.exe','app.asar')]
+          def rec(p):
+              return {'path':str(p).replace('\\','/'),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+          assert paths, 'No output artifacts'
+          result={'status':'built_not_download_verified','commit':os.environ['CANDIDATE_COMMIT'],'tree':os.environ['CANDIDATE_TREE'],'base':os.environ['BASE_SHA'],'version':os.environ['CANDIDATE_VERSION'],'kind':kind,'run':os.environ['GITHUB_RUN_ID'],'artifacts':[rec(p) for p in sorted(paths)],'payloads':[rec(p) for p in inner]}
+          pathlib.Path('manifest-'+kind+'.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf8')
+          PY
+
+      - name: Verify tracked source unchanged
+        run: git diff --exit-code HEAD --
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          if-no-files-found: error
+          path: |
+            manifest-windows.json
+            apps/desktop/dist/codync-windows-x64.exe
+            apps/desktop/dist/codync-windows-x64.exe.sha256
+
+  linux-host:
+    if: inputs.platform == 'all' || inputs.platform == 'linux-host'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: e66e8ef7c94e86d3c7a51f688ac1d0ee7902115d
+          fetch-depth: 1
+
+      - name: Verify private repository and frozen candidate
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "fukuazr-svg/codync-ours"
+          test "$REPOSITORY_PRIVATE" = "true"
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_COMMIT"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$CANDIDATE_TREE"
+          grep -q 'oursBuild' apps/desktop/src/main/updates.ts
+          grep -q 'codync-ours: this build never updates' host/src/update/mod.rs
+          test "$(git status --porcelain)" = ""
+
+      - name: 装 Rust（host/rust-toolchain.toml）
+        working-directory: host
+        run: |
+          rustup toolchain install
+          rustup target add x86_64-unknown-linux-musl
+
+      - name: 系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: host
+          key: merge260-linux-host
+
+      - name: 编 host
+        working-directory: host
+        env:
+          CODYNC_ENV: main
+        run: cargo build --locked --release --bin codync-host --target x86_64-unknown-linux-musl
+
+      - name: 编 codync-screen
+        working-directory: apps/screen-linux
+        run: |
+          rustup toolchain install
+          cargo build --locked --release
+
+      - name: 打包
+        run: |
+          set -euo pipefail
+          NAME=codync-host-linux-x86_64
+          mkdir -p "$NAME"
+          cp host/target/x86_64-unknown-linux-musl/release/codync-host "$NAME/"
+          cp apps/screen-linux/target/release/codync-screen "$NAME/"
+          node packaging/cua-driver/fetch.mjs linux-x86_64 "$NAME/"
+          cp LICENSE "$NAME/"
+          tar czf "$NAME.tar.gz" "$NAME"
+          sha256sum "$NAME.tar.gz" > "$NAME.tar.gz.sha256"
+          cat "$NAME.tar.gz.sha256"
+
+      - name: Record linux-host payload bytes and hashes
+        env:
+          ARTIFACT_KIND: linux-host
+          ARTIFACT_DIRECTORY: .
+        run: |
+          set -euo pipefail
+          if tar tzf codync-host-linux-x86_64.tar.gz | grep -E 'acceptance_api_driver|(^|/)(examples|tests)/'; then exit 1; fi
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          kind=os.environ['ARTIFACT_KIND']; directory=pathlib.Path(os.environ['ARTIFACT_DIRECTORY'])
+          paths=[p for p in directory.glob('*') if p.is_file() and p.name.startswith('codync-') and p.name.endswith(('.exe','.tar.gz','.AppImage','.deb','.sha256'))]
+          inner=[pathlib.Path('codync-host-linux-x86_64/codync-host')]
+          def rec(p):
+              return {'path':str(p).replace('\\','/'),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+          assert paths, 'No output artifacts'
+          result={'status':'built_not_download_verified','commit':os.environ['CANDIDATE_COMMIT'],'tree':os.environ['CANDIDATE_TREE'],'base':os.environ['BASE_SHA'],'version':os.environ['CANDIDATE_VERSION'],'kind':kind,'run':os.environ['GITHUB_RUN_ID'],'artifacts':[rec(p) for p in sorted(paths)],'payloads':[rec(p) for p in inner]}
+          pathlib.Path('manifest-'+kind+'.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf8')
+          PY
+
+      - name: Verify tracked source unchanged
+        run: git diff --exit-code HEAD --
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-host
+          if-no-files-found: error
+          path: |
+            manifest-linux-host.json
+            codync-host-linux-x86_64.tar.gz
+            codync-host-linux-x86_64.tar.gz.sha256
+
+  linux-desktop:
+    if: inputs.platform == 'all' || inputs.platform == 'linux-desktop'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: e66e8ef7c94e86d3c7a51f688ac1d0ee7902115d
+          fetch-depth: 1
+
+      - name: Verify private repository and frozen candidate
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "fukuazr-svg/codync-ours"
+          test "$REPOSITORY_PRIVATE" = "true"
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_COMMIT"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$CANDIDATE_TREE"
+          grep -q 'oursBuild' apps/desktop/src/main/updates.ts
+          grep -q 'codync-ours: this build never updates' host/src/update/mod.rs
+          test "$(git status --porcelain)" = ""
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      - name: 出 Linux x64 桌面版
+        working-directory: apps/desktop
+        run: |
+          set -euo pipefail
+          grep -q 'oursBuild' src/main/updates.ts
+          npm ci
+          npm run dist:linux:main -- --x64 --publish never
+          cd dist
+          test -f codync-linux-amd64.deb
+          mv codync-linux-amd64.deb codync-linux-x86_64.deb
+          for f in codync-linux-x64.*; do mv "$f" "codync-linux-x86_64.${f#codync-linux-x64.}"; done
+          for f in codync-linux-x86_64.*; do sha256sum "$f" > "$f.sha256"; done
+          ls -lh codync-linux-x86_64.*
+
+      - name: Record linux-desktop payload bytes and hashes
+        env:
+          ARTIFACT_KIND: linux-desktop
+          ARTIFACT_DIRECTORY: apps/desktop/dist
+        run: |
+          set -euo pipefail
+          cd apps/desktop
+          node - <<'JS'
+          const asar = require('@electron/asar');
+          const entries = asar.listPackage('dist/linux-unpacked/resources/app.asar');
+          if(entries.some(x => /acceptance_api_driver|protocol-acceptance|real-model-inspection|(^|[\\/])host[\\/](examples|tests)([\\/]|$)/i.test(x))) throw Error('Test-only payload leaked');
+          JS
+          cd ../..
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          kind=os.environ['ARTIFACT_KIND']; directory=pathlib.Path(os.environ['ARTIFACT_DIRECTORY'])
+          paths=[p for p in directory.glob('*') if p.is_file() and p.name.startswith('codync-') and p.name.endswith(('.exe','.tar.gz','.AppImage','.deb','.sha256'))]
+          inner=[pathlib.Path('apps/desktop/dist/linux-unpacked/resources/app.asar')]
+          def rec(p):
+              return {'path':str(p).replace('\\','/'),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+          assert paths, 'No output artifacts'
+          result={'status':'built_not_download_verified','commit':os.environ['CANDIDATE_COMMIT'],'tree':os.environ['CANDIDATE_TREE'],'base':os.environ['BASE_SHA'],'version':os.environ['CANDIDATE_VERSION'],'kind':kind,'run':os.environ['GITHUB_RUN_ID'],'artifacts':[rec(p) for p in sorted(paths)],'payloads':[rec(p) for p in inner]}
+          pathlib.Path('manifest-'+kind+'.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf8')
+          PY
+
+      - name: Verify tracked source unchanged
+        run: git diff --exit-code HEAD --
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-desktop
+          if-no-files-found: error
+          path: |
+            manifest-linux-desktop.json
+            apps/desktop/dist/codync-linux-x86_64.*

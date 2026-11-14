@@ -34,7 +34,7 @@ test("signing out revokes only this install's device, then its key goes", async 
   await revokeThisDevice('https://cloud.test', 'jwt', 'user')
   assert.deepEqual(calls, [], 'no key here: nothing to revoke')
 
-  const keyFile = `/data/device-key-${crypto.createHash('sha256').update('user').digest('hex').slice(0, 16)}.bin`
+  const keyFile = path.join('/data', `device-key-${crypto.createHash('sha256').update('user').digest('hex').slice(0, 16)}.bin`)
   files.set(keyFile, Buffer.from(seed))
   await revokeThisDevice('https://cloud.test', 'jwt', 'user')
   assert.deepEqual(calls, ['GET /v1/devices Bearer jwt', 'DELETE /v1/devices/mine Bearer jwt'])

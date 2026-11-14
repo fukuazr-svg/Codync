@@ -292,7 +292,7 @@ function UpdateSettings() {
   const tr = useTr()
   const updates = useUpdates()
   if (!updates) return null
-  const footer = updates.supported ? null : 'Updates are available in release builds.'
+  const footer = updates.supported ? null : tr('This build updates only through the codync-ours release line.')
   const lastChecked = updates.lastCheck
     ? `Last checked ${new Date(updates.lastCheck).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`
     : null
@@ -313,10 +313,10 @@ function UpdateSettings() {
                 </div>,
               ]
             : []),
-          <Switch key="check" on={updates.autoCheck} onChange={(on) => window.codync.updates.setAutoCheck(on)} disabled={!updates.supported}>
+          <Switch key="check" on={updates.supported && updates.autoCheck} onChange={(on) => window.codync.updates.setAutoCheck(on)} disabled={!updates.supported}>
             Automatically check for updates
           </Switch>,
-          <Switch key="download" on={updates.autoDownload} onChange={(on) => window.codync.updates.setAutoDownload(on)} disabled={!updates.supported}>
+          <Switch key="download" on={updates.supported && updates.autoDownload} onChange={(on) => window.codync.updates.setAutoDownload(on)} disabled={!updates.supported}>
             Automatically download and install
           </Switch>,
           ...(updates.error

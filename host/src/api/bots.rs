@@ -73,6 +73,11 @@ pub(super) async fn call(hub: &Arc<Hub>, caller: &Caller, method: &str, b: Value
         "teamCall" => {
             crate::chat::team::call_async(hub, str_arg(&b, "botId")?, str_arg(&b, "name")?, &b["arguments"]).await?
         }
+        // The team server's instructions, worded by the bot's approvals (looped back by the MCP server as it starts).
+        "teamInstructions" => {
+            let cfg = hub.store.bot(str_arg(&b, "botId")?)?.ok_or_else(|| anyhow!("unknown bot"))?.config;
+            json!({"instructions": crate::chat::team::instructions(cfg.permission)})
+        }
         "manageCall" => {
             crate::chat::manage::call(hub, str_arg(&b, "botId")?, str_arg(&b, "name")?, &b["arguments"]).await?
         }
@@ -306,6 +311,9 @@ pub(super) async fn call(hub: &Arc<Hub>, caller: &Caller, method: &str, b: Value
         "respondDecision" => {
             crate::chat::decision::respond(hub, str_arg(&b, "entryId")?, str_arg(&b, "option")?).await?
         }
+        // Goal mode: the conversation's goal, its limits, and stopping it.
+        "setGoal" => crate::chat::goal::set(hub, str_arg(&b, "botId")?, &b)?,
+        "stopGoal" => crate::chat::goal::stop(hub, str_arg(&b, "botId")?)?,
         "respondPermission" => {
             let entry_id = str_arg(&b, "entryId")?;
             let e = hub.store.entry(entry_id).ok_or_else(|| anyhow!("unknown card"))?;

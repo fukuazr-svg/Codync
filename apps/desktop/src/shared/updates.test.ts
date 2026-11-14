@@ -4,7 +4,10 @@ import { EventEmitter } from 'node:events'
 import { QuitLifecycle } from '../main/quit-lifecycle.ts'
 import { updateAction } from './update-action.ts'
 import { deferred, settle } from './test-support/main-module.ts'
-import { updaterFixture } from './test-support/updater.ts'
+import { updaterFixture as fixture } from './test-support/updater.ts'
+
+// Exercise the unchanged official updater contract with an explicit build policy.
+const updaterFixture = (options: Parameters<typeof fixture>[0] = {}) => fixture({ ...options, officialUpdates: true })
 
 const release = { version: '2.11.3' }
 

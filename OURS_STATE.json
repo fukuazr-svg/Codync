@@ -1,0 +1,13 @@
+{
+  "upstream": "leepokai/Codync",
+  "source": "dev",
+  "sha": "9c79149d613ffa0521e5bbe712b1a69ecbe4b76c",
+  "version": "2.47.0",
+  "latestStableTag": "v2.46.1",
+  "latestStableNote": "v2.46.1 was released 2026-11-13T11:25:05Z; dev has since bumped to 2.47.0 (2.46.2 was skipped) and still carries no v2.47.0 tag, so this line's baseline is a dev preview, not a released tree",
+  "syncedAt": "2026-11-14T13:20:00.000Z",
+  "desktopUpdate": "off",
+  "hostUpdate": "off",
+  "status": "MERGE_COMMITTED_GATES_PENDING",
+  "note": "This file records the official baseline the branch was built on. The authoritative gate state for a candidate head lives in F:/Codync/发版工/work/gates-*/ on the build computer, not in this file."
+}

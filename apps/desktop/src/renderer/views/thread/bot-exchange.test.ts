@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { testLanguage } from '../../lib/test-language.ts'
 import { botConversation, botExchange, buildBotConversation, groupExchanges, groupSummary, isOutgoing, peerOf, verbOf } from './bot-exchange.ts'
 import type { Entry, EntryData } from '../../../shared/models.ts'
 
@@ -44,7 +45,8 @@ test('bot replies stay in the popup while independent reports stay in the main c
   ])
 })
 
-test('decodes the wire JSON and reads direction and verb from either chat', () => {
+test('decodes the wire JSON and reads direction and verb from either chat', (t) => {
+  testLanguage(t, 'en-US')
   const wire = JSON.parse('{"id":"n","seq":1,"botId":"egan","rev":3,"kind":"notice","turn":0,"createdAt":5,"updatedAt":5,"data":{"text":"Messaged Owen: Hi\\nQueued. Outcome will appear in Owen\'s chat.","heading":"Messaged Owen: Hi","style":"info","status":"queued","delegationId":"d","sourceBotId":"egan","targetBotId":"owen","botMessage":{"sourceBotId":"egan","targetBotId":"owen","text":"Hi"}}}') as Entry
   const out = botExchange(wire)!
   assert.equal(isOutgoing(out), true)

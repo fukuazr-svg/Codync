@@ -106,6 +106,7 @@ host answers and sends it once the host is up.
 | `turn_stopped` | host | `stop` | — |
 | `turn_finished` | host | An agent's turn ends: once per agent it ran on, so a turn that fell back once and then answered sends a `failed` and a `done` | `agent`, `outcome` (`done`/`stopped`/`failed`/`needs_setup`/`incomplete`; `needs_setup` is a failure whose `error` is `sign_in` or `not_installed`: the user has a step to take, nothing broke), `stop_reason`, `source` (`user`/`routine`/`group`/`bot`/`host`: the lead opening a call/`follow_up`: a [follow-up](../features/follow-ups.md) came due), `seconds`; when failed or needs_setup, `error` (`not_installed`/`timeout`/`exited`/`no_model`/`mode_missing`/`sign_in`/`agent_error`/`io`/`other`) and, for `agent_error`, `rpc_code` and `agent_reason` (the adapter's own category, else one the host reads from the message, which is never sent: `session_ended`/`rate_limit`/`quota`/`overloaded`/`context`/`model`/`network`/`provider`/`unknown`) |
 | `agent_fell_back` | host | A turn moves on to the bot's next agent ([agent fallbacks](../features/agent-fallback.md)) | `agent` (the one that couldn't answer), `reason` (`usageLimit`/`outOfCredits`/`rateLimited`/`overloaded`/`signedOut`/`notStarting`/`modelMissing`/`modeMissing`), `loginProfile: true` when the step it left or the one taking over runs on a [login profile](../features/login-profiles.md) (never which) |
+| `handoff_ledger_built` | host | A new fallback session collected its Context Manifest, or reported why it could not ([agent fallbacks](../features/agent-fallback.md#the-handover-ledger)) | `outcome` (`collected`/`time_limit`/`worker_failed`/`history_failed`), `collection_omitted` and `files_unavailable` counts; no text, paths, hashes or identifiers |
 | `handoff_carried` | host | An agent taking over a bot's chat is told what came before ([the handover ledger](../features/agent-fallback.md#the-handover-ledger)) | `agent` (the one taking over), `loginProfile: true` when it runs on a login profile (never which), `kind` (`recap`: a new session / `catch_up`: a session it had), `bytes` (the size of what it was told, never the text), `window_known` (whether a recap was sized to the agent's window; always `false` for a catch-up) |
 | `agent_retired` | host | A bot's agent stops between turns to give back its processes (`agent/bot/lifecycle.rs`); the next message starts it again | `agent`, `reason` (`idle`: every session unused for 30 minutes; `routine_finished`: a routine run ended with no other session open; `session_not_closed`: a routine run ended and the agent couldn't close its session) |
 | `context_compacted` | host | Codync starts summarizing a bot's chat ([context and memory](../features/context-and-memory.md)) | `agent`, `when` (`turn_end`/`idle`), `threshold` (the bot's Summarize long chats: `early`/`nearLimit`/`tokens`) |
@@ -115,6 +116,8 @@ host answers and sends it once the host is up.
 | `reaction_added` | host | `react` | — |
 | `handoff_answered` | host | `editHandoff`, `keepConversation` | `action` (`edit`/`keep`) |
 | `routine_saved` | host | `saveRoutine` | — |
+| `goal_started` | host | `setGoal` starts a conversation goal | No goal text |
+| `goal_stopped` | host | A conversation goal stops | `reason`: `done`, `needsUser`, `failed`, `user`, `limit`, `usage`, `stopped`; no goal text |
 | `routine_toggled` | host | `setRoutineEnabled` | `enabled` |
 | `routine_deleted` | host | `deleteRoutine` | — |
 | `routine_run` | host | `runRoutine` | — |
@@ -160,6 +163,7 @@ host answers and sends it once the host is up.
 | `decision_answered` | host | The actor delivered a choice to its live waiter, once | `via`: `button`, `text` (a typed option or its number) or `custom` (the user's own words); never which option or the words |
 | `decision_expired` | host | A choice card stopped waiting unanswered, once per card | `reason`: `timeout`, `cancelled` (the agent cancelled its call), `stopped`, `turn_ended`, `other_message` (the user sent files, a quote, a `/` command or call speech instead) or `restart`; never the question or its options |
 | `decision_failed` | host | The user's choice was saved but its call had already stopped waiting, so the bot never got it | none |
+| `bot_inspected` | host | A bot's team tool about another bot (`teamCall`): `bot_status` or `recent_messages` read one; the target accepted `answer_approval`, or accepted a `stop_bot` cancellation request. Declined or stale actions are not counted | `tool` (`bot_status`/`recent_messages`/`answer_approval`/`stop_bot`); on the last two, `by` (`user`: the card in the sender's chat; `auto`: the sender approves automatically); never what it read or which bots |
 
 ## Screens
 

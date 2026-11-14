@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { testLanguage } from '../../lib/test-language.ts'
 import type { SpeechEvent } from '../../../shared/ipc.ts'
 import { Dictation, type DictationPlatform } from './dictation.ts'
 import { MIN_SAMPLES, PIECE_SAMPLES } from './dictation-pieces.ts'
@@ -91,7 +92,8 @@ test('a speech error ends it and reports it; a send already asked for goes with 
   assert.equal(s.box(), 'Fix the bug in the parser')
 })
 
-test('without on-device speech or a provider, the mic says what to pick', () => {
+test('without on-device speech or a provider, the mic says what to pick', (t) => {
+  testLanguage(t, 'en-US')
   const s = setup({ speech: null })
   s.dictation.start(s.box())
   assert.equal(s.dictation.error, 'No speech here. Pick OpenAI or Gemini beside the mic.')

@@ -8,6 +8,8 @@ use serde_json::Value;
 use std::sync::Arc;
 
 pub enum Cmd {
+    /// Continue this generation of the conversation's goal.
+    Goal(String),
     RefreshTools,
     /// A cloud computer's keeper started again, forgetting the grants the agent was started with.
     KeeperRestarted,
@@ -75,6 +77,11 @@ pub enum Cmd {
         chat: String,
     },
     Stop,
+    /// Cancel only the turn the user approved stopping, without clearing newer queued work.
+    StopTurn {
+        key: uuid::Uuid,
+        reply: tokio::sync::oneshot::Sender<bool>,
+    },
     /// A `request_decision` call (`chat::decision`): its card in the turn's chat, the call waiting.
     Ask {
         data: Value,
@@ -92,6 +99,12 @@ pub enum Cmd {
     Permission {
         entry_id: String,
         option_id: Option<String>,
+    },
+    /// A team tool must know whether this exact card still accepted the answer.
+    AnswerPermission {
+        entry_id: String,
+        option_id: String,
+        reply: tokio::sync::oneshot::Sender<bool>,
     },
     /// A Codync tool asks the user before it acts (`chat::manage`), on the agent's kind of approval card.
     Approve {
@@ -111,6 +124,7 @@ pub enum Cmd {
 }
 
 pub(super) enum Queued {
+    Goal(String),
     Routine(String),
     FollowUp(String),
     User {

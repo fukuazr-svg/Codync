@@ -15,6 +15,7 @@ use tokio::sync::mpsc;
 impl Actor {
     pub(super) async fn on_cmd(&mut self, cmd: Cmd, done_tx: &mpsc::UnboundedSender<Done>) -> bool {
         match cmd {
+            Cmd::Goal(id) => self.enqueue(Queued::Goal(id), done_tx).await,
             Cmd::RefreshTools => {
                 self.tools_changed = true;
             }
@@ -62,7 +63,28 @@ impl Actor {
                 let _ = reply.send(self.post_artifact(data));
             }
             Cmd::Stop => self.stop().await,
-            Cmd::Permission { entry_id, option_id } => self.answer_permission(&entry_id, option_id).await,
+            Cmd::Permission { entry_id, option_id } => {
+                self.answer_permission(&entry_id, option_id).await;
+            }
+            Cmd::StopTurn { key, reply } => {
+                if !reply.is_closed() {
+                    let current = self.turn.is_some()
+                        && !self.stop_requested
+                        && self.hub.runtime(&self.cfg.id).turn_key == Some(key);
+                    if current {
+                        self.cancel_turn().await;
+                    }
+                    // This acknowledges a cancellation request, not that the process has already exited.
+                    let _ = reply.send(current);
+                }
+            }
+            Cmd::AnswerPermission { entry_id, option_id, reply } => {
+                if !reply.is_closed() {
+                    let applied = self.answer_permission(&entry_id, Some(option_id)).await;
+                    // The caller may have been cancelled while the agent's response was being written.
+                    let _ = reply.send(applied);
+                }
+            }
             Cmd::Approve { title, detail, reply } => self.ask_approval(&title, &detail, reply),
             Cmd::NewSession => {
                 if self.turn.is_some() {
@@ -149,6 +171,7 @@ impl Actor {
     }
 
     pub(super) async fn stop(&mut self) {
+        crate::chat::goal::finish(&self.hub, &self.cfg.id, None, crate::chat::goal::Stopped::Manual);
         self.hub.team.end_turn(&self.cfg.id);
         if let Err(error) = self.hub.routines.cancel_queued(&self.hub.store, &self.cfg.id) {
             tracing::error!(error = format!("{error:#}"), "couldn't cancel queued routines");
@@ -204,6 +227,9 @@ impl Actor {
             self.set_session(Some(&slot), None);
         }
         self.forget_session();
+        // Every conversation starts over on a restarted agent, so none of the old approvals may answer a new one:
+        // an agent that numbers sessions per process hands out the same ids again.
+        self.always_allowed.forget_all();
     }
 
     pub(super) async fn next_in_queue(&mut self, done_tx: &mpsc::UnboundedSender<Done>) {
@@ -266,6 +292,11 @@ impl Actor {
                     if let Err(e) = self.start_turn(main.clone(), &[], &prompt, false, done_tx).await {
                         self.start_error(e, done_tx).await;
                     }
+                    continue;
+                }
+                Some(Queued::Goal(_)) => {
+                    let Some(Queued::Goal(id)) = self.queue.pop_front() else { unreachable!("goal step") };
+                    self.dequeue_goal(id, done_tx).await;
                     continue;
                 }
                 Some(Queued::Prompt { .. }) => {
@@ -357,6 +388,10 @@ impl Actor {
         if self.turn.is_some() {
             self.report_turn(false, Some(e), "start_failed");
         }
+        if let Some(step) = self.goal_step.take() {
+            let why = step.stopped.unwrap_or(crate::chat::goal::Stopped::Failed);
+            crate::chat::goal::finish(&self.hub, &self.cfg.id, Some(&step.id), why);
+        }
         self.finish_routine(crate::routines::Status::Failed, Some(format!("Could not start routine: {e:#}")), None);
         self.complete_request(Err(anyhow!("couldn't start recipient: {e:#}")), false);
         self.complete_group(Err(anyhow!("couldn't start: {e:#}")));
@@ -377,6 +412,7 @@ impl Actor {
             r.status = BotStatus::Error;
             r.activity = "Couldn't start".into();
             r.started_at = None;
+            r.turn_key = None;
             r.lane = None;
             r.message = None;
             r.session = None;
