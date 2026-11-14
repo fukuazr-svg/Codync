@@ -61,7 +61,7 @@ pub(super) fn tools() -> Vec<Value> {
     vec![
         json!({
             "name": START,
-            "description": "Start a dedicated background tab through the Codync Browser extension on this exact computer and bind it to this user turn. If the extension is absent, the call fails instead of switching browser or computer. Returns operationId, browserId, tabId, generation, the original messageId, browser identity and page state. Repeating start with the same URL for the same message returns the same binding.",
+            "description": "Start a dedicated foreground tab through the Codync Browser extension on this exact computer and bind it to this user turn. If the extension is absent, the call fails instead of switching browser or computer. Returns operationId, browserId, tabId, generation, the original messageId, browser identity and page state. Repeating start with the same URL for the same message returns the same binding.",
             "inputSchema": {
                 "type": "object",
                 "properties": {"url": {"type": "string", "description": "An absolute http or https URL."}},

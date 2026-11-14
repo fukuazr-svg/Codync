@@ -50,7 +50,7 @@ Descriptions come from the running driver, so they match the platform; when it c
 
 On Windows, the same `computer` server offers `browser_start`, `browser_navigate`, `browser_click`,
 `browser_type`, `browser_screenshot` and `browser_stop`. Its Codync Browser extension creates one
-dedicated background tab for the user message, uses Chrome's real mouse and keyboard input paths, and
+dedicated foreground tab for the user message, uses Chrome's real mouse and keyboard input paths, and
 publishes screenshots through the chat's existing file card. A missing extension is an explicit
 error; the host never opens another browser, profile or computer as a fallback.
 

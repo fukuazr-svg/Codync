@@ -1,6 +1,6 @@
 # Codync Browser
 
-Codync Browser is a Manifest V3 extension that lets a bot operate a dedicated background tab on
+Codync Browser is a Manifest V3 extension that lets a bot operate a dedicated foreground tab on
 the Windows computer it is running on. The host remains the authority: every request carries the
 exact host, bot, user message, browser tab and generation, and a missing host never selects a
 different computer.
@@ -40,7 +40,7 @@ both Chrome and Edge. To remove those registrations, run the same helper with
 
 ## Safety behavior
 
-- A bot gets one dedicated background tab per user message. Existing signed-in tabs are never
+- A bot gets one dedicated foreground tab per user message. Existing signed-in tabs are never
   selected implicitly.
 - A stale generation or a different host, bot, message or tab is rejected.
 - A click or text insertion requires a selector that matches exactly one element. Every action runs

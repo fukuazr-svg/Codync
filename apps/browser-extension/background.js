@@ -232,7 +232,7 @@ async function start(params) {
   const url = checkedUrl(params.url)
   let tabId = null
   try {
-    const tab = await chrome.tabs.create({ url, active: false })
+    const tab = await chrome.tabs.create({ url, active: true })
     if (!Number.isInteger(tab.id)) throw new Error('Chrome did not return a tab id')
     tabId = tab.id
     await waitForTab(tabId, (current) => current.status === 'complete', navigateTimeout)
@@ -336,12 +336,14 @@ async function click(params) {
     type: 'mousePressed',
     ...point,
     button: 'left',
+    buttons: 1,
     clickCount: 1
   })
   await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
     type: 'mouseReleased',
     ...point,
     button: 'left',
+    buttons: 0,
     clickCount: 1
   })
   await sleep(settleTimeout)
