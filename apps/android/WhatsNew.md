@@ -7,6 +7,15 @@ released version's section; a version without one gets the PRs' "What's New: And
 else a generic "Bug fixes and improvements" line. Delete old sections.
 -->
 
+## 2.48.0
+### zh-Hant
+- 可以選用的智慧體多了 MiMo Code 和 TraeCode CLI：在電腦上裝好、登入一次，bot 就能用它工作。
+- TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
+
+### en-US
+- MiMo Code and TraeCode CLI are agents you can pick now: install one on the computer and sign in once, then a bot can work with it.
+- TRAE's mark is drawn in its own green, so it stands out in the agent list.
+
 ## 2.47.0
 ### zh-Hant
 - 從任何 App 的分享選單選「Codync」，就能把文字、連結、照片或檔案傳給 Bot，還能附上一段訊息。上次分享的對象會排在「最近」並預先選好，原本輸入框裡的草稿不會被動到。
