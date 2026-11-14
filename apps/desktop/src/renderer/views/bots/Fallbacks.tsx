@@ -33,10 +33,11 @@ export function AgentStepBanner({ bot }: { bot: Bot }) {
       : own ? backend?.defaultLoginProfile?.name ?? tr('Default login profile') : null
     return profile ? `${store.backendName(login.backend)} (${profile})` : store.backendName(login.backend)
   }
+  const line = stepBanner(bot, name, Date.now())
   return (
     <HStack gap={8} className="fade-in">
       <AgentIcon registry={store.agentRegistry(runningAgent(bot))} size={14} />
-      <Text tone="text" grow>{stepBanner(bot, name, Date.now())}</Text>
+      <Text tone="text" grow>{line === null ? null : tr(line)}</Text>
       <Button kind="secondary" className="fallback-switch-back" onClick={() => store.switchBack(bot.id)}>Switch back</Button>
     </HStack>
   )
@@ -124,7 +125,7 @@ function FallbackRow({ fallback, index, count, bot, now, move, remove }: {
       <AgentIcon registry={store.agentRegistry(fallback.backend)} size={14} />
       <VStack gap={2} grow>
         <Text tone="text" truncate>{`${stepName} · ${fallback.model || tr(`Default`)}`}</Text>
-        {rest ? <Text size="caption" tone="secondary">{restLine(rest, now)}</Text> : null}
+        {rest ? <Text size="caption" tone="secondary">{tr(restLine(rest, now))}</Text> : null}
       </VStack>
       {step && sameLogin(step, fallback) ? <Text size="caption" weight="medium" tone="text" className="fallback-chip fade-in">{tr(`In use`)}</Text> : null}
       <DropdownMenu

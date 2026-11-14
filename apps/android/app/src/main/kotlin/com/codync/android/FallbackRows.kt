@@ -70,7 +70,7 @@ private fun fallbackChoices(state: AppState, taken: List<Login>): List<Pair<Stri
     }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         AgentIcon(agentRegistry(state, step.agent), 22.dp)
-        Text(bot.stepBanner(name, RelativeTime::clock).orEmpty(), Modifier.weight(1f), style = Type.subheadline, color = Palette.text)
+        Text(tr(bot.stepBanner(name, RelativeTime::clock).orEmpty()), Modifier.weight(1f), style = Type.subheadline, color = Palette.text)
         if ("switchBack:" + bot.id in state.busy) Spinner() else SecondaryButton("Switch back") { store.switchBack(bot) }
     }
 }
@@ -110,7 +110,7 @@ private fun fallbackChoices(state: AppState, taken: List<Login>): List<Pair<Stri
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             // ponytail: the model's id, not its name: a name needs the agent's model list, an agent start per row.
             Text("$name · ${tr(fallback.model ?: "Default")}", style = Type.body, color = Palette.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (rest != null) Text(rest.line(RelativeTime.clock(rest.until)), style = Type.caption, color = Palette.secondary)
+            if (rest != null) Text(tr(rest.line(RelativeTime.clock(rest.until))), style = Type.caption, color = Palette.secondary)
         }
         if (inUse) Text("In use", Modifier.clip(Capsule()).background(Palette.accentFill).padding(horizontal = 8.dp, vertical = 3.dp),
             style = Type.caption.medium, color = Palette.onAccent)

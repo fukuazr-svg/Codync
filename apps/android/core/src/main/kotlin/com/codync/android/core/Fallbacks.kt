@@ -35,7 +35,9 @@ fun Bot.stepBanner(name: (Login, own: Boolean) -> String, clock: (Long) -> Strin
     val same = step.backend == backend
     val (to, own) = name(step, same) to name(login, same)
     val rest = restOf(login, now)
-    return if (rest != null) "Using $to until $own resets at ${clock(rest.until)}" else "Using $to while $own can't answer"
+    if (rest == null) return "Using $to while $own can't answer"
+    // A reset time is real only for a usage limit; another rest names what it is (signed out, rate limited…).
+    return if (rest.reason == "usageLimit") "Using $to until $own resets at ${clock(rest.until)}" else "Using $to while $own ${rest.phrase}"
 }
 
 /** The login the draft is set to run on. */
@@ -59,6 +61,19 @@ fun List<Bot>.mixesAgents(): Boolean = filter { it.kind != "group" }.mapTo(HashS
 data class Resting(val agent: String = "", val until: Long = 0, val reason: String = "", val loginProfile: String? = null) {
     /** Its line under the agent, with `until` as [time]: "Usage resets 3:00 PM", "Resting until 3:00 PM". */
     fun line(time: String): String = if (reason == "usageLimit") "Usage resets $time" else "Resting until $time"
+
+    /** Why it rests, in the banner's words: "is signed out", "is rate limited"… */
+    val phrase: String get() = when (reason) {
+        "usageLimit" -> "reached its usage limit"
+        "outOfCredits" -> "is out of credits"
+        "rateLimited" -> "is rate limited"
+        "overloaded" -> "is overloaded"
+        "signedOut" -> "is signed out"
+        "notStarting" -> "couldn't start"
+        "modelMissing" -> "doesn't have this bot's model"
+        "modeMissing" -> "doesn't have this bot's mode"
+        else -> "can't answer"
+    }
 }
 
 /** Most fallbacks a bot has (the host refuses more). */

@@ -2078,5 +2078,16 @@
   "Follow-up due now": "곧 다시 확인",
   "Cancel follow-up": "다시 확인 취소",
   "Follow-up cancelled": "다시 확인 취소됨",
-  "A follow-up is the bot's own: x cancels it": "다시 확인은 봇이 직접 정한 것입니다: x로 취소합니다"
+  "A follow-up is the bot's own: x cancels it": "다시 확인은 봇이 직접 정한 것입니다: x로 취소합니다",
+  "Usage resets {time}": "{time}에 사용량이 초기화됩니다",
+  "Resting until {time}": "{time}까지 휴식 중",
+  "Using {to} until {own} resets at {time}": "{own}이(가) {time}에 재설정될 때까지 {to} 사용 중",
+  "Using {to} while {own} can't answer": "{own}이(가) 응답할 수 없어 {to} 사용 중",
+  "Using {to} while {own} is out of credits": "{own}의 크레딧이 부족해 {to} 사용 중",
+  "Using {to} while {own} is rate limited": "{own}이(가) 속도 제한 중이어서 {to} 사용 중",
+  "Using {to} while {own} is overloaded": "{own}이(가) 과부하 상태여서 {to} 사용 중",
+  "Using {to} while {own} is signed out": "{own}이(가) 로그아웃되어 {to} 사용 중",
+  "Using {to} while {own} couldn't start": "{own}을(를) 시작할 수 없어 {to} 사용 중",
+  "Using {to} while {own} doesn't have this bot's model": "{own}에 이 Bot의 모델이 없어 {to} 사용 중",
+  "Using {to} while {own} doesn't have this bot's mode": "{own}에 이 Bot의 모드가 없어 {to} 사용 중"
 }

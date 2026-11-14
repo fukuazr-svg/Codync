@@ -45,6 +45,8 @@ public extension Bot {
         let same = step.backend == backend
         let to = name(step, same), own = name(login, same)
         guard let rest = rest(of: login, now: now) else { return "Using \(to) while \(own) can't answer" }
+        // A reset time is real only for a usage limit; another rest names what it is (signed out, rate limited…).
+        guard rest.reason == "usageLimit" else { return "Using \(to) while \(own) \(rest.phrase)" }
         return "Using \(to) until \(own) resets at \(RelativeTime.clock(Date(milliseconds: rest.until)))"
     }
 }

@@ -34,9 +34,9 @@ pub(in crate::tui) fn rest_note(bot: &Bot, agent: &str, login_profile: Option<&s
     })
 }
 
-/// The Details page's line while the bot runs on a fallback: "Using Codex until Claude Code resets 15:00". A login
-/// on a login profile goes by it too ("Claude Code (Work)"), and so does the computer's own when both are the same
-/// agent.
+/// The Details page's line while the bot runs on a fallback: "Using Codex until Claude Code resets 15:00", or why
+/// it can't answer, as "Using Codex while Claude Code is signed out". A login on a login profile goes by it too
+/// ("Claude Code (Work)"), and so does the computer's own when both are the same agent.
 pub(in crate::tui) fn using_line(app: &App, bot: &Bot) -> Option<String> {
     let step = bot.agent_step.as_deref()?;
     let same = step == bot.backend;
@@ -49,7 +49,10 @@ pub(in crate::tui) fn using_line(app: &App, bot: &Bot) -> Option<String> {
     let (own, using) =
         (name(&bot.backend, bot.login_profile.as_deref()), name(step, bot.step_login_profile.as_deref()));
     Some(match bot.rests(&bot.backend, bot.login_profile.as_deref(), now_ms()) {
-        Some(rest) => format!("Using {using} until {own} resets {}", when_future(rest.until)),
+        Some(rest) if rest.reason == Reason::UsageLimit => {
+            format!("Using {using} until {own} resets {}", when_future(rest.until))
+        }
+        Some(rest) => format!("Using {using} while {own} {}", rest.reason.phrase()),
         None => format!("Using {using} while {own} can't answer"),
     })
 }

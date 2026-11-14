@@ -14,7 +14,7 @@ struct FallbackBanner: View {
     var body: some View {
         HStack(spacing: 10) {
             AgentIcon(registry: model.agentRegistry(step.agent), size: 18)
-            Text(bot.stepBanner(name: name) ?? "")
+            Text(L10n.tr(bot.stepBanner(name: name) ?? ""))
                 .font(.subheadline)
                 .foregroundStyle(Palette.text)
                 .fixedSize(horizontal: false, vertical: true)
@@ -98,7 +98,7 @@ struct FallbackList: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("\(name) · \(L10n.tr(fallback.model ?? "Default"))").foregroundStyle(Palette.text).lineLimit(1)
                 if let rest = bot?.rest(of: fallback.login) {
-                    Text(rest.line).font(.caption).foregroundStyle(Palette.secondary)
+                    Text(L10n.tr(rest.line)).font(.caption).foregroundStyle(Palette.secondary)
                 }
             }
             Spacer(minLength: 8)

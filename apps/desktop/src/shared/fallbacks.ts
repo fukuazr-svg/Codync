@@ -1,5 +1,5 @@
 import { AUTO_MODE } from './approvals.ts'
-import { isGroup, type Backend, type Bot, type BotDraft, type Fallback, type Resting } from './models.ts'
+import { isGroup, type Backend, type Bot, type BotDraft, type Fallback, type FallbackReason, type Resting } from './models.ts'
 
 /** The host refuses more. */
 export const MAX_FALLBACKS = 3
@@ -41,6 +41,21 @@ export function clockTime(ms: number, now: number): string {
 export const restLine = (rest: Resting, now: number) =>
   `${rest.reason === 'usageLimit' ? 'Usage resets' : 'Resting until'} ${clockTime(rest.until, now)}`
 
+/** Why an agent rests, in the banner's words: "is signed out", "is rate limited"… */
+export function restPhrase(reason: FallbackReason): string {
+  switch (reason) {
+    case 'usageLimit': return 'reached its usage limit'
+    case 'outOfCredits': return 'is out of credits'
+    case 'rateLimited': return 'is rate limited'
+    case 'overloaded': return 'is overloaded'
+    case 'signedOut': return 'is signed out'
+    case 'notStarting': return "couldn't start"
+    case 'modelMissing': return "doesn't have this bot's model"
+    case 'modeMissing': return "doesn't have this bot's mode"
+    default: return "can't answer"
+  }
+}
+
 /**
  * The Agent card's first line while the bot runs on a fallback; null on its own agent. `name` says what to call a login
  * ("Claude Code (Work)" on a login profile); `own` asks for the computer's own login by its name too, which tells two
@@ -52,7 +67,11 @@ export function stepBanner(bot: Bot, name: (login: Login, own: boolean) => strin
   const same = step.backend === bot.backend
   const [to, own] = [name(step, same), name(bot, same)]
   const rest = restOf(bot, bot, now)
-  return rest ? `Using ${to} until ${own} resets at ${clockTime(rest.until, now)}` : `Using ${to} while ${own} can't answer`
+  if (!rest) return `Using ${to} while ${own} can't answer`
+  // A reset time is real only for a usage limit; another rest names what it is (signed out, rate limited…).
+  return rest.reason === 'usageLimit'
+    ? `Using ${to} until ${own} resets at ${clockTime(rest.until, now)}`
+    : `Using ${to} while ${own} ${restPhrase(rest.reason)}`
 }
 
 /** The list with the fallback at `index` moved `by` places (clamped to the ends). */
