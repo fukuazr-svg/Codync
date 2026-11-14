@@ -38,6 +38,8 @@ a version without one gets a generic "Bug fixes and improvements" line. Delete o
 - Bot 改用備援時，「智慧體」卡片會說明原本的智慧體為什麼停下（已登出、被限速等），只有用量上限才顯示重設時間。
 - 輸入 `/` 時，清單最後會列出 Bot 所用智慧體自己的指令（Claude Code、Codex、OpenCode 等），和 Codync 自己的指令、技能分開，標上智慧體的名稱、圖示和說明；選一個會填入 `/<指令>`，送出後由智慧體直接執行。
 - 電腦的「網路」頁會列出新的規則等級：「自動」只讓其他電腦的 Bot 做 agent 判斷為安全的事，其餘先問你；「詢問」讓每個變更和指令都等你批准。沒有符合任何規則的電腦預設為「自動」，原本就在網路裡的電腦維持「允許」。
+- 可以選用的智慧體多了 MiMo Code 和 TraeCode CLI：在電腦上裝好、登入一次，bot 就能用它工作。
+- TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 
 ### en-US
 - Bots do long work in the background, several things at once, and keep answering in the chat. When it's done, the bot tells you what it found, or why it couldn't finish.
@@ -66,3 +68,5 @@ a version without one gets a generic "Bug fixes and improvements" line. Delete o
 - While a bot is on a fallback, the Agent card says why its own agent stopped (signed out, rate limited and so on) and gives a reset time only for a usage limit.
 - Typing `/` also lists the bot's agent's own commands (Claude Code, Codex, OpenCode and more) under the agent's name; pick one and the agent runs it when you send.
 - Network rules gain two levels: Auto (another computer's bots get only what the agent judges safe; the rest asks you) and Ask (every change and command waits for you). A computer no rule matches gets Auto; computers already in a network keep Allow.
+- MiMo Code and TraeCode CLI are agents you can pick now: install one on the computer and sign in once, then a bot can work with it.
+- TRAE's mark is drawn in its own green, so it stands out in the agent list.

@@ -19,6 +19,8 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - 改用備援時，智慧體卡片會說明原因。
 - 輸入 `/` 時會列出 Bot 所用智慧體自己的指令。
 - 網路規則新增「自動」與「詢問」等級，沒有符合規則的電腦預設為「自動」。
+- 可以選用的智慧體多了 MiMo Code 和 TraeCode CLI：在電腦上裝好、登入一次，bot 就能用它工作。
+- TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 
 ### en-US
 - Bots do long work in the background and keep answering.
@@ -30,3 +32,5 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - On a fallback, the Agent card says why.
 - `/` also lists the agent's own commands.
 - Network rules gain Auto and Ask levels.
+- MiMo Code and TraeCode CLI are agents you can pick now: install one on the computer and sign in once, then a bot can work with it.
+- TRAE's mark is drawn in its own green, so it stands out in the agent list.
