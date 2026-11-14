@@ -92,7 +92,9 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
     const el = root.current
     if (!el) return
     const observer = new ResizeObserver(([e]) => {
-      const w = e!.contentRect.width
+      // CSS pixels can be fractional under DPI scaling and zoom: 739.6 is a 740-wide layout, and
+      // comparing the fraction would drop a desktop window into the compact sheet a hair early.
+      const w = Math.round(e!.contentRect.width)
       width.current = w
       setWide(w >= WIDE)
       setSqueezed(w - 380 < squeezeBelow.current ? w : 0)
