@@ -109,7 +109,9 @@ val LocalNetworkImages = staticCompositionLocalOf<ImageLoader> { error("Missing 
     Box(Modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth().clip(RoundedRectangle(8.dp)).background(Palette.codeBackground)
             .horizontalScroll(rememberScrollState())) {
-            Text(text, Modifier.padding(10.dp), style = Type.footnote.monospaced, color = Palette.text, softWrap = false)
+            // The copy button always sits over the top-right corner on a phone; the extra top
+            // padding keeps the first line, and a long line scrolled fully right, clear of it.
+            Text(text, Modifier.padding(10.dp).padding(top = 34.dp), style = Type.footnote.monospaced, color = Palette.text, softWrap = false)
         }
         IconButton(
             title = if (copied) "Copied" else "Copy code",
