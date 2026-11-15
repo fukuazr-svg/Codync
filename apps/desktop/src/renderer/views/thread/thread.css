@@ -425,10 +425,12 @@
 }
 
 /* The compact details keep to the right at desktop widths too narrow to dock the panel beside the
-   chat: an aside over the conversation, with no dim and no inert, so the chat behind stays usable. */
+   chat: an aside over the conversation, with no dim and no inert, so the chat behind stays usable.
+   It starts below the title band: the pill that opens it is centred in the chat, and the aside
+   would otherwise cover the pill — at a 900-wide window its centre sits under the aside's edge. */
 .details-aside {
   position: absolute;
-  top: 0;
+  top: 60px;
   right: 0;
   bottom: 0;
   z-index: 7;
