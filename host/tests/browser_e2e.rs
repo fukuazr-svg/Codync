@@ -5,10 +5,21 @@
 
 mod common;
 
+#[cfg(windows)]
+#[path = "common/phone.rs"]
+mod phone;
+
+#[cfg(windows)]
+#[allow(dead_code)]
+#[path = "../src/remote/crypto.rs"]
+mod crypto;
+
 use axum::{Router, response::Html, routing::get};
 #[cfg(windows)]
 use base64::Engine as _;
 use common::host::Host;
+#[cfg(windows)]
+use ed25519_dalek::SigningKey;
 use futures::{SinkExt as _, StreamExt as _};
 use image::GenericImageView as _;
 use serde_json::{Value, json};
@@ -379,6 +390,152 @@ async fn extension_bridge_posts_to_the_same_chat_without_a_headless_fallback() {
     let stored = host.home.join("bots").join(&bot).join("files").join(shared["id"].as_str().unwrap());
     assert_eq!(tokio::fs::read(&stored).await.unwrap(), png);
     assert_eq!(result["screenshot"]["screenshot"]["sha256"].as_str().unwrap(), sha256_hex(&png));
+    extension.await.unwrap();
+}
+
+#[tokio::test]
+#[cfg(windows)]
+async fn iphone_channel_receives_browser_progress_and_screenshot_in_the_same_chat() {
+    if common::python_missing() {
+        return;
+    }
+    let host = Host::start().await;
+    let mut png = Vec::new();
+    image::DynamicImage::new_rgba8(2, 2)
+        .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+        .unwrap();
+    let extension = fake_extension(&host, png.clone(), Duration::ZERO, Arc::new(StdMutex::new(Vec::new()))).await;
+    let bot = browser_bot(&host).await;
+
+    // Pair an iPhone over the direct E2E channel. The loopback-only desktop is the approver.
+    let pairing = host.call("pairing", json!({})).await;
+    let pairing_url = pairing["pairingUrl"].as_str().unwrap();
+    let host_key: [u8; 32] = crypto::unb64_n(&phone::query_param(pairing_url, "sk")).unwrap();
+    let device_key = SigningKey::from_bytes(&crypto::random());
+    let mut pairing_phone = phone::Phone::connect(&host.base, &device_key, &host_key, true).await;
+    let certificate = phone::test_certificate(&crypto::b64(device_key.verifying_key().as_bytes()), "browser-user");
+    pairing_phone
+        .send(json!({
+            "id": 1,
+            "m": "pair",
+            "b": {
+                "code": phone::query_param(pairing_url, "code"),
+                "name": "Browser Test iPhone",
+                "platform": "ios",
+                "certificate": certificate,
+            }
+        }))
+        .await;
+    let request = loop {
+        let requests = host.call("pairingRequests", json!({})).await;
+        if let Some(request) = requests["requests"].as_array().and_then(|items| items.first()) {
+            break request.clone();
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    };
+    assert_eq!(request["deviceName"], "Browser Test iPhone", "{request}");
+    host.call("decidePairing", json!({"requestId": request["requestId"], "approve": true})).await;
+    assert_eq!(pairing_phone.inner().await["ok"]["computerId"], crypto::computer_id(&host_key));
+    assert!(matches!(pairing_phone.recv().await, phone::Frame::Closed(4100)));
+
+    let mut iphone = phone::Phone::connect(&host.base, &device_key, &host_key, false).await;
+    let hello = iphone.call(1, "hello", json!({})).await;
+    assert_eq!(hello["boxKey"], phone::query_param(pairing_url, "bk"));
+    let current_rev = host.snapshot().await["rev"].as_i64().unwrap();
+    iphone.send(json!({"id": 2, "sub": "events", "b": {"since": current_rev, "client": "ios"}})).await;
+    assert_eq!(iphone.inner().await["ev"]["type"], "hello");
+
+    // Send from the phone itself and retain every event, including the early working state.
+    iphone
+        .send(json!({
+            "id": 3,
+            "m": "send",
+            "b": {
+                "botId": bot,
+                "text": "browser-happy http://127.0.0.1/",
+                "clientNonce": "browser-iphone-e2e",
+            }
+        }))
+        .await;
+
+    let (mut message_id, mut saw_working, mut saw_idle, mut screenshot, mut final_reply) =
+        (None, false, false, None, None);
+    let deadline = Instant::now() + Duration::from_secs(60);
+    while screenshot.is_none() || final_reply.is_none() || !saw_working || !saw_idle {
+        assert!(
+            Instant::now() < deadline,
+            "timed out waiting for the iPhone browser turn; preserved evidence at {}",
+            capture_failure(&host.home)
+                .map_or_else(|error| format!("unavailable: {error}"), |path| path.display().to_string())
+        );
+        let value = iphone.inner().await;
+        if value["id"] == 3 && value.get("ev").is_none() {
+            assert!(value["ok"].is_object(), "{value}");
+            message_id = value["ok"]["entry"]["id"].as_str().map(str::to_owned);
+            continue;
+        }
+        let event = &value["ev"];
+        match event["type"].as_str() {
+            Some("bot") if event["bot"]["id"] == bot => match event["bot"]["status"].as_str() {
+                Some("working") => saw_working = true,
+                Some("idle") => saw_idle = true,
+                _ => {}
+            },
+            Some("entry") => {
+                let entry = &event["entry"];
+                if entry["botId"] != bot {
+                    continue;
+                }
+                if entry["kind"] == "agent" && entry["data"]["files"].as_array().is_some_and(|files| !files.is_empty())
+                {
+                    screenshot = Some(entry.clone());
+                }
+                if entry["kind"] == "agent"
+                    && entry["data"]["final"] == true
+                    && entry["data"]["text"] == "Browser operation complete."
+                {
+                    final_reply = Some(entry.clone());
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let result = wait_json(&host.home, &results_path(&host, &bot), Duration::from_secs(45)).await;
+    let message_id = message_id.expect("the phone's send acknowledgement names its chat entry");
+    assert_eq!(result["start"]["target"]["messageId"], message_id, "{result}");
+    assert!(result["click"]["state"]["text"].as_str().unwrap().contains("Count: 1"), "{result}");
+    assert!(result["type"]["state"]["text"].as_str().unwrap().contains("name=Codync"), "{result}");
+    assert_eq!(result["screenshot"]["postedToChat"], true, "{result}");
+
+    let screenshot = screenshot.expect("the iPhone receives the screenshot file card");
+    let shared = &screenshot["data"]["files"][0];
+    assert_eq!(
+        shared["name"],
+        format!("browser-{}-1.png", &result["start"]["target"]["operationId"].as_str().unwrap()[..8])
+    );
+    assert_ne!(screenshot["id"], message_id, "the screenshot is its own card in the same chat");
+    let stored = host.home.join("bots").join(&bot).join("files").join(shared["id"].as_str().unwrap());
+    assert_eq!(tokio::fs::read(stored).await.unwrap(), png);
+    assert_eq!(shared["sha256"], sha256_hex(&png));
+    assert_eq!(final_reply.unwrap()["data"]["final"], true);
+    let history = history(&host, &bot).await;
+    let sent = history.iter().find(|entry| entry["id"] == message_id).unwrap();
+    assert_eq!(sent["data"]["text"], "browser-happy http://127.0.0.1/");
+
+    eprintln!(
+        "PHONE_BROWSER_RECEIPT platform=ios host_id={} bot_id={} message_id={} operation_id={} browser_id={} tab_id={} generation={} screenshot_entry_id={} screenshot_name={} screenshot_sha256={}",
+        result["start"]["target"]["hostId"].as_str().unwrap(),
+        bot,
+        message_id,
+        result["start"]["target"]["operationId"].as_str().unwrap(),
+        result["start"]["target"]["browserId"].as_str().unwrap(),
+        result["start"]["target"]["tabId"].as_str().unwrap(),
+        result["start"]["target"]["generation"].as_str().unwrap(),
+        screenshot["id"].as_str().unwrap(),
+        shared["name"].as_str().unwrap(),
+        shared["sha256"].as_str().unwrap(),
+    );
     extension.await.unwrap();
 }
 

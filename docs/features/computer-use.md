@@ -71,6 +71,12 @@ permission. Every operation carries the exact host, bot, user message, tab and g
 tabs are never selected implicitly. Clicks and text insertion run once; a timeout, disconnected
 bridge or stale target is reported without a retry or fallback.
 
+The phone apps need no separate browser screen: a chat message sent from an iPhone or Android
+device over the encrypted channel reaches the fixed computer selected for that chat, and the
+existing working-step and shared-file rows show its progress and screenshot in the same chat. The
+iPhone and Android clients both present shared PNG files with the same image preview and download
+path as any other file card.
+
 ## Packaging
 
 `packaging/cua-driver/driver.json` pins the release and the SHA-256 of each archive; `fetch.mjs <target> <dir>` downloads, checks and copies the executables with `cua-driver.LICENSE`:
