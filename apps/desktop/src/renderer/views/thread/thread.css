@@ -454,6 +454,11 @@
 .details-aside .details-drag {
   display: none;
 }
+/* The aside opens with the focus in this column, so the keys scroll it; it is a scroller, not a
+   control, and a ring here would trace the whole inset panel. */
+.details-aside .details-scroll:focus {
+  outline: none;
+}
 
 /* A message arriving while the list follows the newest pops in from its bubble's side (Grok Bot's). */
 .row-in {

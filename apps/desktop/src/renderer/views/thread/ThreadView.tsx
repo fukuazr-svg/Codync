@@ -143,7 +143,11 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   useEffect(() => {
     if (!compactDetails) return
     giveFocusBack.current = true
-    aside.current?.focus()
+    // The aside itself scrolls nothing (its overflow is hidden); PageDown and the arrow keys act on
+    // the scroll box inside it, so that is what takes the focus the aside would otherwise hold.
+    const scroller = aside.current?.querySelector<HTMLElement>('.details-scroll')
+    if (scroller) scroller.focus({ preventScroll: true })
+    else aside.current?.focus()
     return () => {
       // The button that opened the aside is unmounted while it is open, so closing would leave the
       // focus on the page: it goes to the title pill, which opens the same details.
