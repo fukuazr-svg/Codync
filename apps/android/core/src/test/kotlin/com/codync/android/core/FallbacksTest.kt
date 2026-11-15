@@ -82,6 +82,19 @@ class FallbacksTest {
         assertNull(bot("null").stepBanner(name, clock))
     }
 
+    @Test fun `a login profile name holding while stays one name`() {
+        val bot = HostClient.decode(Json.parseToJsonElement("""{"id":"b","name":"B","backend":"claude","loginProfile":"Work while traveling",
+            "agentStep":{"step":1,"agent":"codex","since":1},
+            "resting":[{"agent":"claude","loginProfile":"Work while traveling","until":2000,"reason":"signedOut"}]}""").jsonObject)
+        val name = { login: Login, own: Boolean -> login.backend + (login.loginProfile?.let { " ($it)" } ?: if (own) " (Default login profile)" else "") }
+        val clock = { _: Long -> "3:00 PM" }
+        val phrase = bot.stepBannerPhrase(name, clock, now = 1000)
+        // The phrase keeps its slot, and the whole name is one value: translating the phrase never sees the name.
+        assertEquals("Using {to} while {own} is signed out", phrase?.key)
+        assertEquals(mapOf("to" to "codex", "own" to "claude (Work while traveling)"), phrase?.values)
+        assertEquals("Using codex while claude (Work while traveling) is signed out", phrase?.let { fillTemplate(it.key, it.values) })
+    }
+
     @Test fun `a new step takes a login the chain doesn't have, signed in`() {
         val claude = WireJson.decodeFromString<AgentBackend>("""{"id":"claude","name":"Claude Code",
             "loginProfiles":[{"id":"a1","signedIn":true},{"id":"a2","signedIn":true},{"id":"a3","signedIn":false}]}""")

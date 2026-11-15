@@ -2107,5 +2107,16 @@
   "↵ opens": "↵ öffnet",
   "Google Search": "Google-Suche",
   "Let Gemini search the web during calls. Requires Google Search quota; charges may apply.": "Gemini darf während Anrufen im Web suchen. Google-Suchkontingent erforderlich; Gebühren können anfallen.",
-  "Couldn't open the link.": "Der Link konnte nicht geöffnet werden."
+  "Couldn't open the link.": "Der Link konnte nicht geöffnet werden.",
+  "Usage resets {time}": "Nutzung wird um {time} zurückgesetzt",
+  "Resting until {time}": "Pause bis {time}",
+  "Using {to} until {own} resets at {time}": "{to} wird verwendet, bis {own} um {time} zurückgesetzt wird",
+  "Using {to} while {own} can't answer": "{to} wird verwendet, da {own} nicht antworten kann",
+  "Using {to} while {own} is out of credits": "{to} wird verwendet, da {own} keine Credits mehr hat",
+  "Using {to} while {own} is rate limited": "{to} wird verwendet, da {own} rate-limitiert ist",
+  "Using {to} while {own} is overloaded": "{to} wird verwendet, da {own} überlastet ist",
+  "Using {to} while {own} is signed out": "{to} wird verwendet, da {own} abgemeldet ist",
+  "Using {to} while {own} couldn't start": "{to} wird verwendet, da {own} nicht starten konnte",
+  "Using {to} while {own} doesn't have this bot's model": "{to} wird verwendet, da {own} das Modell dieses Bots nicht hat",
+  "Using {to} while {own} doesn't have this bot's mode": "{to} wird verwendet, da {own} den Modus dieses Bots nicht hat"
 }

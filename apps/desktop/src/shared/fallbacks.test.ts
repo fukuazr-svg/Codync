@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { clockTime, freeLogins, mixesAgents, moveFallback, restLine, restOf, runningAgent, sameLogin, stepBanner, withBackend } from './fallbacks.ts'
+import { clockTime, fillNames, freeLogins, mixesAgents, moveFallback, restLine, restOf, restPhrase, runningAgent, sameLogin, stepBanner, stepBannerPhrase, withBackend } from './fallbacks.ts'
 import { draftOf, normalizeBot, type Backend } from './models.ts'
 
 const now = new Date(2026, 9, 21, 10, 0).getTime()
@@ -53,6 +53,29 @@ test('the banner names the fallback, and when the own agent is back if it says',
   // Two logins of one agent go by their login profiles.
   const onProfile = normalizeBot({ id: 'b', backend: 'claude', agentStep: { ...step, agent: 'claude', loginProfile: 'a1' } })
   assert.equal(stepBanner(onProfile, called, now), "Using Claude Code (Work) while Claude Code (Default login profile) can't answer")
+})
+
+test('a rest that is not a usage limit names its reason, never a reset time', () => {
+  const step = { step: 1, agent: 'codex', model: null, since: now, reason: 'signedOut' }
+  const called = (login: { backend: string; loginProfile?: string | null }, own: boolean) =>
+    `${name(login.backend)}${login.loginProfile ? ' (Work)' : own ? ' (Default login profile)' : ''}`
+  const signedOut = normalizeBot({ id: 'b', backend: 'claude', agentStep: step, resting: [{ agent: 'claude', until: at3, reason: 'signedOut' }] })
+  assert.equal(stepBanner(signedOut, called, now), 'Using Codex while Claude Code is signed out')
+  const limited = normalizeBot({ id: 'b', backend: 'claude', agentStep: step, resting: [{ agent: 'claude', until: at3, reason: 'rateLimited' }] })
+  assert.equal(stepBanner(limited, called, now), 'Using Codex while Claude Code is rate limited')
+  assert.equal(restPhrase('somethingElse'), "can't answer")
+})
+
+test('a login profile name holding " while " stays one name, not the banner\'s own word', () => {
+  const step = { step: 1, agent: 'codex', model: null, since: now, reason: 'signedOut' }
+  const called = (login: { backend: string; loginProfile?: string | null }, own: boolean) =>
+    `${name(login.backend)}${login.loginProfile ? ' (Work while traveling)' : own ? ' (Default login profile)' : ''}`
+  const signingOut = normalizeBot({ id: 'b', backend: 'claude', loginProfile: 'p1', agentStep: step, resting: [{ agent: 'claude', loginProfile: 'p1', until: at3, reason: 'signedOut' }] })
+  const phrase = stepBannerPhrase(signingOut, called, now)
+  // The phrase keeps its slot, and the whole name is one value: translating the phrase never sees the name.
+  assert.equal(phrase?.key, 'Using {to} while {own} is signed out')
+  assert.deepEqual(phrase?.values, { to: 'Codex', own: 'Claude Code (Work while traveling)' })
+  assert.equal(fillNames(phrase!.key, phrase!.values), 'Using Codex while Claude Code (Work while traveling) is signed out')
 })
 
 test('fallbacks move within the list', () => {
