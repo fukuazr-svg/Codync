@@ -66,6 +66,9 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   const [showSettings, setShowSettings] = useState(false)
   const [detailsTab, setDetailsTab] = useState<DetailsTab>('details')
   const [compactDetails, setCompactDetails] = useState(false)
+  // A keyboard close hands the focus back to the pill; a click elsewhere already put it somewhere
+  // the user chose, so the aside does not take it away from there.
+  const giveFocusBack = useRef(true)
   const [calling, setCalling] = useState(false)
   const [callSpeaking, setCallSpeaking] = useState(false)
   const interruptCall = useRef<(() => void) | null>(null)
@@ -125,7 +128,12 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
     if (!compactDetails) return
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Element | null
-      if (!target?.closest('.details-aside')) setCompactDetails(false)
+      // The title pill is the details' own toggle: its click closes them. Closing here first would
+      // make that click reopen them. Menus and other sheets are portalled out of the aside, so a
+      // pointer still inside one belongs to the aside's own surface.
+      if (target?.closest('.details-aside, .title-pill, .anchored, .modal-card, .dialog')) return
+      giveFocusBack.current = false
+      setCompactDetails(false)
     }
     document.addEventListener('pointerdown', onPointerDown, true)
     return () => document.removeEventListener('pointerdown', onPointerDown, true)
@@ -134,10 +142,12 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   // else closes it too, because the chat behind it stays live.
   useEffect(() => {
     if (!compactDetails) return
+    giveFocusBack.current = true
     aside.current?.focus()
     return () => {
       // The button that opened the aside is unmounted while it is open, so closing would leave the
       // focus on the page: it goes to the title pill, which opens the same details.
+      if (!giveFocusBack.current) return
       if (!document.activeElement || document.activeElement === document.body) pill.current?.focus()
     }
   }, [compactDetails])
