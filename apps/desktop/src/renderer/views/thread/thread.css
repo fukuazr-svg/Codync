@@ -448,6 +448,12 @@
   min-width: 0;
   height: 100%;
 }
+/* The panel's top band moves the window; an aside inside the window must not. Measured at the OS
+   level, a drag region takes the press before the DOM sees it: with the band over a 360-wide aside,
+   its first 54px would move the whole window instead of clicking the detail under the pointer. */
+.details-aside .details-drag {
+  display: none;
+}
 
 /* A message arriving while the list follows the newest pops in from its bubble's side (Grok Bot's). */
 .row-in {
