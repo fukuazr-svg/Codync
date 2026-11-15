@@ -396,17 +396,9 @@ fn install_native_messaging() -> Result<()> {
 
 #[cfg(windows)]
 fn uninstall_native_messaging() -> Result<()> {
-    use std::process::{Command, Stdio};
-
+    let host_name = native_host();
     for root in [CHROME_REGISTRY, EDGE_REGISTRY] {
-        let key = format!(r"{root}\{}", native_host());
-        // A missing key already represents the requested state.
-        let _ = Command::new("reg.exe")
-            .args(["delete", &key, "/f"])
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status();
+        delete_native_messaging_key(root, &host_name)?;
     }
     let manifest_dir = native_manifest_dir()?;
     let manifest_path = manifest_dir.join(format!("{}.json", native_host()));
@@ -421,6 +413,28 @@ fn uninstall_native_messaging() -> Result<()> {
         Err(error) => return Err(error).with_context(|| format!("removing {}", manifest_dir.display())),
     }
     Ok(())
+}
+
+#[cfg(windows)]
+fn delete_native_messaging_key(root: &str, host_name: &str) -> Result<()> {
+    use windows_sys::Win32::System::Registry::{HKEY_CURRENT_USER, RegDeleteKeyW};
+
+    let key = format!(r"{root}\{host_name}");
+    let subkey = key.strip_prefix(r"HKCU\").with_context(|| format!("unexpected current-user registry path {key}"))?;
+    let wide = subkey.encode_utf16().chain(std::iter::once(0)).collect::<Vec<_>>();
+    // SAFETY: `wide` is a live, NUL-terminated UTF-16 path and `HKEY_CURRENT_USER` is a valid root key.
+    let status = unsafe { RegDeleteKeyW(HKEY_CURRENT_USER, wide.as_ptr()) };
+    if registry_delete_completed(status) {
+        return Ok(());
+    }
+    Err(std::io::Error::from_raw_os_error(status as i32)).with_context(|| format!("removing registry key {key}"))
+}
+
+#[cfg(windows)]
+fn registry_delete_completed(status: u32) -> bool {
+    use windows_sys::Win32::Foundation::{ERROR_FILE_NOT_FOUND, ERROR_PATH_NOT_FOUND, ERROR_SUCCESS};
+
+    status == ERROR_SUCCESS || status == ERROR_FILE_NOT_FOUND || status == ERROR_PATH_NOT_FOUND
 }
 
 #[cfg(not(windows))]
@@ -592,6 +606,19 @@ mod tests {
         assert_eq!(profile_ownership(Some("dev"), Some("main")), ProfileOwnership::Other);
         assert_eq!(profile_ownership(Some("main"), Some("dev")), ProfileOwnership::Other);
         assert_eq!(profile_ownership(Some("unknown"), Some("dev")), ProfileOwnership::Other);
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn registry_delete_only_ignores_a_missing_key() {
+        use windows_sys::Win32::Foundation::{
+            ERROR_ACCESS_DENIED, ERROR_FILE_NOT_FOUND, ERROR_PATH_NOT_FOUND, ERROR_SUCCESS,
+        };
+
+        assert!(registry_delete_completed(ERROR_SUCCESS));
+        assert!(registry_delete_completed(ERROR_FILE_NOT_FOUND));
+        assert!(registry_delete_completed(ERROR_PATH_NOT_FOUND));
+        assert!(!registry_delete_completed(ERROR_ACCESS_DENIED));
     }
 
     #[test]
