@@ -10,14 +10,14 @@ use super::browser_headless;
 use crate::hub::{BotStatus, Hub};
 use anyhow::{Context as _, Result, anyhow, bail, ensure};
 use base64::Engine as _;
-use futures::{SinkExt as _, StreamExt as _, future::BoxFuture};
+use futures::future::BoxFuture;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::process::Child;
 use tokio::sync::Mutex;
 use url::Url;
@@ -347,7 +347,7 @@ impl Browsers {
         let generation = uuid::Uuid::new_v4().to_string();
         if headless_enabled() {
             let state_root = crate::service::data_dir().join("browsers").join(bot).join(&browser_id);
-            let launched = browser_headless::launch(&state_root, &url).await?;
+            let launched = browser_headless::launch(&state_root).await?;
             let tab_ws = browser_headless::page_ws(launched.port, &launched.tab_id, &generation).await?;
             let page = browser_headless::navigate_tab(&tab_ws, &url).await?;
             let current_url = string_field(&page, "url", &url);

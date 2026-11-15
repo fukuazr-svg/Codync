@@ -4,6 +4,7 @@
 //! headless engine here prevents product routing and test automation rules from sharing one file.
 
 use anyhow::{Context as _, Result, anyhow, bail, ensure};
+use base64::Engine as _;
 use futures::{SinkExt as _, StreamExt as _};
 use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
@@ -29,7 +30,7 @@ pub(super) struct Launched {
     pub(super) version: String,
 }
 
-pub(super) async fn launch(state_root: &Path, url: &str) -> Result<Launched> {
+pub(super) async fn launch(state_root: &Path) -> Result<Launched> {
     let executable = browser_executable()?;
     let profile = state_root.join("profile");
     std::fs::create_dir_all(&profile).context("creating the isolated browser profile")?;

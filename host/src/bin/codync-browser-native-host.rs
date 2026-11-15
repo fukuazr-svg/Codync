@@ -8,7 +8,6 @@ use anyhow::{Context as _, Result, bail, ensure};
 use futures::{SinkExt as _, StreamExt as _};
 use serde_json::{Value, json};
 use std::io::{Read, Write as _};
-#[cfg(windows)]
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -377,7 +376,7 @@ fn uninstall_native_messaging() -> Result<()> {
     bail!("the Codync Browser native host is available on Windows only")
 }
 
-fn native_manifest(executable: &std::path::Path, extension_id: &str) -> Value {
+fn native_manifest(executable: &Path, extension_id: &str) -> Value {
     json!({
         "name": native_host(),
         "description": "Codync Browser native-messaging bridge",
@@ -387,7 +386,7 @@ fn native_manifest(executable: &std::path::Path, extension_id: &str) -> Value {
     })
 }
 
-fn native_manifest_path(executable: &std::path::Path) -> String {
+fn native_manifest_path(executable: &Path) -> String {
     // Chrome's Windows native-messaging launcher rejects the `\\?\` NT namespace prefix that
     // `canonicalize` adds, even though the same path opens normally in Rust and Explorer.
     let path = executable.to_string_lossy();
