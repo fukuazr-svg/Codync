@@ -246,7 +246,7 @@ async fn fake_extension(
             }
             let result = match request["method"].as_str().unwrap() {
                 "start" => json!({
-                    "tabId": tab_sequence.to_string(),
+                    "tabId": if tab_sequence == 1 { "123".to_owned() } else { tab_sequence.to_string() },
                     "browserVersion": "Chrome test",
                     "browserExecutable": "chrome-extension://fixture",
                     "extensionVersion": "0.1.0",
