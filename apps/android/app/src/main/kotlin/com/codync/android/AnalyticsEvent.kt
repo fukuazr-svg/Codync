@@ -133,6 +133,8 @@ internal sealed class AnalyticsEvent(val name: String) {
     }
     /** A picture in a chat or the Library opened full size. Never the picture or its name. */
     data object ImagePreviewOpened : AnalyticsEvent("image_preview_opened")
+    /** A fenced code block's copy button put its code on the clipboard, without its fences or language tag (iOS `codeBlockCopied`). */
+    data object CodeBlockCopied : AnalyticsEvent("code_block_copied")
     /**
      * Something done to a picture (at most one `zoom` per opening), where from, and how it went: `error` is set only when it
      * failed. Never the picture or its name.

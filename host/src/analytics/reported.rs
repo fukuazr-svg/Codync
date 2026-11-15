@@ -81,6 +81,9 @@ pub enum Reported {
     },
     /// A picture opened full size (desktop).
     ImagePreviewOpened,
+    /// A fenced code block's copy button put its code on the clipboard, without its fences or language tag (desktop;
+    /// the phones send their own).
+    CodeBlockCopied,
     ImagePreviewAction {
         action: ImageAction,
         from: ImageFrom,
@@ -580,6 +583,7 @@ mod tests {
                 Event::RemoteScreenPaused,
             ),
             (json!({"event": "image_preview_opened", "app": "desktop"}), Event::ImagePreviewOpened),
+            (json!({"event": "code_block_copied", "app": "desktop"}), Event::CodeBlockCopied),
             (
                 json!({"event": "image_preview_action", "app": "desktop", "action": "copy_image", "from": "menu", "outcome": "done"}),
                 Event::ImagePreviewAction,
