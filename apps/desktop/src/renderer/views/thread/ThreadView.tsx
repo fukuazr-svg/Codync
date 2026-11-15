@@ -134,7 +134,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
       // make that click reopen them. Menus and other sheets are portalled out of the aside, so a
       // pointer still inside one belongs to the aside's own surface. The message box is where one
       // answers, not somewhere that dismisses: the aside ends above it so both work at once.
-      if (target?.closest('.details-aside, .title-pill, .composer-dock, .anchored, .modal-card, .dialog')) return
+      if (target?.closest('.details-aside, .title-pill, .composer-dock, .composer, .anchored, .modal-card, .dialog')) return
       giveFocusBack.current = false
       setDetailsOpen(false)
     }
