@@ -143,14 +143,21 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   }, [detailsOpen, wide])
   // The aside is not a modal, but it starts with the focus so Escape closes it; a click anywhere
   // else closes it too, because the chat behind it stays live.
+  // A width change is not the user opening the details: docked becomes the aside for what is already
+  // open, and that must not take the caret out of the message box someone is typing in.
+  const wasOpen = useRef(false)
   useEffect(() => {
+    const justOpened = detailsOpen && !wasOpen.current
+    wasOpen.current = detailsOpen
     if (wide || !detailsOpen) return
     giveFocusBack.current = true
     // The aside itself scrolls nothing (its overflow is hidden); PageDown and the arrow keys act on
     // the scroll box inside it, so that is what takes the focus the aside would otherwise hold.
-    const scroller = aside.current?.querySelector<HTMLElement>('.details-scroll')
-    if (scroller) scroller.focus({ preventScroll: true })
-    else aside.current?.focus()
+    if (justOpened) {
+      const scroller = aside.current?.querySelector<HTMLElement>('.details-scroll')
+      if (scroller) scroller.focus({ preventScroll: true })
+      else aside.current?.focus()
+    }
     return () => {
       // The button that opened the aside is unmounted while it is open, so closing would leave the
       // focus on the page: it goes to the title pill, which opens the same details.
