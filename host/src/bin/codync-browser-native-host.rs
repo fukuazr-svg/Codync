@@ -8,6 +8,7 @@ use anyhow::{Context as _, Result, bail, ensure};
 use futures::{SinkExt as _, StreamExt as _};
 use serde_json::{Value, json};
 use std::io::{Read, Write as _};
+#[cfg(any(windows, test))]
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -18,6 +19,7 @@ use tokio_tungstenite::tungstenite::{Message, http::header};
 const MAX_FRAME: usize = 32 * 1024 * 1024;
 const INSTALL_COMMAND: &str = "--install-native-messaging";
 const UNINSTALL_COMMAND: &str = "--uninstall-native-messaging";
+#[cfg(any(windows, test))]
 const EXTENSION_ID: &str = "dgejialhpalhoigbkmgeabgpphlipiek";
 #[cfg(windows)]
 const CHROME_REGISTRY: &str = r"HKCU\Software\Google\Chrome\NativeMessagingHosts";
@@ -141,10 +143,12 @@ fn relay_message(message: &str, isolated_profile: bool) -> Result<String> {
     Ok(value.to_string())
 }
 
+#[cfg(any(windows, test))]
 fn native_host() -> &'static str {
     native_host_for(option_env!("CODYNC_ENV"))
 }
 
+#[cfg(any(windows, test))]
 fn native_host_for(build_env: Option<&str>) -> &'static str {
     match build_env {
         Some("main") => "codync.browser",
@@ -152,6 +156,7 @@ fn native_host_for(build_env: Option<&str>) -> &'static str {
     }
 }
 
+#[cfg(windows)]
 fn native_manifest_dir() -> Result<PathBuf> {
     Ok(dirs::data_local_dir()
         .context("finding the local application data directory")?
@@ -159,6 +164,7 @@ fn native_manifest_dir() -> Result<PathBuf> {
         .join("BrowserExtension"))
 }
 
+#[cfg(any(windows, test))]
 fn app_folder(build_env: Option<&str>) -> &'static str {
     match build_env {
         Some("main") => "Codync",
@@ -376,6 +382,7 @@ fn uninstall_native_messaging() -> Result<()> {
     bail!("the Codync Browser native host is available on Windows only")
 }
 
+#[cfg(any(windows, test))]
 fn native_manifest(executable: &Path, extension_id: &str) -> Value {
     json!({
         "name": native_host(),
@@ -386,6 +393,7 @@ fn native_manifest(executable: &Path, extension_id: &str) -> Value {
     })
 }
 
+#[cfg(any(windows, test))]
 fn native_manifest_path(executable: &Path) -> String {
     // Chrome's Windows native-messaging launcher rejects the `\\?\` NT namespace prefix that
     // `canonicalize` adds, even though the same path opens normally in Rust and Explorer.
