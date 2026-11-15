@@ -8,6 +8,7 @@ import { HStack, IconSlot, Spacer } from '../../components/Stack'
 import { Text } from '../../components/Text'
 import { prefs, usePref } from '../../lib/prefs'
 import { connectedThrough } from '../../lib/relay-copy'
+import { useEscapeLast } from '../../lib/escape-last'
 import { useTr } from '../../lib/use-language'
 import { useScreenViewed } from '../../store/analytics'
 import { useStore } from '../../store/context'
@@ -124,6 +125,12 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   squeezeBelow.current = panelOpen ? Math.max(360, detailsWidth) : 0
   // The side panel's edge drags its width, leaving the conversation at least 380 wide.
   const panelWidth = (w: number) => Math.min(Math.max(360, w), width.current - 380)
+  // The aside animates away rather than vanishing: it stays mounted until its exit ends, and a
+  // closing aside must never take a click meant for the chat underneath.
+  const { mounted: asideMounted, shown: asideShown } = usePresence(!wide && detailsOpen)
+  // Escape closes the details from wherever the focus is, the message box included: a click there
+  // keeps them open, so the key must not depend on the focus staying inside the aside.
+  useEscapeLast(aside, () => setDetailsOpen(false), !wide && detailsOpen)
   // The compact details sit over the chat without a dim, so a click anywhere else closes them and
   // the conversation underneath keeps working.
   useEffect(() => {
@@ -160,10 +167,13 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
     }
     return () => {
       // The button that opened the aside is unmounted while it is open, so closing would leave the
-      // focus on the page: it goes to the title pill, which opens the same details.
+      // focus on the page: it goes to the title pill, which opens the same details. The aside stays
+      // mounted for its exit, so the focus is still inside it here; the box someone is typing in
+      // keeps it (a click elsewhere set `giveFocusBack` false).
       if (!giveFocusBack.current) return
       if (wideNow.current) return
-      if (!document.activeElement || document.activeElement === document.body) pill.current?.focus()
+      const active = document.activeElement
+      if (!active || active === document.body || aside.current?.contains(active)) pill.current?.focus()
     }
   }, [detailsOpen, wide])
   const toggleDetails = useCallback(() => setDetailsOpen((open) => !open), [])
@@ -243,7 +253,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   )
 
   return (
-    <div className="thread-view" ref={root}>
+    <div className="thread-view" ref={root} data-details-aside={!wide && detailsOpen ? '' : undefined}>
       <div className="conversation">
         <div className="top-chrome">
           <TopFade />
@@ -307,20 +317,8 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
         {details}
       </ChatSidePanel>
 
-      {!wide && detailsOpen ? (
-        <div
-          ref={aside}
-          className="details-aside"
-          role="dialog"
-          aria-label={tr('Conversation details')}
-          tabIndex={-1}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              event.stopPropagation()
-              setDetailsOpen(false)
-            }
-          }}
-        >
+      {!wide && asideMounted ? (
+        <div ref={aside} className={`details-aside${asideShown ? ' shown' : ''}`} role="dialog" aria-label={tr('Conversation details')} tabIndex={-1}>
           {details}
         </div>
       ) : null}
