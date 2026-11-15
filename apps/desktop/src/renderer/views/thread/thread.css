@@ -424,6 +424,25 @@
   flex: none;
 }
 
+/* The compact details keep to the right at desktop widths too narrow to dock the panel beside the
+   chat: an aside over the conversation, with no dim and no inert, so the chat behind stays usable. */
+.details-aside {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 7;
+  display: flex;
+  width: min(360px, 92%);
+  background: var(--background);
+  overflow: hidden;
+}
+.details-aside > * {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
 /* A message arriving while the list follows the newest pops in from its bubble's side (Grok Bot's). */
 .row-in {
   animation: row-in 0.24s var(--ease-out) both;

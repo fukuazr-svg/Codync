@@ -77,6 +77,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   const [artifactId, setArtifactId] = useState<string | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const dock = useRef<HTMLDivElement>(null)
+  const aside = useRef<HTMLDivElement>(null)
   // The width is measured, not rendered: resizing re-renders only when `wide` flips, or while the
   // window is narrow enough to squeeze the open side panel.
   const width = useRef(800)
@@ -117,6 +118,22 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   useEffect(() => {
     if (wide) setCompactDetails(false)
   }, [wide])
+  // The compact details sit over the chat without a dim, so a click anywhere else closes them and
+  // the conversation underneath keeps working.
+  useEffect(() => {
+    if (!compactDetails) return
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Element | null
+      if (!target?.closest('.details-aside')) setCompactDetails(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [compactDetails])
+  // The aside is not a modal, but it starts with the focus so Escape closes it; a click anywhere
+  // else closes it too, because the chat behind it stays live.
+  useEffect(() => {
+    if (compactDetails) aside.current?.focus()
+  }, [compactDetails])
   const toggleDetails = useCallback(() => {
     if (!wide) setCompactDetails((c) => !c)
     else setShowSettings((s) => !s)
@@ -259,9 +276,23 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
         {details}
       </ChatSidePanel>
 
-      <Sheet open={compactDetails} onClose={() => setCompactDetails(false)} width={400} height={600} dismissOnDim>
-        {details}
-      </Sheet>
+      {compactDetails ? (
+        <div
+          ref={aside}
+          className="details-aside"
+          role="dialog"
+          aria-label={tr('Conversation details')}
+          tabIndex={-1}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.stopPropagation()
+              setCompactDetails(false)
+            }
+          }}
+        >
+          {details}
+        </div>
+      ) : null}
       <Sheet open={botChat !== null} onClose={() => setBotChat(null)} width={620} height={560}>
         {botChat ? <BotConversationView botId={botId} peerId={botChat} /> : null}
       </Sheet>
