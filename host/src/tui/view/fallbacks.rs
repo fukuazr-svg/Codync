@@ -34,7 +34,7 @@ pub(in crate::tui) fn rest_note(bot: &Bot, agent: &str, login_profile: Option<&s
     })
 }
 
-/// The Details page's line while the bot runs on a fallback: "Using Codex until Claude Code resets 15:00", or why
+/// The Settings page's line while the bot runs on a fallback: "Using Codex until Claude Code resets 15:00", or why
 /// it can't answer, as "Using Codex while Claude Code is signed out". A login on a login profile goes by it too
 /// ("Claude Code (Work)"), and so does the computer's own when both are the same agent.
 pub(in crate::tui) fn using_line(app: &App, bot: &Bot) -> Option<String> {
@@ -55,12 +55,6 @@ pub(in crate::tui) fn using_line(app: &App, bot: &Bot) -> Option<String> {
         Some(rest) => format!("Using {using} while {own} {}", rest.reason.phrase()),
         None => format!("Using {using} while {own} can't answer"),
     })
-}
-
-/// The Details page's chain: "Fallbacks: 1 Codex · gpt-5.5 (in use) · 2 Gemini CLI · default".
-pub(in crate::tui) fn chain_line(app: &App, bot: &Bot) -> Option<String> {
-    let steps: Vec<String> = bot.fallbacks.iter().enumerate().map(|(i, f)| step_item(app, Some(bot), i, f)).collect();
-    (!steps.is_empty()).then(|| format!("Fallbacks: {}", steps.join(" · ")))
 }
 
 #[cfg(test)]

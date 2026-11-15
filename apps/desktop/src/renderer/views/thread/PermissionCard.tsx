@@ -75,8 +75,9 @@ export function PermissionCard({ entry, hostName, answering, respond }: { entry:
   }
 
   return (
-    <div className="agent-inset">
-      <VStack gap={12} className="permission-card">
+    // The item's row on the bot's Details finds its card by this.
+    <div className="agent-inset" data-work-item={d.item}>
+      <VStack gap={10} className="permission-card">
         <HStack gap={8}>
           <Text size="headline" tone="text">{permissionHeadline(d.toolKind)}</Text>
           <span className="permission-card-dot" />

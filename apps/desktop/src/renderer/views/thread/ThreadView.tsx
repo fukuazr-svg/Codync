@@ -25,7 +25,7 @@ import { RoutineNotice } from './RoutineNotice'
 import { Composer } from './Composer'
 import { GoalBanner } from './GoalSection'
 import { QueuedMessages } from './QueuedMessages'
-import { TaskCapsule } from './TaskCapsule'
+import { WorkCapsule } from './WorkCapsule'
 import { fill } from '../../lib/fill.ts'
 import { outsideQueue } from './queued-messages'
 import { ChatSidePanel } from './ChatSidePanel'
@@ -141,16 +141,29 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
     setCompactDetails(false)
   }, [])
 
-  const presentRoutine = useCallback((id: string | null) => {
-    setRoutineId(id)
-    setRoutineRequest((r) => r + 1)
-    setDetailsTab('details')
+  const showDetails = useCallback((tab: DetailsTab) => {
+    setDetailsTab(tab)
     setShowSettings(true)
     if (!wide) setCompactDetails(true)
   }, [wide])
 
-  // This bot's Agent card is on the Details tab; a group member's is in its settings.
-  const presentAgent = useCallback((id: string) => (id === botId ? presentRoutine(null) : setEditingMember(id)), [botId, presentRoutine])
+  const presentRoutine = useCallback((id: string | null) => {
+    setRoutineId(id)
+    setRoutineRequest((r) => r + 1)
+    showDetails('details')
+  }, [showDetails])
+
+  // This bot's Agent card is on the Settings tab; a group member's is in its settings.
+  const presentAgent = useCallback((id: string) => (id === botId ? showDetails('settings') : setEditingMember(id)), [botId, showDetails])
+  // The capsule opens what the bot does.
+  const openWork = useCallback(() => showDetails('details'), [showDetails])
+  // The chat at the approval card of an item that needs the user.
+  const openCard = useCallback((itemId: string) => {
+    setCompactDetails(false)
+    // ponytail: looks among the loaded messages only; a card still waiting is among the newest. Load older pages
+    // until it is found if cards ever wait that long.
+    requestAnimationFrame(() => root.current?.querySelector(`[data-work-item="${CSS.escape(itemId)}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
+  }, [])
   const member = editingMember ? store.bots.get(editingMember) : undefined
 
   // The panel's share sits in the top bar with its other actions, not on the panel itself.
@@ -167,6 +180,12 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
       setTab={setDetailsTab}
       editGroup={() => setEditingGroup(true)}
       openArtifact={openArtifact}
+      openCard={openCard}
+      share={shareDetails}
+      close={() => {
+        setShowSettings(false)
+        setCompactDetails(false)
+      }}
     />
   )
 
@@ -214,7 +233,7 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
           ) : artifactId ? null : (
             // The artifact over the chat has its own box (two would both take the voice shortcut).
             <>
-              <TaskCapsule botId={botId} />
+              <WorkCapsule botId={botId} open={openWork} />
               <QueuedMessages botId={botId} />
               {bot ? <GoalBanner bot={bot} /> : null}
               <Composer
