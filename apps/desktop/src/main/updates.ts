@@ -9,6 +9,7 @@ import type { UpdateState } from '../shared/ipc'
 import { isMainEnvironment } from './account'
 import { identity } from './environment'
 import { prefs, type HostController } from './host-controller'
+import { officialUpdates } from './update-policy'
 
 const { autoUpdater } = electronUpdater
 
@@ -18,7 +19,8 @@ const { autoUpdater } = electronUpdater
  * coordinates its background services before the installer replaces the app: the host is
  * stopped first, and a restart marker makes the next launch reinstall it from the new bundle.
  */
-const enabled = app.isPackaged && isMainEnvironment()
+/** codync-ours: our build turns the in-app updater off and follows its own sync line instead. */
+const enabled = officialUpdates && app.isPackaged && isMainEnvironment()
 const shipIt = `${identity.appId}.ShipIt`
 
 const bundlePath = () => join(app.getPath('exe'), '../../..')
@@ -89,14 +91,17 @@ export class Updates extends EventEmitter<{ change: []; upToDate: []; setAutoChe
       for (const w of windows()) w.webContents.send('updates:change', this.state)
     })
     removeStuckShipIt()
-    if (!enabled) return
-    // macOS relaunches the updated app from the background, behind the app in front, and ignores
-    // `app.focus` there (cooperative activation); opening its own bundle brings it forward.
-    if (prefs.get('updateRelaunchInFront') === true) {
+    if (app.isPackaged && isMainEnvironment() && prefs.get('updateRelaunchInFront') === true) {
       prefs.set('updateRelaunchInFront', false)
       if (process.platform === 'darwin') void shell.openPath(bundlePath())
     }
-
+    if (!enabled) {
+      // Keep orphan cleanup for packaged macOS builds without enabling update checks.
+      if (!officialUpdates && app.isPackaged && isMainEnvironment() && process.platform === 'darwin') {
+        setInterval(removeStuckShipIt, 3600_000)
+      }
+      return
+    }
     this.host.on('updateRequested', () => this.installRequested())
     autoUpdater.autoDownload = false
     autoUpdater.autoInstallOnAppQuit = true
@@ -289,13 +294,26 @@ export class Updates extends EventEmitter<{ change: []; upToDate: []; setAutoChe
  * update request is gone (a cleaned Caches folder) it fails forever and its log grows without
  * bound. An idle job without a request can't install anything: remove it.
  */
+let checkingShipIt = false
 function removeStuckShipIt() {
   if (process.platform !== 'darwin') return
-  if (existsSync(join(homedir(), 'Library/Caches', shipIt, 'ShipItState.plist'))) return
+  const requestExists = () => existsSync(join(homedir(), 'Library/Caches', shipIt, 'ShipItState.plist'))
+  if (checkingShipIt || requestExists()) return
+  checkingShipIt = true
   execFile('/bin/launchctl', ['list', shipIt], (error, stdout) => {
-    // Not submitted, or running right now (the next check finds it idle).
-    if (error || stdout.includes('"PID" =')) return
-    execFile('/bin/launchctl', ['remove', shipIt], () => {})
+    let stillIdle = false
+    if (!error && !stdout.includes('"PID" =') && !requestExists()) {
+      try {
+        stillIdle = !execFileSync('/bin/launchctl', ['list', shipIt], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).includes('"PID" =')
+      } catch {
+        // A failed recheck cannot establish that the job is still idle.
+      }
+    }
+    if (!stillIdle || requestExists()) {
+      checkingShipIt = false
+      return
+    }
+    execFile('/bin/launchctl', ['remove', shipIt], () => { checkingShipIt = false })
   })
 }
 

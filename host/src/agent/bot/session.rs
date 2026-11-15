@@ -119,7 +119,13 @@ impl Actor {
         for name in builtin.into_iter().flatten() {
             // A task's memory is its bot's; everything else of it is its own.
             let bot = if name == "memory" { self.cfg.owner() } else { &self.cfg.id };
-            servers.push(crate::mcp::acp_server(name, &exe, &[name, "--bot", bot], port));
+            // The team server's own words follow the bot's approvals; they travel with the server's start.
+            let env = if name == "team" {
+                vec![(crate::mcp::INSTRUCTIONS_ENV, crate::chat::team::instructions(self.cfg.permission))]
+            } else {
+                Vec::new()
+            };
+            servers.push(crate::mcp::acp_server(name, &exe, &[name, "--bot", bot], port, &env));
         }
         Ok(Value::Array(servers))
     }
@@ -310,6 +316,12 @@ impl Actor {
         self.instruct(&mut params, instructions, &system);
         let res = self.session_request("session/new", params).await?;
         let sid = self.adopt_opened(&res, slot, renamed).await?;
+        // A fresh conversation inherits no approvals. An agent numbers its sessions from the start in each process,
+        // so the id it returns here can be the one an earlier conversation was always allowed under.
+        if let Some(stale) = self.session_for(slot).filter(|stale| stale != &sid) {
+            self.always_allowed.forget(&stale);
+        }
+        self.always_allowed.forget(&sid);
         context::adopt(&self.hub.store, &self.cfg.as_owner(), &sid, system.clone(), revision)?;
         if instructions == Instructions::ClaudeMeta {
             self.applied_system.insert(sid, system);
@@ -401,7 +413,7 @@ impl Actor {
 
     /// A routine's time limit cut a session request short. An agent that can resume stops, so a session it might
     /// still open goes with its process; one that can't keeps running rather than lose the sessions it has.
-    async fn drop_unanswered(&mut self) {
+    pub(super) async fn drop_unanswered(&mut self) {
         let Some(conn) = self.conn.as_mut() else { return };
         if !std::mem::take(&mut conn.opening) {
             return;
@@ -417,8 +429,12 @@ impl Actor {
         }
     }
 
-    /// Drops the main ACP session so the next turn starts a fresh one.
+    /// Drops the main ACP session so the next turn starts a fresh one. Its approvals go with it: the next
+    /// conversation may come back on the same session id.
     pub(super) fn forget_session(&mut self) {
+        if let Some(sid) = self.session_id.clone() {
+            self.always_allowed.forget(&sid);
+        }
         self.set_session(None, None);
     }
 }

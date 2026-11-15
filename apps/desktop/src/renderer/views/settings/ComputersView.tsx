@@ -14,6 +14,7 @@ import type { CloudComputer } from '../../store/cloud'
 import type { BotStore } from '../../store/bot-store'
 import { StoreContext, useApp } from '../../store/context'
 import { ComputerBadge } from '../ComputerBadge'
+import { DeviceIconPicker } from './DeviceIconPicker'
 import { PairingCode } from '../PairingCode'
 import { AuthorizedDevicesSection } from './AuthorizedDevicesSection'
 import { ComputersUsedSection } from './ComputersUsedSection'
@@ -191,7 +192,7 @@ function ManagedComputerCard({ store, ssh: overSSH, nested = false }: { store: B
       <CardSection>
         {[
           <div key="header" className="settings-row">
-            <ComputerBadge computer={store.computer} size={26} />
+            <DeviceIconPicker store={store} />
             <VStack grow className="settings-stack">
               <Text size="headline">{name}</Text>
               <Text size="caption" tone="secondary">

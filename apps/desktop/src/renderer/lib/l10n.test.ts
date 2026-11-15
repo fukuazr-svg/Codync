@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { appLanguages, intlLocale, resolvedLanguage, resetLine, languageTitle, systemIsChinese, systemScript, translate, usesChinese } from './l10n.ts'
+import { testLanguage } from './test-language.ts'
 
 test('chinese follows the choice, and a system preference follows the computer', () => {
   assert.equal(usesChinese('zh', false), true)
@@ -166,7 +167,8 @@ test('each supported locale follows regional system tags and explicit choices wi
 })
 
 
-test('Brazilian Portuguese follows Portuguese regions and keeps its native menu name', () => {
+test('Brazilian Portuguese follows Portuguese regions and keeps its native menu name', (t) => {
+  testLanguage(t, 'en-US')
   assert.deepEqual(appLanguages.slice(-4), ['es', 'pt-BR', 'ru', 'it'])
   assert.equal(languageTitle('pt-BR', 'en', 'en'), 'Português (Brasil)')
   for (const tag of ['pt', 'pt-BR', 'pt_BR.UTF-8', 'pt-PT', 'pt-AO', 'pt-MZ', 'PT_cv.UTF-8']) {
@@ -178,6 +180,12 @@ test('Brazilian Portuguese follows Portuguese regions and keeps its native menu 
   assert.equal(translate('Settings', 'en', 'pt-BR'), 'Settings')
   assert.equal(resolvedLanguage('system', 'en-US'), 'en')
   assert.equal(resolvedLanguage('system', ''), 'en')
+})
+
+test('empty system language falls back to the browser language', (t) => {
+  testLanguage(t, 'zh-CN')
+  assert.equal(resolvedLanguage('system', ''), 'zh')
+  assert.equal(translate('Settings', 'system', ''), translate('Settings', 'zh'))
 })
 
 test('English reset text remains literal and absolute dates do not become durations', () => {

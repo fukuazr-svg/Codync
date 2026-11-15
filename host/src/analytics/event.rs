@@ -30,6 +30,8 @@ pub enum Event {
     ConversationFindOpened,
     ConversationFindSearched,
     BotCreated,
+    GoalStarted,
+    GoalStopped,
     BotUpdated,
     BotsReordered,
     SectionRenamed,
@@ -42,6 +44,8 @@ pub enum Event {
     TurnFinished,
     /// A turn moved on to the bot's next agent (`agent::fallback`).
     AgentFellBack,
+    /// The host gathered or timed out on the mechanical context manifest (`agent::fallback::carry::ledger`).
+    HandoffLedgerBuilt,
     /// An agent taking over a bot's chat was told what came before (`agent::fallback::carry`).
     HandoffCarried,
     /// A bot's agent stopped to give back what it held (`agent::bot::lifecycle`).
@@ -159,6 +163,8 @@ pub enum Event {
     NetworkChanged,
     /// A network step failed (`NetworkStage`): starting a node, a letter, or a `network*` call.
     NetworkFailed,
+    /// A bot reads another bot, or an explicitly approved action is applied to it.
+    BotInspected,
     /// Error tracking (`errors`): a panic or an uncaught error.
     Exception,
 }
@@ -189,6 +195,8 @@ impl Event {
             Self::ConversationFindOpened => "conversation_find_opened",
             Self::ConversationFindSearched => "conversation_find_searched",
             Self::BotCreated => "bot_created",
+            Self::GoalStarted => "goal_started",
+            Self::GoalStopped => "goal_stopped",
             Self::BotUpdated => "bot_updated",
             Self::BotsReordered => "bots_reordered",
             Self::SectionRenamed => "section_renamed",
@@ -199,6 +207,7 @@ impl Event {
             Self::TurnStopped => "turn_stopped",
             Self::TurnFinished => "turn_finished",
             Self::AgentFellBack => "agent_fell_back",
+            Self::HandoffLedgerBuilt => "handoff_ledger_built",
             Self::HandoffCarried => "handoff_carried",
             Self::AgentRetired => "agent_retired",
             Self::ContextCompacted => "context_compacted",
@@ -273,6 +282,7 @@ impl Event {
             Self::NetworkJoined => "network_joined",
             Self::NetworkChanged => "network_changed",
             Self::NetworkFailed => "network_failed",
+            Self::BotInspected => "bot_inspected",
             Self::Exception => "$exception",
         }
     }

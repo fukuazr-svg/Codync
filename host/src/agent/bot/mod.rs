@@ -16,6 +16,7 @@
 //! written to the group's transcript; see `group`). A routine run talks in its chat
 //! from a session of its own (see `session`).
 
+mod always_allowed;
 mod background_work;
 mod cmd;
 mod codex_names;
@@ -24,6 +25,7 @@ mod decisions;
 mod fallback;
 mod fast_mode;
 mod files;
+mod goal;
 mod inflight;
 mod launch;
 mod lifecycle;
@@ -74,6 +76,8 @@ pub struct BotHandle {
 }
 
 pub fn spawn(hub: Arc<Hub>, base: BotConfig) -> BotHandle {
+    // A goal is never resumed after a host restart without another explicit start.
+    crate::chat::goal::finish(&hub, &base.id, None, crate::chat::goal::Stopped::Failed);
     let (tx, rx) = mpsc::unbounded_channel();
     let session_id = hub.store.bot(&base.id).ok().flatten().and_then(|b| b.session_id);
     // The agent its main session runs on: one of its fallbacks, if it was on one when the host stopped.
@@ -132,7 +136,9 @@ pub fn spawn(hub: Arc<Hub>, base: BotConfig) -> BotHandle {
         joined: false,
         files: files::FileShares::default(),
         perms: HashMap::new(),
+        always_allowed: always_allowed::AlwaysAllowed::default(),
         asked: HashMap::new(),
+        goal_step: None,
         stop_requested: false,
         cancel_deadline: None,
         exit_tail: None,
@@ -334,8 +340,12 @@ struct Actor {
     files: files::FileShares,
     /// permission entry id -> who waits for the answer
     perms: HashMap<String, updates::Answer>,
+    /// What the user chose Always allow for, by session: answered by Codync when the agent asks again.
+    always_allowed: always_allowed::AlwaysAllowed,
     /// Decision card id -> the live tool call waiting for this turn's choice.
     asked: HashMap<String, decisions::Asked>,
+    /// The generation id of the goal whose step is running.
+    goal_step: Option<goal::Step>,
     stop_requested: bool,
     /// A cancelled turn still running past this stops its agent process.
     cancel_deadline: Option<Instant>,
@@ -417,6 +427,7 @@ impl Actor {
                 _ = flush_tick.tick() => {
                     self.flush(false);
                     self.expire_abandoned().await;
+                    self.check_goal_deadline().await;
                     if self.routine_completion.is_some() && self.retry_routine_completion() {
                         self.set_inflight(false);
                         self.next_in_queue(&done_tx).await;

@@ -9,3 +9,87 @@
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
 }
+
+/* A picked device icon: a stroke drawing that fills its box and follows the badge's colour. */
+.computer-badge-svg {
+  display: block;
+}
+.computer-badge-svg svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* The picker: the icon in a computer's heading, and the eight shapes plus "auto" behind it. */
+.device-icon-picker {
+  position: relative;
+  flex: none;
+}
+.device-icon-trigger {
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  border-radius: 7px;
+  color: inherit;
+}
+.device-icon-trigger:hover {
+  background: var(--bubble-agent);
+}
+.device-icon-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  width: 244px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+}
+.device-icon-menu-title {
+  font-size: var(--text-caption);
+  color: var(--secondary);
+  padding: 2px 4px 8px;
+}
+.device-icon-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.device-icon-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  font-size: var(--text-callout);
+  color: var(--text);
+  text-align: left;
+}
+.device-icon-choice:hover {
+  background: var(--bubble-agent);
+}
+.device-icon-choice.chosen {
+  background: var(--bubble-agent);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.device-icon-dot {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+.device-icon-dot svg {
+  width: 20px;
+  height: 20px;
+}
+.device-icon-menu-foot {
+  padding: 8px 4px 0;
+  font-size: var(--text-caption);
+  color: var(--secondary);
+}
+.device-icon-error {
+  color: var(--attention);
+}

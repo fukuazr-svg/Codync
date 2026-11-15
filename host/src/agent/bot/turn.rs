@@ -117,7 +117,7 @@ impl Actor {
         self.lane = lane.clone();
         self.turn = Some(turn);
         // Only the user's own words feed memory: not another bot's, a room's or a routine's.
-        let from_user = !hidden && self.source() == TurnSource::User;
+        let from_user = !hidden && self.goal_step.is_none() && self.source() == TurnSource::User;
         self.turn_text = from_user.then(|| text.to_owned());
         self.turn_entries = if from_user { entry_ids.to_vec() } else { Vec::new() };
         // A room turn answers the user's message in the room; another turn, the messages it was given.
@@ -157,6 +157,7 @@ impl Actor {
             self.active_request.is_none()
                 && self.active_group.is_none()
                 && self.active_routine.is_none()
+                && self.goal_step.is_none()
                 && self.host_turn.is_none_or(HostTurn::resumed),
         );
         // A message the host wrote in the user's place (`from: host`) isn't the user asking.
@@ -171,6 +172,7 @@ impl Actor {
             }
             .into();
             r.started_at = Some(now_ms());
+            r.turn_key = Some(uuid::Uuid::new_v4());
             r.lane = Some(lane.clone());
             r.message = message;
         });
@@ -181,7 +183,7 @@ impl Actor {
         let slot = self.slot();
         self.ensure_turn_session(slot.as_deref()).await?;
         if !hidden {
-            self.carry_in();
+            self.carry_in().await?;
         }
         let session = self.turn_session.clone();
         self.hub.set_runtime(&self.id(), |r| r.session.clone_from(&session));
@@ -209,6 +211,7 @@ impl Actor {
                 r.status = BotStatus::Idle;
                 r.activity = String::new();
                 r.started_at = None;
+                r.turn_key = None;
                 r.lane = None;
                 r.message = None;
                 r.session = None;
@@ -243,6 +246,10 @@ impl Actor {
         // ponytail: a task's edits to the memory files aren't tracked as a turn's (the tracker keeps one turn per
         // bot): they are taken at its bot's next scan and credited as changes outside a turn. Track turns per
         // session if a task's writes need its own credit.
+        if !self.goal_can_prompt() {
+            let _ = done_tx.send(Ok(json!({"stopReason": "cancelled"})));
+            return Ok(());
+        }
         if !self.cfg.is_task() {
             memory::turns::begin_turn(&self.cfg.id, &sid, self.hub.runtime(&self.cfg.id).message);
         }
@@ -278,6 +285,14 @@ impl Actor {
         let stopped = self.stop_requested || matches!(&done, Ok(v) if v["stopReason"] == "cancelled");
         self.close_attempt(stopped || done.is_err());
         let mut final_text = None;
+        // The agent's first prompt may hand it its instructions; the prompt's own text is that (the snapshot).
+        // send_message can consume the public reply; the agent's closing marker still counts.
+        let goal_closing = self
+            .goal_step
+            .as_ref()
+            .and(self.last_text.as_ref())
+            .and_then(|id| self.hub.store.entry(id))
+            .and_then(|e| e.data["text"].as_str().map(str::to_owned));
         let routine = self.active_routine.is_some();
         let grouped = self.active_group.is_some() || routine;
         let delegated = self.active_request.is_some();
@@ -407,11 +422,13 @@ impl Actor {
             r.status = if failed { BotStatus::Error } else { BotStatus::Idle };
             r.activity = String::new();
             r.started_at = None;
+            r.turn_key = None;
             r.lane = None;
             r.message = None;
             r.session = None;
         });
         self.hub.team.end_turn(&self.cfg.id);
+        self.goal_ended(stopped, failed || stop_reason != "end_turn", final_text.as_deref(), goal_closing.as_deref());
         // A room turn's news comes from the group once the room is done (see `group`).
         let more = self.queue.iter().any(|q| matches!(q, Queued::User { .. }));
         // It held back its only answer, a reaction: it said nothing, so there is nothing to tell either.
@@ -454,7 +471,7 @@ impl Actor {
                 self.hub.set_entry(&id, &e.data);
             }
             // The agent would wait on a card no one can answer any more.
-            if let (super::updates::Answer::Agent(rpc_id), Some(client)) = (answer, client.clone()) {
+            if let (super::updates::Answer::Agent { rpc_id, .. }, Some(client)) = (answer, client.clone()) {
                 tokio::spawn(async move { client.respond(rpc_id, acp::permission_answer(None)).await });
             }
         }
@@ -492,6 +509,8 @@ impl Actor {
             TurnSource::Group
         } else if self.active_request.is_some() || self.reply_hops.is_some() {
             TurnSource::Bot
+        } else if self.goal_step.is_some() {
+            TurnSource::Host
         } else {
             self.host_turn.map_or(TurnSource::User, HostTurn::source)
         }

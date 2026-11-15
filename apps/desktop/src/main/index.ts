@@ -62,6 +62,23 @@ let chat: BrowserWindow | null = null
 let pairing: BrowserWindow | null = null
 const quitLifecycle = new QuitLifecycle(app, autoUpdater)
 const isMac = process.platform === 'darwin'
+// Windows draws its own title bar: the window controls sit over the page's top-right corner.
+const isWindows = process.platform === 'win32'
+
+/**
+ * The Windows window-controls overlay follows the app's appearance. It takes the colour of the
+ * frost a sheet lays over the page (`--scrim` in theme.css), so the buttons stay part of the same
+ * surface when a settings sheet is open, and read as the page colour when none is.
+ */
+function windowControls() {
+  const dark = nativeTheme.shouldUseDarkColors
+  return {
+    // T3's overlay is the page itself: a 1/255 alpha, not pure zero (which breaks on Linux).
+    color: '#01000000',
+    symbolColor: dark ? '#F8FAFC' : '#1F2937',
+    height: 40,
+  }
+}
 
 function rendererURL(page: string) {
   return process.env.ELECTRON_RENDERER_URL
@@ -69,7 +86,7 @@ function rendererURL(page: string) {
     : `file://${join(__dirname, '../renderer/index.html')}?window=${page}`
 }
 
-const background = () => (nativeTheme.shouldUseDarkColors ? '#0A0A0A' : '#FFFFFF')
+const background = () => (nativeTheme.shouldUseDarkColors ? '#000000' : '#FDFDFD')
 
 function snapshot(): HostSnapshot {
   return { state: host.state, local: host.local, dev: devPort !== null, logPath: host.logPath }
@@ -92,9 +109,18 @@ function openChat() {
     title: app.getName(),
     show: false,
     backgroundColor: background(),
-    titleBarStyle: isMac ? 'hidden' : 'default',
+    // macOS hides it for the traffic lights; Windows for the same frameless header, with its
+    // controls drawn over the page (titleBarOverlay).
+    titleBarStyle: isMac || isWindows ? 'hidden' : 'default',
+    ...(isWindows ? { titleBarOverlay: windowControls() } : {}),
     webPreferences: { preload: join(__dirname, '../preload/index.js'), sandbox: true, contextIsolation: true },
   })
+  // The menu keeps its accelerators (⌘/Ctrl+N, R, ±, 0, I, F, …) but no bar on Windows: the
+  // hidden title bar leaves none to click anyway.
+  if (isWindows) {
+    chat.setMenuBarVisibility(false)
+    registerAccelerators(chat)
+  }
   // CODYNC_SHOW_INACTIVE: development and UI checks open the window without taking focus.
   chat.on('ready-to-show', () => (process.env.CODYNC_SHOW_INACTIVE ? chat?.showInactive() : chat?.show()))
   // Closing hides: the window keeps the stores (and the menu bar's data) alive.
@@ -130,6 +156,46 @@ export function send(command: WindowCommand, show = true) {
   const window = show ? openChat() : chat
   if (show && isMac) app.focus({ steal: true })
   window?.webContents.send('app:command', command)
+}
+
+/**
+ * The window has no menu bar on Windows, so the system never walks the menu for a key: the same
+ * accelerators are read here instead, and each one sends the command the menu item would.
+ */
+function registerAccelerators(win: BrowserWindow) {
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown' || !(input.control || input.meta)) return
+    const key = input.key.toLowerCase()
+    // Zoom, on the same keys the View menu uses.
+    const zoom = { '=': true, '+': true, '-': false, '0': null } as const
+    if (key in zoom) {
+      send({ kind: 'stepTextSize', up: zoom[key as keyof typeof zoom] }, false)
+      event.preventDefault()
+      return
+    }
+    if (input.alt && key === 'i') {
+      send({ kind: 'toggleDetails' }, false)
+      event.preventDefault()
+      return
+    }
+    if (input.shift) {
+      if (app.isPackaged) return
+      // The dev page reload sits on ⇧⌘R, leaving ⌘R to Refresh.
+      if (key === 'i') win.webContents.toggleDevTools()
+      else if (key === 'r') win.webContents.reloadIgnoringCache()
+      else return
+      event.preventDefault()
+      return
+    }
+    switch (key) {
+      case 'n': send({ kind: 'newBot' }); break
+      case 'f': send({ kind: 'search' }); break
+      case 'r': send({ kind: 'refresh' }, false); break
+      case 'w': win.close(); break
+      default: return
+    }
+    event.preventDefault()
+  })
 }
 
 function registerIPC(tray: Tray) {
@@ -263,8 +329,11 @@ if (yieldsToInstall()) {
     nativeTheme.on('updated', () => {
       // Only the opaque windows: a color on the transparent notch island paints its whole panel.
       for (const w of [chat, pairing]) w?.setBackgroundColor(background())
+      // The Windows controls are drawn by the system: hand them the new colours.
+      if (isWindows && chat) chat.setTitleBarOverlay(windowControls())
     })
     host.start()
     openChat()
   })
 }
+

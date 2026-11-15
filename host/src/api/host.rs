@@ -79,6 +79,7 @@ pub(super) async fn call(hub: &Arc<Hub>, caller: &Caller, method: &str, b: Value
                 "home": dirs::home_dir().map(|p| p.to_string_lossy().into_owned()),
                 "backends": agents(hub),
                 "icons": icons.icons,
+                // The device icons a person picked, keyed by computer id (absent: the real device).
                 "iconsRevision": icons.icons_revision,
                 "rev": hub.store.current_rev(),
                 "screen": hub.screen.state(),

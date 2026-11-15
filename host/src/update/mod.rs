@@ -33,7 +33,7 @@ impl Default for Config {
 }
 
 const fn on() -> bool {
-    true
+    false
 }
 
 /// A release build of a standalone binary that the installed service runs: the hosts that
@@ -114,9 +114,8 @@ pub fn latest_version() -> Option<String> {
 /// at login, GitHub unreachable) is tried again sooner, from a minute up to every 30 minutes. Release builds
 /// on platforms with releases only: a development host never offers one.
 pub async fn release_watch() {
-    if crate::environment::Environment::current() != crate::environment::Environment::Main
-        || release::platform().is_err()
-    {
+    // codync-ours: our build never follows the official update line.
+    if true {
         return;
     }
     let mut retry = Duration::from_mins(1);
@@ -140,7 +139,8 @@ pub async fn release_watch() {
 
 /// Whether `installHostUpdate` can update this computer (`hello.canUpdate`).
 pub fn installable() -> bool {
-    service::current_exe().is_ok_and(|executable| route(&executable).is_ok())
+    // codync-ours: this build never updates the official way.
+    false
 }
 
 /// Installs the latest release now (`installHostUpdate`).
@@ -401,7 +401,7 @@ pub async fn automatic_loop(hub: Arc<Hub>) {
     let mut last_check = None;
     loop {
         tokio::time::sleep(Duration::from_mins(1)).await;
-        let enabled = read::<Config>("update-config.json").is_ok_and(|c| c.automatic);
+        let enabled = false; // codync-ours: automatic updates stay off
         // A cloud computer's updates come from the cloud (`remote::managed`).
         if !enabled || hub.busy() || crate::remote::managed::is_managed(&hub.store) {
             continue;
