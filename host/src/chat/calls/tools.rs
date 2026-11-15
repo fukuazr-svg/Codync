@@ -37,7 +37,7 @@ pub async fn call(hub: &Arc<Hub>, call: &str, name: &str, args: &Value, lines: &
             hub.store.bot(&bot)?.filter(|r| !r.deleted).ok_or_else(|| anyhow!("The bot isn't available."))?.config;
         match name {
             "send_to_bot" => relay(hub, &cfg, call, args["text"].as_str().unwrap_or_default()),
-            "bot_status" => Ok(insight::status(hub, &cfg, &recent(hub, &cfg))),
+            "bot_status" => Ok(status(hub, &cfg)),
             "recent_messages" => Ok(recent_messages(hub, &cfg, args["count"].as_i64().unwrap_or(6))),
             "answer_approval" => answer(hub, &cfg, args["option"].as_str().unwrap_or_default()),
             "stop_bot" => stop(hub, &cfg),
@@ -69,10 +69,10 @@ fn relay(hub: &Arc<Hub>, cfg: &BotConfig, call: &str, text: &str) -> Result<Valu
 }
 
 fn status(hub: &Hub, cfg: &BotConfig) -> Value {
-    let rt = runtime(hub, cfg);
+    let rt = insight::runtime(hub, cfg);
     let mut out = json!({"status": rt.status, "activity": rt.activity});
-    let recent = hub.store.history(&cfg.id, i64::MAX, RECENT).unwrap_or_default();
-    if let Some(w) = waiting(&recent) {
+    let recent = hub.store.history(&cfg.id, i64::MAX, insight::RECENT_ENTRIES).unwrap_or_default();
+    if let Some(w) = insight::waiting(&recent) {
         out["approval"] = json!({"request": w.request, "options": w.options});
     }
     // What it works on away from the chat, and what waits.
