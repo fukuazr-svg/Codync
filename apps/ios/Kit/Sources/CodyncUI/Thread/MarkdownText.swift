@@ -89,6 +89,7 @@ private struct CodeBlock: View {
         .overlay(alignment: .topTrailing) {
             IconButton(copied ? "Copied" : "Copy code", systemImage: copied ? "checkmark" : "doc.on.doc") {
                 Pasteboard.copy(text)
+                Analytics.shared.capture(.codeBlockCopied)
                 copied = true
             }
             .padding(2)

@@ -117,6 +117,7 @@ val LocalNetworkImages = staticCompositionLocalOf<ImageLoader> { error("Missing 
             modifier = Modifier.align(Alignment.TopEnd).padding(2.dp),
         ) {
             clipboard.setPrimaryClip(ClipData.newPlainText("Codync", text))
+            Analytics.capture(AnalyticsEvent.CodeBlockCopied)
             copied = true
         }
     }

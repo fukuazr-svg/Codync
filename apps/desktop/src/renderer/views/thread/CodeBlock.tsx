@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { IconButton } from '../../components/Controls'
 import { copyText } from '../../lib/image-clipboard'
+import { analytics } from '../../store/analytics'
 
 /**
  * A fenced code block: the code as it was written, and a button that puts it on the clipboard
@@ -12,6 +13,7 @@ export function CodeBlock({ text }: { text: string }) {
   useEffect(() => () => { if (done.current) clearTimeout(done.current) }, [])
   const copy = () => {
     void copyText(text)
+    analytics.track({ event: 'code_block_copied' })
     setCopied(true)
     if (done.current) clearTimeout(done.current)
     done.current = setTimeout(() => setCopied(false), 1500)
