@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { IconButton } from '../../components/Controls'
 import { copyText } from '../../lib/image-clipboard'
 import { analytics } from '../../store/analytics'
+import { copyCodeBlock } from './code-block-copy'
 
 /**
  * A fenced code block: the code as it was written, and a button that puts it on the clipboard
@@ -12,11 +13,13 @@ export function CodeBlock({ text }: { text: string }) {
   const done = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => () => { if (done.current) clearTimeout(done.current) }, [])
   const copy = () => {
-    void copyText(text)
-    analytics.track({ event: 'code_block_copied' })
-    setCopied(true)
     if (done.current) clearTimeout(done.current)
-    done.current = setTimeout(() => setCopied(false), 1500)
+    done.current = copyCodeBlock(text, {
+      copy: (value) => void copyText(value),
+      track: () => analytics.track({ event: 'code_block_copied' }),
+      setCopied,
+      schedule: (run, ms) => setTimeout(run, ms),
+    })
   }
   return (
     <div className="md-code-block">
