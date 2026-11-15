@@ -111,6 +111,14 @@ impl ExtensionBridge {
             Ok(Err(_)) => bail!(BridgeFailure::Disconnected),
             Err(_) => {
                 connection.pending.lock().await.remove(&id);
+                // A timed-out start can leave a tab attached in Chrome. Ask the extension to cancel
+                // the still-running request; if it already created a tab, its request guard removes it.
+                let cancel_id = uuid::Uuid::new_v4().to_string();
+                let _ = connection.out.send(json!({
+                    "id": cancel_id,
+                    "method": "cancel",
+                    "params": {"requestId": id}
+                }));
                 bail!(BridgeFailure::Timeout);
             }
         }
@@ -127,6 +135,10 @@ impl ExtensionBridge {
         ensure!(hello["type"] == "hello", "the Codync Browser bridge expected a hello");
         ensure!(hello["extensionId"] == EXTENSION_ID, "the Codync Browser bridge only accepts the Codync extension");
         ensure!(hello["protocol"] == 1, "unsupported Codync Browser extension protocol");
+        ensure!(
+            hello["isolatedProfile"] == true,
+            "Codync Browser must run in its dedicated profile; ordinary browser profiles are not accepted"
+        );
 
         let (mut sink, mut stream) = socket.split();
         let (out, mut output) = mpsc::unbounded_channel();
@@ -149,7 +161,8 @@ impl ExtensionBridge {
             json!({
                 "type": "ready",
                 "hostId": host_id,
-                "protocol": 1
+                "protocol": 1,
+                "isolatedProfile": true
             })
         } else {
             json!({
@@ -210,7 +223,16 @@ impl ExtensionBridge {
             return None;
         }
         while let Some(next) = connections.waiting.pop_front() {
-            if next.out.send(json!({"type": "ready", "hostId": host_id, "protocol": 1})).is_ok() {
+            if next
+                .out
+                .send(json!({
+                    "type": "ready",
+                    "hostId": host_id,
+                    "protocol": 1,
+                    "isolatedProfile": true
+                }))
+                .is_ok()
+            {
                 connections.active = Some(next.clone());
                 return Some(next);
             }
@@ -298,6 +320,9 @@ mod tests {
         assert_eq!(sent["method"], "click");
         let error = task.await.unwrap().unwrap_err();
         assert!(matches!(error.downcast_ref::<BridgeFailure>(), Some(BridgeFailure::Timeout)));
+        let cancelled = output.recv().await.unwrap();
+        assert_eq!(cancelled["method"], "cancel");
+        assert_eq!(cancelled["params"]["requestId"], sent["id"]);
         assert_eq!(output.try_recv(), Err(mpsc::error::TryRecvError::Empty));
         assert!(pending.lock().await.is_empty());
     }

@@ -6,6 +6,7 @@
 //! the turn. Screenshots are published through `send_file`, which puts the picture in that same chat.
 
 use super::browser_extension::{EXTENSION_ID, ExtensionBridge, failure_category as extension_failure_category};
+use super::browser_headless;
 use crate::hub::{BotStatus, Hub};
 use anyhow::{Context as _, Result, anyhow, bail, ensure};
 use base64::Engine as _;
@@ -15,12 +16,10 @@ use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::process::Stdio;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
-use tokio::process::{Child, Command};
+use std::time::Duration;
+use tokio::process::Child;
 use tokio::sync::Mutex;
-use tokio_tungstenite::tungstenite::Message;
 use url::Url;
 
 const START: &str = "browser_start";
@@ -31,16 +30,10 @@ const SCREENSHOT: &str = "browser_screenshot";
 pub(super) const STOP: &str = "browser_stop";
 const NAMES: [&str; 6] = [START, NAVIGATE, CLICK, TYPE, SCREENSHOT, STOP];
 
-const VIEWPORT_WIDTH: u32 = 1280;
-const VIEWPORT_HEIGHT: u32 = 720;
 const MAX_URL: usize = 8 * 1024;
 const MAX_SELECTOR: usize = 512;
 const MAX_TYPE: usize = 16 * 1024;
 const MAX_SCREENSHOT: usize = 20 * 1024 * 1024;
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
-const COMMAND_TIMEOUT: Duration = Duration::from_secs(15);
-const NAVIGATION_TIMEOUT: Duration = Duration::from_secs(20);
-const LAUNCH_TIMEOUT: Duration = Duration::from_secs(15);
 
 /// Whether `name` belongs to this module's tools.
 pub(super) fn offered(name: &str) -> bool {
@@ -154,12 +147,14 @@ pub(super) fn tools() -> Vec<Value> {
 #[derive(Default)]
 pub(super) struct Browsers {
     state: Mutex<State>,
+    start_lock: Mutex<()>,
     extension: ExtensionBridge,
 }
 
 #[derive(Default)]
 struct State {
     sessions: HashMap<String, Session>,
+    cancelled_epochs: HashMap<String, u64>,
 }
 
 struct Session {
@@ -291,9 +286,17 @@ impl Browsers {
     }
 
     async fn start(&self, hub: &Arc<Hub>, bot: &str, args: Value) -> Result<Value> {
+        // Starting involves a browser round trip. Serialize starts so concurrent calls for the
+        // same user message cannot create duplicate tabs before either one is registered.
+        let _start_guard = self.start_lock.lock().await;
         let StartArgs { url } = serde_json::from_value(args).map_err(|e| anyhow!("invalid browser_start call: {e}"))?;
         let url = checked_url(&url)?;
-        let message_id = current_message(hub, bot)?;
+        let (message_id, cancelled_epoch) = {
+            let mut state = self.state.lock().await;
+            let message_id = current_message(hub, bot)?;
+            let epoch = *state.cancelled_epochs.entry(bot.to_owned()).or_default();
+            (message_id, epoch)
+        };
         let existing = {
             let state = self.state.lock().await;
             state
@@ -339,12 +342,29 @@ impl Browsers {
                 "too many browser tabs are open for this bot"
             );
         }
+        let browser_id = uuid::Uuid::new_v4().to_string();
+        let operation_id = uuid::Uuid::new_v4().to_string();
+        let generation = uuid::Uuid::new_v4().to_string();
         if headless_enabled() {
-            let launched = launch(&hub.host_id, bot, &message_id, &url).await?;
-            let tab_ws = page_ws(launched.port, &launched.tab_id, &launched.binding.generation).await?;
-            let page = navigate_tab(&tab_ws, &url).await?;
-            let binding = Binding { current_url: url, ..launched.binding };
-            let browser_id = binding.browser_id.clone();
+            let state_root = crate::service::data_dir().join("browsers").join(bot).join(&browser_id);
+            let launched = browser_headless::launch(&state_root, &url).await?;
+            let tab_ws = browser_headless::page_ws(launched.port, &launched.tab_id, &generation).await?;
+            let page = browser_headless::navigate_tab(&tab_ws, &url).await?;
+            let current_url = string_field(&page, "url", &url);
+            let binding = Binding {
+                host_id: hub.host_id.clone(),
+                bot_id: bot.to_owned(),
+                message_id: message_id.clone(),
+                operation_id,
+                browser_id: browser_id.clone(),
+                tab_id: launched.tab_id,
+                generation,
+                browser_pid: launched.pid,
+                browser_executable: launched.executable.display().to_string(),
+                browser_version: launched.version,
+                initial_url: url.clone(),
+                current_url,
+            };
             let session = Session {
                 child: Some(launched.child),
                 port: launched.port,
@@ -354,28 +374,26 @@ impl Browsers {
                 engine: Engine::Headless,
                 extension_version: String::new(),
             };
-            if current_message(hub, bot).ok().as_deref() != Some(message_id.as_str()) {
+            if self.ensure_start_active(hub, bot, &message_id, cancelled_epoch).await.is_err() {
                 close(session).await;
                 bail!("the browser start no longer belongs to the user's current turn");
             }
             let rejected = {
                 let mut state = self.state.lock().await;
-                if state.sessions.values().filter(|session| session.binding.bot_id == bot).count() >= 2 {
-                    true
+                if *state.cancelled_epochs.get(bot).unwrap_or(&0) != cancelled_epoch {
+                    Err(anyhow!("the browser start was cancelled by the user"))
+                } else if state.sessions.values().filter(|session| session.binding.bot_id == bot).count() >= 2 {
+                    Err(anyhow!("too many browser tabs are open for this bot"))
                 } else {
                     state.sessions.insert(browser_id, session);
-                    false
+                    Ok(())
                 }
             };
-            if rejected {
-                bail!("too many browser tabs are open for this bot");
-            }
+            rejected?;
             return Ok(json!({"target": binding, "state": page, "reused": false}));
         }
 
-        let browser_id = uuid::Uuid::new_v4().to_string();
-        let operation_id = uuid::Uuid::new_v4().to_string();
-        let generation = uuid::Uuid::new_v4().to_string();
+        self.ensure_start_active(hub, bot, &message_id, cancelled_epoch).await?;
         let target = json!({
             "hostId": hub.host_id,
             "botId": bot,
@@ -423,27 +441,25 @@ impl Browsers {
             engine: Engine::Extension,
             extension_version: extension_version.clone(),
         };
-        if current_message(hub, bot).ok().as_deref() != Some(message_id.as_str()) {
-            fail_extension_start(
-                &self.extension,
-                &binding,
-                "the browser start no longer belongs to the user's current turn",
-            )
-            .await;
-            bail!("the browser start no longer belongs to the user's current turn");
+        if self.ensure_start_active(hub, bot, &message_id, cancelled_epoch).await.is_err() {
+            fail_extension_start(&self.extension, &binding, "the browser start was cancelled before it completed")
+                .await;
+            bail!("the browser start was cancelled by the user");
         }
         let rejected = {
             let mut state = self.state.lock().await;
-            if state.sessions.values().filter(|session| session.binding.bot_id == bot).count() >= 2 {
-                true
+            if *state.cancelled_epochs.get(bot).unwrap_or(&0) != cancelled_epoch {
+                Err(anyhow!("the browser start was cancelled by the user"))
+            } else if state.sessions.values().filter(|session| session.binding.bot_id == bot).count() >= 2 {
+                Err(anyhow!("too many browser tabs are open for this bot"))
             } else {
                 state.sessions.insert(browser_id, session);
-                false
+                Ok(())
             }
         };
-        if rejected {
-            fail_extension_start(&self.extension, &binding, "too many browser tabs are open for this bot").await;
-            bail!("too many browser tabs are open for this bot");
+        if let Err(error) = rejected {
+            fail_extension_start(&self.extension, &binding, &error.to_string()).await;
+            return Err(error);
         }
         Ok(json!({
             "target": binding,
@@ -454,6 +470,19 @@ impl Browsers {
             },
             "reused": false
         }))
+    }
+
+    async fn ensure_start_active(&self, hub: &Hub, bot: &str, message_id: &str, cancelled_epoch: u64) -> Result<()> {
+        ensure!(
+            current_message(hub, bot).ok().as_deref() == Some(message_id),
+            "the browser start no longer belongs to the user's current turn"
+        );
+        let state = self.state.lock().await;
+        ensure!(
+            *state.cancelled_epochs.get(bot).unwrap_or(&0) == cancelled_epoch,
+            "the browser start was cancelled by the user"
+        );
+        Ok(())
     }
 
     async fn navigate(&self, hub: &Arc<Hub>, bot: &str, args: Value) -> Result<Value> {
@@ -476,8 +505,8 @@ impl Browsers {
             let session = bound_session(&mut state, hub, bot, &bound, true)?;
             (session.port, session.binding.tab_id.clone(), session.binding.generation.clone())
         };
-        let tab_ws = page_ws(port, &tab_id, &generation).await?;
-        let page = navigate_tab(&tab_ws, &url).await?;
+        let tab_ws = browser_headless::page_ws(port, &tab_id, &generation).await?;
+        let page = browser_headless::navigate_tab(&tab_ws, &url).await?;
         let mut state = self.state.lock().await;
         let session = bound_session(&mut state, hub, bot, &bound, true)?;
         session.binding.current_url = url;
@@ -504,16 +533,8 @@ impl Browsers {
             let session = bound_session(&mut state, hub, bot, &bound, true)?;
             (session.port, session.binding.tab_id.clone(), session.binding.generation.clone())
         };
-        let tab_ws = page_ws(port, &tab_id, &generation).await?;
-        let selector = serde_json::to_string(&selector)?;
-        let expression = format!(
-            "(() => {{ const el = document.querySelector({selector}); if (!el) return {{found:false}}; \
-             el.scrollIntoView({{block:'center', inline:'center'}}); el.click(); return {{found:true}}; }})()"
-        );
-        let clicked = evaluate(&tab_ws, &expression).await?;
-        ensure!(clicked["found"] == true, "selector did not match a clickable element: {selector}");
-        tokio::time::sleep(Duration::from_millis(150)).await;
-        let page = page_state(&tab_ws).await?;
+        let tab_ws = browser_headless::page_ws(port, &tab_id, &generation).await?;
+        let page = browser_headless::click(&tab_ws, &selector).await?;
         let mut state = self.state.lock().await;
         let session = bound_session(&mut state, hub, bot, &bound, true)?;
         session.binding.current_url = string_field(&page, "url", &session.binding.current_url);
@@ -542,22 +563,8 @@ impl Browsers {
             let session = bound_session(&mut state, hub, bot, &bound, true)?;
             (session.port, session.binding.tab_id.clone(), session.binding.generation.clone())
         };
-        let tab_ws = page_ws(port, &tab_id, &generation).await?;
-        let selector = serde_json::to_string(&selector)?;
-        let text = serde_json::to_string(&text)?;
-        let expression = format!(
-            "(() => {{ const el = document.querySelector({selector}); if (!el) return {{found:false}}; \
-             el.focus(); const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : \
-             el instanceof HTMLInputElement ? HTMLInputElement.prototype : null; \
-             if (proto) {{ const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set; \
-             if (!setter) return {{found:false}}; setter.call(el, {text}); }} \
-             else if (el.isContentEditable) el.textContent = {text}; else return {{found:false}}; \
-             el.dispatchEvent(new Event('input', {{bubbles:true}})); \
-             el.dispatchEvent(new Event('change', {{bubbles:true}})); return {{found:true}}; }})()"
-        );
-        let typed = evaluate(&tab_ws, &expression).await?;
-        ensure!(typed["found"] == true, "selector did not match an editable element: {selector}");
-        let page = page_state(&tab_ws).await?;
+        let tab_ws = browser_headless::page_ws(port, &tab_id, &generation).await?;
+        let page = browser_headless::type_text(&tab_ws, &selector, &text).await?;
         let mut state = self.state.lock().await;
         let session = bound_session(&mut state, hub, bot, &bound, true)?;
         session.binding.current_url = string_field(&page, "url", &session.binding.current_url);
@@ -572,64 +579,53 @@ impl Browsers {
             let mut state = self.state.lock().await;
             extension_binding(&mut state, hub, bot, &bound, true)?
         };
-        let (encoded, page, exact_viewport) = if let Some(binding) = extension {
+        let (encoded, page) = if let Some(binding) = extension {
             let answer = self.extension.call("screenshot", json!({"target": binding})).await?;
             let encoded =
                 answer["data"].as_str().context("the Codync Browser extension returned no screenshot data")?.to_owned();
             let page = answer.get("state").cloned().unwrap_or_else(|| public_state(&binding.current_url, "", ""));
-            (encoded, page, false)
+            (encoded, page)
         } else {
             let (port, tab_id, generation) = {
                 let mut state = self.state.lock().await;
                 let session = bound_session(&mut state, hub, bot, &bound, true)?;
                 (session.port, session.binding.tab_id.clone(), session.binding.generation.clone())
             };
-            let tab_ws = page_ws(port, &tab_id, &generation).await?;
-            let mut cdp = Cdp::connect(&tab_ws).await?;
-            set_viewport(&mut cdp).await?;
-            let result = cdp
-                .command(
-                    "Page.captureScreenshot",
-                    json!({"format":"png", "fromSurface":true, "captureBeyondViewport":false}),
-                )
-                .await?;
-            let encoded = result["data"].as_str().context("Chrome returned no screenshot data")?.to_owned();
-            let page = page_state(&tab_ws).await?;
-            (encoded, page, true)
+            let tab_ws = browser_headless::page_ws(port, &tab_id, &generation).await?;
+            let (encoded, page) = browser_headless::screenshot(&tab_ws).await?;
+            (encoded, page)
         };
         let bytes = base64::engine::general_purpose::STANDARD.decode(encoded).context("invalid screenshot data")?;
         ensure!(!bytes.is_empty() && bytes.len() <= MAX_SCREENSHOT, "screenshot is empty or too large");
         let image = image::load_from_memory_with_format(&bytes, image::ImageFormat::Png)
             .context("Chrome returned an invalid PNG")?;
-        if exact_viewport {
-            ensure!(
-                image.width() == VIEWPORT_WIDTH && image.height() == VIEWPORT_HEIGHT,
-                "screenshot has an unexpected size {}x{}",
-                image.width(),
-                image.height()
-            );
-        } else {
-            ensure!(image.width() > 0 && image.height() > 0, "screenshot has an empty size");
-        }
-        let (binding, screenshot) = {
+        ensure!(image.width() > 0 && image.height() > 0, "screenshot has an empty size");
+        let screenshot_sha256 = digest(&bytes);
+        let screenshot_size = bytes.len();
+        let (binding, path, number) = {
             let mut state = self.state.lock().await;
             let session = bound_session(&mut state, hub, bot, &bound, true)?;
             session.screenshots += 1;
             let path = screenshot_path(&session.profile, session.screenshots);
-            write_whole(&path, &bytes)?;
             session.binding.current_url = string_field(&page, "url", &session.binding.current_url);
-            (
-                session.binding.clone(),
-                json!({
-                    "path": path.display().to_string(),
-                    "sha256": digest(&bytes),
-                    "size": bytes.len(),
-                    "width": image.width(),
-                    "height": image.height(),
-                    "number": session.screenshots
-                }),
-            )
+            (session.binding.clone(), path, session.screenshots)
         };
+        let write_path = path.clone();
+        tokio::task::spawn_blocking(move || write_whole(&write_path, &bytes))
+            .await
+            .context("the screenshot writer task failed")??;
+        {
+            let mut state = self.state.lock().await;
+            bound_session(&mut state, hub, bot, &bound, true)?;
+        }
+        let screenshot = json!({
+            "path": path.display().to_string(),
+            "sha256": screenshot_sha256,
+            "size": screenshot_size,
+            "width": image.width(),
+            "height": image.height(),
+            "number": number
+        });
         let name = format!("browser-{}-{}.png", &binding.operation_id[..8], screenshot["number"]);
         let posted =
             crate::chat::outbox::call(hub, bot, "send_file", &json!({"path": screenshot["path"], "name": name}))
@@ -672,6 +668,8 @@ impl Browsers {
     pub(super) async fn cancel_bot(&self, bot: &str) {
         let sessions = {
             let mut state = self.state.lock().await;
+            let epoch = state.cancelled_epochs.entry(bot.to_owned()).or_default();
+            *epoch = epoch.saturating_add(1);
             let ids: Vec<String> =
                 state.sessions.iter().filter(|(_, s)| s.binding.bot_id == bot).map(|(id, _)| id.clone()).collect();
             ids.into_iter().filter_map(|id| state.sessions.remove(&id)).collect::<Vec<_>>()
@@ -781,332 +779,6 @@ fn headless_enabled() -> bool {
     std::env::var_os("CODYNC_BROWSER_HEADLESS").is_some_and(|value| value != "0")
 }
 
-struct Launched {
-    child: Child,
-    port: u16,
-    profile: PathBuf,
-    tab_id: String,
-    binding: Binding,
-}
-
-async fn launch(host_id: &str, bot: &str, message_id: &str, url: &str) -> Result<Launched> {
-    let executable = browser_executable()?;
-    let browser_id = uuid::Uuid::new_v4().to_string();
-    let operation_id = uuid::Uuid::new_v4().to_string();
-    let generation = uuid::Uuid::new_v4().to_string();
-    launch_with_ids(host_id, bot, url, executable, browser_id, operation_id, generation, message_id.to_owned()).await
-}
-
-#[allow(clippy::too_many_arguments)]
-async fn launch_with_ids(
-    host_id: &str,
-    bot: &str,
-    url: &str,
-    executable: PathBuf,
-    browser_id: String,
-    operation_id: String,
-    generation: String,
-    message_id: String,
-) -> Result<Launched> {
-    // The caller uses the real message id; the placeholder above is replaced here for one construction path.
-    let state_root = crate::service::data_dir().join("browsers").join(bot).join(&browser_id);
-    let profile = state_root.join("profile");
-    std::fs::create_dir_all(&profile).context("creating the isolated browser profile")?;
-    let error_log = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(state_root.join("chrome.log"))
-        .context("opening the browser log")?;
-    let mut command = Command::new(&executable);
-    command
-        .args([
-            "--headless=new",
-            "--remote-debugging-port=0",
-            "--remote-allow-origins=*",
-            "--no-first-run",
-            "--no-default-browser-check",
-            "--disable-sync",
-            "--disable-extensions",
-            "--disable-component-update",
-            "--disable-background-networking",
-            "--disable-default-apps",
-            "--disable-features=Translate,OptimizationHints,MediaRouter",
-            "--force-device-scale-factor=1",
-            "--window-size=1280,720",
-            "about:blank",
-        ])
-        .arg(format!("--user-data-dir={}", profile.display()))
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::from(error_log))
-        .kill_on_drop(true);
-    #[cfg(windows)]
-    {
-        command.creation_flags(0x0800_0000);
-    }
-    let mut child = command.spawn().with_context(|| format!("starting {}", executable.display()))?;
-    let setup = async {
-        let (port, browser_path) = wait_devtools(&mut child, &state_root).await?;
-        let browser_ws = format!("ws://127.0.0.1:{port}{browser_path}");
-        let version = wait_version(port).await?;
-        let created = cdp_command(
-            &browser_ws,
-            "Target.createTarget",
-            json!({
-                "url": "about:blank",
-                "newWindow": true,
-                "width": VIEWPORT_WIDTH,
-                "height": VIEWPORT_HEIGHT,
-                "background": true
-            }),
-        )
-        .await?;
-        let tab_id = created["targetId"].as_str().context("Chrome returned no tab id")?.to_owned();
-        let pid = child.id().context("the browser process already exited")?;
-        let binding = Binding {
-            host_id: host_id.to_owned(),
-            bot_id: bot.to_owned(),
-            message_id,
-            operation_id,
-            browser_id,
-            tab_id: tab_id.clone(),
-            generation,
-            browser_pid: pid,
-            browser_executable: executable.display().to_string(),
-            browser_version: version,
-            initial_url: url.to_owned(),
-            current_url: url.to_owned(),
-        };
-        Ok::<_, anyhow::Error>((port, tab_id, binding))
-    };
-    match setup.await {
-        Ok((port, tab_id, binding)) => Ok(Launched { child, port, profile, tab_id, binding }),
-        Err(error) => {
-            let _ = child.kill().await;
-            let _ = std::fs::remove_dir_all(&state_root);
-            Err(error)
-        }
-    }
-}
-
-fn browser_executable() -> Result<PathBuf> {
-    if let Some(path) = std::env::var_os("CODYNC_BROWSER_BIN") {
-        let path = PathBuf::from(path);
-        ensure!(path.is_file(), "CODYNC_BROWSER_BIN does not name a file: {}", path.display());
-        return Ok(path);
-    }
-    #[cfg(windows)]
-    let candidates = [
-        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-    ];
-    #[cfg(target_os = "macos")]
-    let candidates = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"];
-    #[cfg(all(unix, not(target_os = "macos")))]
-    let candidates =
-        ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/usr/bin/chromium", "/usr/bin/chromium-browser"];
-    for candidate in candidates {
-        let path = PathBuf::from(candidate);
-        if path.is_file() {
-            return Ok(path);
-        }
-    }
-    bail!("Chrome or Chromium was not found; set CODYNC_BROWSER_BIN to an isolated-test browser executable")
-}
-
-async fn wait_devtools(child: &mut Child, root: &Path) -> Result<(u16, String)> {
-    let port_file = root.join("profile").join("DevToolsActivePort");
-    let deadline = Instant::now() + LAUNCH_TIMEOUT;
-    loop {
-        if let Some(status) = child.try_wait()? {
-            bail!("the browser exited before DevTools opened ({status})");
-        }
-        if let Ok(text) = tokio::fs::read_to_string(&port_file).await {
-            let mut lines = text.lines();
-            if let (Some(port), Some(path)) = (lines.next(), lines.next())
-                && let Ok(port) = port.parse::<u16>()
-                && path.starts_with("/devtools/browser/")
-            {
-                return Ok((port, path.to_owned()));
-            }
-        }
-        ensure!(Instant::now() < deadline, "the browser DevTools endpoint did not start in time");
-        tokio::time::sleep(Duration::from_millis(100)).await;
-    }
-}
-
-async fn wait_version(port: u16) -> Result<String> {
-    let client = reqwest::Client::builder().timeout(Duration::from_secs(2)).build()?;
-    let deadline = Instant::now() + LAUNCH_TIMEOUT;
-    loop {
-        if let Ok(response) = client.get(format!("http://127.0.0.1:{port}/json/version")).send().await
-            && response.status().is_success()
-            && let Ok(value) = response.json::<Value>().await
-        {
-            return Ok(value["Browser"].as_str().unwrap_or("unknown").to_owned());
-        }
-        ensure!(Instant::now() < deadline, "the browser DevTools endpoint did not answer in time");
-        tokio::time::sleep(Duration::from_millis(100)).await;
-    }
-}
-
-async fn page_ws(port: u16, tab_id: &str, generation: &str) -> Result<String> {
-    ensure!(uuid::Uuid::parse_str(generation).is_ok(), "browser target changed");
-    let client = reqwest::Client::builder().timeout(Duration::from_secs(3)).build()?;
-    let list: Value = client
-        .get(format!("http://127.0.0.1:{port}/json/list"))
-        .send()
-        .await
-        .context("reading the bound tab")?
-        .error_for_status()?
-        .json()
-        .await?;
-    let target = list
-        .as_array()
-        .and_then(|targets| targets.iter().find(|target| target["id"] == tab_id))
-        .ok_or_else(|| anyhow!("the bound browser tab is gone; refusing to use another tab"))?;
-    let ws =
-        target["webSocketDebuggerUrl"].as_str().ok_or_else(|| anyhow!("the bound tab has no DevTools endpoint"))?;
-    ensure!(
-        ws.starts_with("ws://127.0.0.1:") || ws.starts_with("ws://localhost:"),
-        "the bound tab has an unexpected DevTools endpoint"
-    );
-    Ok(ws.to_owned())
-}
-
-struct Cdp {
-    socket: tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
-    next_id: u64,
-}
-
-impl Cdp {
-    async fn connect(ws_url: &str) -> Result<Self> {
-        let (socket, _) = tokio::time::timeout(CONNECT_TIMEOUT, tokio_tungstenite::connect_async(ws_url))
-            .await
-            .context("connecting to the isolated browser timed out")?
-            .context("connecting to the isolated browser")?;
-        Ok(Self { socket, next_id: 1 })
-    }
-
-    async fn command(&mut self, method: &str, params: Value) -> Result<Value> {
-        let id = self.next_id;
-        self.next_id += 1;
-        self.socket
-            .send(Message::Text(json!({"id":id, "method":method, "params":params}).to_string().into()))
-            .await
-            .with_context(|| format!("sending {method}"))?;
-        let deadline = Instant::now() + COMMAND_TIMEOUT;
-        loop {
-            let left = deadline.saturating_duration_since(Instant::now());
-            ensure!(!left.is_zero(), "{method} timed out");
-            let message = tokio::time::timeout(left, self.socket.next())
-                .await
-                .with_context(|| format!("{method} timed out"))?
-                .ok_or_else(|| anyhow!("{method}: browser connection closed"))?
-                .with_context(|| format!("{method}: browser connection failed"))?;
-            match message {
-                Message::Text(text) => {
-                    let reply: Value =
-                        serde_json::from_str(&text).with_context(|| format!("{method}: invalid reply"))?;
-                    if reply["id"].as_u64() != Some(id) {
-                        continue;
-                    }
-                    if !reply["error"].is_null() {
-                        let detail = reply["error"]["message"].as_str().unwrap_or("unknown DevTools error");
-                        bail!("{method}: {detail}");
-                    }
-                    return Ok(reply["result"].clone());
-                }
-                Message::Binary(bytes) => {
-                    let Ok(reply) = serde_json::from_slice::<Value>(&bytes) else { continue };
-                    if reply["id"].as_u64() != Some(id) {
-                        continue;
-                    }
-                    if !reply["error"].is_null() {
-                        let detail = reply["error"]["message"].as_str().unwrap_or("unknown DevTools error");
-                        bail!("{method}: {detail}");
-                    }
-                    return Ok(reply["result"].clone());
-                }
-                Message::Ping(data) => self.socket.send(Message::Pong(data)).await?,
-                Message::Close(_) => bail!("{method}: browser connection closed"),
-                Message::Pong(_) | Message::Frame(_) => {}
-            }
-        }
-    }
-}
-
-async fn cdp_command(ws_url: &str, method: &str, params: Value) -> Result<Value> {
-    Cdp::connect(ws_url).await?.command(method, params).await
-}
-
-async fn set_viewport(cdp: &mut Cdp) -> Result<()> {
-    cdp.command(
-        "Emulation.setDeviceMetricsOverride",
-        json!({
-            "width":VIEWPORT_WIDTH,
-            "height":VIEWPORT_HEIGHT,
-            "deviceScaleFactor":1,
-            "mobile":false
-        }),
-    )
-    .await?;
-    Ok(())
-}
-
-async fn evaluate(ws_url: &str, expression: &str) -> Result<Value> {
-    let mut cdp = Cdp::connect(ws_url).await?;
-    let reply = cdp
-        .command("Runtime.evaluate", json!({"expression":expression, "returnByValue":true, "awaitPromise":true}))
-        .await?;
-    ensure!(reply["exceptionDetails"].is_null(), "page script failed: {}", reply["exceptionDetails"]);
-    Ok(reply["result"]["value"].clone())
-}
-
-async fn page_state(ws_url: &str) -> Result<Value> {
-    let value = evaluate(
-        ws_url,
-        "(() => { const fields = [...document.querySelectorAll('input,textarea')].map(el => `${el.id || el.name || 'field'}=${el.value || ''}`); return {url: location.href, title: document.title || '', text: ((document.body?.innerText || '') + (fields.length ? '\\n' + fields.join('\\n') : '')).slice(0, 4096)}; })()",
-    )
-    .await?;
-    Ok(public_state(
-        value["url"].as_str().unwrap_or_default(),
-        value["title"].as_str().unwrap_or_default(),
-        value["text"].as_str().unwrap_or_default(),
-    ))
-}
-
-async fn navigate_tab(ws_url: &str, url: &str) -> Result<Value> {
-    let mut cdp = Cdp::connect(ws_url).await?;
-    cdp.command("Page.enable", json!({})).await?;
-    set_viewport(&mut cdp).await?;
-    let navigation = tokio::time::timeout(
-        NAVIGATION_TIMEOUT,
-        cdp.command("Page.navigate", json!({"url":url, "transitionType":"typed"})),
-    )
-    .await
-    .context("navigation timed out; it was sent once and will not be retried")??;
-    ensure!(
-        navigation["errorText"].is_null(),
-        "navigation failed: {}",
-        navigation["errorText"].as_str().unwrap_or("unknown error")
-    );
-    let ready = cdp
-        .command(
-            "Runtime.evaluate",
-            json!({
-                "expression":"new Promise(resolve => { if (document.readyState === 'complete') resolve(true); else addEventListener('load', () => resolve(true), {once:true}); setTimeout(() => resolve(document.readyState === 'complete'), 10000); })",
-                "returnByValue":true,
-                "awaitPromise":true
-            }),
-        )
-        .await?;
-    ensure!(ready["result"]["value"] == true, "the bound tab did not finish loading");
-    page_state(ws_url).await
-}
-
 fn public_state(url: &str, title: &str, text: &str) -> Value {
     json!({"url":url, "title":title, "text":text})
 }
@@ -1133,11 +805,28 @@ fn digest(bytes: &[u8]) -> String {
 
 async fn close(mut session: Session) {
     if let Some(child) = session.child.as_mut() {
-        let _ = child.start_kill();
-        let _ = tokio::time::timeout(Duration::from_secs(5), child.wait()).await;
+        if let Err(error) = child.start_kill() {
+            tracing::warn!(%error, browser_id = %session.binding.browser_id, "could not signal the test browser to stop");
+        }
+        match tokio::time::timeout(Duration::from_secs(5), child.wait()).await {
+            Ok(Ok(_)) => {}
+            Ok(Err(error)) => {
+                tracing::warn!(%error, browser_id = %session.binding.browser_id, "could not reap the test browser");
+            }
+            Err(_) => {
+                tracing::warn!(browser_id = %session.binding.browser_id, "the test browser did not exit within five seconds");
+            }
+        }
     }
-    let root = session.profile.parent().unwrap_or(&session.profile);
-    let _ = std::fs::remove_dir_all(root);
+    let root = session.profile.parent().unwrap_or(&session.profile).to_owned();
+    let browser_id = session.binding.browser_id.clone();
+    if let Err(error) = tokio::task::spawn_blocking(move || std::fs::remove_dir_all(root))
+        .await
+        .context("the browser cleanup task failed")
+        .and_then(|result| result.context("removing the browser evidence directory"))
+    {
+        tracing::warn!(%error, %browser_id, "could not remove the browser evidence directory");
+    }
 }
 
 #[cfg(test)]

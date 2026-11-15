@@ -6,6 +6,7 @@
 mod common;
 
 use axum::{Router, response::Html, routing::get};
+#[cfg(windows)]
 use base64::Engine as _;
 use common::host::Host;
 use futures::{SinkExt as _, StreamExt as _};
@@ -13,8 +14,12 @@ use image::GenericImageView as _;
 use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 use std::path::{Path, PathBuf};
+#[cfg(windows)]
+use std::sync::{Arc, Mutex as StdMutex};
 use std::time::{Duration, Instant};
+#[cfg(windows)]
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
+#[cfg(windows)]
 use tokio_tungstenite::tungstenite::{Message, http::header};
 
 const PAGE: &str = r#"<!doctype html>
@@ -156,7 +161,13 @@ async fn history(host: &Host, bot: &str) -> Vec<Value> {
     host.call("history", json!({"botId": bot})).await["entries"].as_array().unwrap().clone()
 }
 
-async fn fake_extension(host: &Host, screenshot: Vec<u8>) -> tokio::task::JoinHandle<()> {
+#[cfg(windows)]
+async fn fake_extension(
+    host: &Host,
+    screenshot: Vec<u8>,
+    start_delay: Duration,
+    requests: Arc<StdMutex<Vec<Value>>>,
+) -> tokio::task::JoinHandle<()> {
     let url = host.base.replacen("http://", "ws://", 1) + "/browser-extension";
     let mut request = url.into_client_request().unwrap();
     request.headers_mut().insert(header::AUTHORIZATION, format!("Bearer {}", host.token).parse().unwrap());
@@ -167,7 +178,8 @@ async fn fake_extension(host: &Host, screenshot: Vec<u8>) -> tokio::task::JoinHa
                 "type": "hello",
                 "protocol": 1,
                 "extensionId": "dgejialhpalhoigbkmgeabgpphlipiek",
-                "version": "test"
+                "version": "test",
+                "isolatedProfile": true
             })
             .to_string()
             .into(),
@@ -187,11 +199,15 @@ async fn fake_extension(host: &Host, screenshot: Vec<u8>) -> tokio::task::JoinHa
             let Some(id) = request["id"].as_str() else {
                 continue;
             };
+            requests.lock().unwrap().push(request.clone());
             let state = json!({
                 "url": "http://127.0.0.1/",
                 "title": "Codync extension fixture",
                 "text": if request["method"] == "click" { "Count: 1" } else { "name=Codync" }
             });
+            if request["method"] == "start" && !start_delay.is_zero() {
+                tokio::time::sleep(start_delay).await;
+            }
             let result = match request["method"].as_str().unwrap() {
                 "start" => json!({
                     "tabId": "123",
@@ -206,6 +222,7 @@ async fn fake_extension(host: &Host, screenshot: Vec<u8>) -> tokio::task::JoinHa
                     "state": state
                 }),
                 "stop" => json!({"closed": true}),
+                "cancel" => json!({"cancelled": true}),
                 method => panic!("unexpected browser extension method {method}"),
             };
             socket
@@ -327,6 +344,7 @@ async fn screenshot_returns_to_the_same_chat_with_guards() {
 }
 
 #[tokio::test]
+#[cfg(windows)]
 async fn extension_bridge_posts_to_the_same_chat_without_a_headless_fallback() {
     if common::python_missing() {
         return;
@@ -336,7 +354,8 @@ async fn extension_bridge_posts_to_the_same_chat_without_a_headless_fallback() {
     image::DynamicImage::new_rgba8(2, 2)
         .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
         .unwrap();
-    let extension = fake_extension(&host, png.clone()).await;
+    let requests = Arc::new(StdMutex::new(Vec::new()));
+    let extension = fake_extension(&host, png.clone(), Duration::ZERO, requests).await;
     let bot = browser_bot(&host).await;
 
     let message_id = send(&host, &bot, "browser-happy http://127.0.0.1/").await;
@@ -364,6 +383,74 @@ async fn extension_bridge_posts_to_the_same_chat_without_a_headless_fallback() {
 }
 
 #[tokio::test]
+#[cfg(windows)]
+async fn concurrent_start_requests_share_one_tab() {
+    if common::python_missing() {
+        return;
+    }
+    let host = Host::start().await;
+    let mut png = Vec::new();
+    image::DynamicImage::new_rgba8(2, 2)
+        .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+        .unwrap();
+    let requests = Arc::new(StdMutex::new(Vec::new()));
+    let extension = fake_extension(&host, png, Duration::ZERO, requests.clone()).await;
+    let bot = browser_bot(&host).await;
+
+    let _ = send(&host, &bot, "browser-concurrent http://127.0.0.1/").await;
+    let result = wait_json(&host.home, &results_path(&host, &bot), Duration::from_secs(45)).await;
+    let starts = result["concurrentStarts"].as_array().unwrap();
+    assert_eq!(starts.len(), 2, "{result}");
+    assert_ne!(starts[0]["reused"], starts[1]["reused"], "{result}");
+    assert_eq!(starts[0]["target"], starts[1]["target"], "{result}");
+
+    extension.await.unwrap();
+    let methods = requests
+        .lock()
+        .unwrap()
+        .iter()
+        .filter_map(|request| request["method"].as_str().map(str::to_owned))
+        .collect::<Vec<_>>();
+    assert_eq!(methods.iter().filter(|method| method.as_str() == "start").count(), 1, "{methods:?}");
+    assert_eq!(methods.iter().filter(|method| method.as_str() == "state").count(), 1, "{methods:?}");
+}
+
+#[tokio::test]
+#[cfg(windows)]
+async fn stopping_during_a_delayed_start_closes_the_late_tab() {
+    if common::python_missing() {
+        return;
+    }
+    let host = Host::start().await;
+    let mut png = Vec::new();
+    image::DynamicImage::new_rgba8(2, 2)
+        .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+        .unwrap();
+    let requests = Arc::new(StdMutex::new(Vec::new()));
+    let extension = fake_extension(&host, png, Duration::from_secs(1), requests.clone()).await;
+    let bot = browser_bot(&host).await;
+
+    let _ = send(&host, &bot, "browser-start-stop http://127.0.0.1/").await;
+    let progress = host.home.join("bots").join(&bot).join("workspace").join("browser-progress.json");
+    let state = wait_json(&host.home, &progress, Duration::from_secs(30)).await;
+    assert_eq!(state["stage"], "tool:browser_start:request", "{state}");
+    host.call("stop", json!({"botId": bot})).await;
+    let result = wait_json(&host.home, &results_path(&host, &bot), Duration::from_secs(45)).await;
+    assert!(result["startError"].as_str().unwrap().contains("cancelled"), "{result}");
+
+    extension.await.unwrap();
+    let methods = requests
+        .lock()
+        .unwrap()
+        .iter()
+        .filter_map(|request| request["method"].as_str().map(str::to_owned))
+        .collect::<Vec<_>>();
+    assert_eq!(methods.iter().filter(|method| method.as_str() == "start").count(), 1, "{methods:?}");
+    assert_eq!(methods.iter().filter(|method| method.as_str() == "stop").count(), 1, "{methods:?}");
+}
+
+#[tokio::test]
+#[cfg(windows)]
 async fn missing_extension_fails_instead_of_switching_browser_or_computer() {
     if common::python_missing() {
         return;

@@ -1,4 +1,4 @@
-const NATIVE_HOST = 'dev.codync.browser'
+const NATIVE_HOSTS = ['codync.browser', 'codync.browser.dev']
 const EXTENSION_ID = 'dgejialhpalhoigbkmgeabgpphlipiek'
 const PROTOCOL = 1
 const SESSION_KEY = 'codyncBrowserSession'
@@ -8,11 +8,14 @@ const attachTimeout = 10_000
 const navigateTimeout = 20_000
 const settleTimeout = 200
 
-let port = null
-let hostId = null
-let reconnect = null
+const connections = new Map()
+const reconnects = new Map()
+const reconnectSuppressed = new Set()
+const activeRequests = new Map()
+const completedStarts = new Map()
 const attachedTabs = new Set()
 const sessions = new Map()
+let storageUpdateQueue = Promise.resolve()
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -42,7 +45,7 @@ function checkedUrl(value) {
   return url.toString()
 }
 
-function targetFrom(params, requireTab = true) {
+function targetFrom(params, connection, requireTab = true) {
   const target = params?.target
   if (!target || typeof target !== 'object') throw new Error('Missing browser target')
   const required = ['hostId', 'botId', 'messageId', 'operationId', 'browserId', 'generation']
@@ -50,7 +53,9 @@ function targetFrom(params, requireTab = true) {
   for (const key of required) {
     if (typeof target[key] !== 'string' || target[key].length === 0) throw new Error(`Missing browser target ${key}`)
   }
-  if (hostId && target.hostId !== hostId) throw new Error('Browser target belongs to another Codync host')
+  if (!connection.hostId || target.hostId !== connection.hostId) {
+    throw new Error('Browser target belongs to another Codync host')
+  }
   return target
 }
 
@@ -74,46 +79,102 @@ async function restoreSessions() {
   for (const session of stored[SESSION_KEY] ?? []) sessions.set(session.browserId, session)
 }
 
-async function setBridgeStatus(status, detail = '') {
-  await chrome.storage.local.set({
-    bridgeStatus: { status, detail, hostId, at: Date.now() }
+function queueStorageUpdate(update) {
+  const pending = storageUpdateQueue.then(update, update)
+  storageUpdateQueue = pending.catch(() => {})
+  return pending
+}
+
+async function setBridgeStatus(status, detail = '', id = null) {
+  await queueStorageUpdate(async () => {
+    const stored = await chrome.storage.local.get(['bridgeConnections'])
+    await chrome.storage.local.set({
+      bridgeStatus: { status, detail, hostId: id, at: Date.now() },
+      bridgeConnections: stored.bridgeConnections ?? {}
+    })
   })
 }
 
-function connectNative() {
-  if (port) return
-  void setBridgeStatus('connecting')
+async function setConnectionStatus(hostName, status, detail = '', id = null) {
+  await queueStorageUpdate(async () => {
+    const stored = await chrome.storage.local.get(['bridgeConnections'])
+    const bridgeConnections = { ...(stored.bridgeConnections ?? {}) }
+    bridgeConnections[hostName] = { status, detail, hostId: id, at: Date.now() }
+    const entries = Object.values(bridgeConnections)
+    const connected = entries.find((entry) => entry.status === 'connected')
+    const waiting = entries.find((entry) => entry.status === 'waiting')
+    const error = entries.find((entry) => entry.status === 'error')
+    const bridgeStatus = connected
+      ? { status: 'connected', detail: '', hostId: connected.hostId ?? null, at: Date.now() }
+      : waiting
+        ? { status: 'waiting', detail: waiting.detail ?? '', hostId: null, at: Date.now() }
+        : error
+          ? { status: 'error', detail: error.detail ?? '', hostId: null, at: Date.now() }
+          : { status: 'disconnected', detail, hostId: null, at: Date.now() }
+    await chrome.storage.local.set({ bridgeStatus, bridgeConnections })
+  })
+}
+
+function connectNative(hostName) {
+  if (connections.get(hostName)?.port) return
+  void setConnectionStatus(hostName, 'connecting')
+  let port
   try {
-    port = chrome.runtime.connectNative(NATIVE_HOST)
+    port = chrome.runtime.connectNative(hostName)
+    connections.set(hostName, { name: hostName, port, hostId: null })
   } catch (error) {
-    void setBridgeStatus('disconnected', String(error?.message ?? error))
-    scheduleReconnect()
+    void setConnectionStatus(hostName, 'disconnected', String(error?.message ?? error))
+    scheduleReconnect(hostName)
     return
   }
   port.onMessage.addListener((message) => {
     if (!message || typeof message !== 'object') return
     if (message.type === 'ready') {
-      hostId = message.hostId
-      void setBridgeStatus('connected')
+      const connection = connections.get(hostName)
+      if (!connection || connection.port !== port) return
+      connection.hostId = String(message.hostId)
+      void setConnectionStatus(hostName, 'connected', '', connection.hostId)
       return
     }
     if (message.type === 'bridgeError') {
-      void setBridgeStatus('error', String(message.error ?? 'Browser bridge error'))
+      const detail = String(message.error ?? 'Browser bridge error')
+      const connection = connections.get(hostName)
+      if (connection?.port === port && /Opened Codync Browser in its dedicated profile/i.test(detail)) {
+        connection.stopReconnect = true
+        connection.stopReason = detail
+        reconnectSuppressed.add(hostName)
+      }
+      void setConnectionStatus(hostName, 'error', detail)
       return
     }
     if (message.type === 'queued') {
-      void setBridgeStatus('waiting', String(message.detail ?? 'Another browser window is connected'))
+      void setConnectionStatus(
+        hostName,
+        'waiting',
+        String(message.detail ?? 'Another browser window is connected')
+      )
       return
     }
     if (typeof message.id !== 'string' || typeof message.method !== 'string') return
-    void runRequest(message)
+    const connection = connections.get(hostName)
+    if (connection?.port === port && connection.hostId) void runRequest(message, connection)
   })
   port.onDisconnect.addListener(() => {
     const detail = chrome.runtime.lastError?.message ?? 'Codync Browser bridge disconnected'
-    port = null
-    hostId = null
-    void setBridgeStatus('disconnected', detail)
-    scheduleReconnect()
+    const connection = connections.get(hostName)
+    if (connection?.port !== port) return
+    const stopReconnect = connection.stopReconnect === true
+    const disconnectDetail = stopReconnect ? connection.stopReason : detail
+    connections.delete(hostName)
+    for (const request of activeRequests.values()) {
+      if (request.connection?.port === port) request.cancelled = true
+    }
+    if (stopReconnect) {
+      void setConnectionStatus(hostName, 'error', disconnectDetail)
+    } else {
+      void setConnectionStatus(hostName, 'disconnected', detail)
+      scheduleReconnect(hostName)
+    }
   })
   port.postMessage({
     type: 'hello',
@@ -124,34 +185,56 @@ function connectNative() {
   })
 }
 
-function scheduleReconnect() {
-  if (reconnect) return
-  reconnect = setTimeout(() => {
-    reconnect = null
-    connectNative()
-  }, 2000)
+function scheduleReconnect(hostName) {
+  if (reconnectSuppressed.has(hostName) || reconnects.has(hostName)) return
+  reconnects.set(
+    hostName,
+    setTimeout(() => {
+      reconnects.delete(hostName)
+      connectNative(hostName)
+    }, 2000)
+  )
 }
 
-function reply(message, result) {
-  if (!port) return
-  port.postMessage({ id: message.id, ok: true, result })
+function reply(connection, message, result) {
+  if (connections.get(connection.name)?.port !== connection.port) return
+  connection.port.postMessage({ id: message.id, ok: true, result })
 }
 
-function fail(message, error) {
-  if (!port) return
-  port.postMessage({
+function fail(connection, message, error) {
+  if (connections.get(connection.name)?.port !== connection.port) return
+  connection.port.postMessage({
     id: message.id,
     ok: false,
     error: String(error?.message ?? error ?? 'Codync Browser request failed')
   })
 }
 
-async function runRequest(message) {
+async function runRequest(message, connection) {
+  const state = { cancelled: false, connection }
+  activeRequests.set(message.id, state)
   try {
-    reply(message, await handle(message.method, message.params ?? {}))
+    const result = await handle(message.method, message.params ?? {}, connection, state)
+    if (state.cancelled) {
+      if (message.method === 'start' && message.params?.target) {
+        await stop({ target: message.params.target }, connection)
+      }
+      throw new Error('Codync Browser request was cancelled')
+    }
+    reply(connection, message, result)
   } catch (error) {
-    fail(message, error)
+    fail(connection, message, error)
+  } finally {
+    activeRequests.delete(message.id)
+    if (message.method === 'start' && message.params?.target) {
+      completedStarts.set(message.id, { target: message.params.target, connection })
+      setTimeout(() => completedStarts.delete(message.id), 60_000)
+    }
   }
+}
+
+function ensureRequestActive(state) {
+  if (state.cancelled) throw new Error('Codync Browser request was cancelled')
 }
 
 async function waitForTab(tabId, predicate, timeoutMs) {
@@ -227,16 +310,20 @@ async function pageState(tabId) {
   }
 }
 
-async function start(params) {
-  const target = targetFrom(params, false)
+async function start(params, connection, state) {
+  const target = targetFrom(params, connection, false)
   const url = checkedUrl(params.url)
   let tabId = null
   try {
+    ensureRequestActive(state)
     const tab = await chrome.tabs.create({ url, active: true })
+    ensureRequestActive(state)
     if (!Number.isInteger(tab.id)) throw new Error('Chrome did not return a tab id')
     tabId = tab.id
     await waitForTab(tabId, (current) => current.status === 'complete', navigateTimeout)
+    ensureRequestActive(state)
     await attach(tabId)
+    ensureRequestActive(state)
     const session = {
       hostId: target.hostId,
       botId: target.botId,
@@ -250,6 +337,7 @@ async function start(params) {
     }
     sessions.set(target.browserId, session)
     await persistSessions()
+    ensureRequestActive(state)
     return {
       tabId: String(tabId),
       browserVersion: navigator.userAgent,
@@ -271,8 +359,8 @@ async function start(params) {
   }
 }
 
-async function navigate(params) {
-  const target = targetFrom(params)
+async function navigate(params, connection) {
+  const target = targetFrom(params, connection)
   const session = sessionFor(target)
   const url = checkedUrl(params.url)
   const tabId = Number(session.tabId)
@@ -295,8 +383,8 @@ async function navigate(params) {
   return pageState(tabId)
 }
 
-async function click(params) {
-  const target = targetFrom(params)
+async function click(params, connection) {
+  const target = targetFrom(params, connection)
   const session = sessionFor(target)
   if (typeof params.selector !== 'string' || params.selector.length === 0 || params.selector.length > 512) {
     throw new Error('Selector must be 1-512 bytes')
@@ -350,8 +438,8 @@ async function click(params) {
   return pageState(tabId)
 }
 
-async function type(params) {
-  const target = targetFrom(params)
+async function type(params, connection) {
+  const target = targetFrom(params, connection)
   const session = sessionFor(target)
   if (typeof params.selector !== 'string' || params.selector.length === 0 || params.selector.length > 512) {
     throw new Error('Selector must be 1-512 bytes')
@@ -400,8 +488,8 @@ function selectAllModifier() {
   return /Mac/i.test(navigator.platform) ? 4 : 2
 }
 
-async function screenshot(params) {
-  const target = targetFrom(params)
+async function screenshot(params, connection) {
+  const target = targetFrom(params, connection)
   const session = sessionFor(target)
   const tabId = Number(session.tabId)
   await attach(tabId)
@@ -414,8 +502,8 @@ async function screenshot(params) {
   return { data: capture.data, state: await pageState(tabId) }
 }
 
-async function stop(params) {
-  const target = targetFrom(params)
+async function stop(params, connection) {
+  const target = targetFrom(params, connection)
   const session = sessionFor(target)
   const tabId = Number(session.tabId)
   await detach(tabId)
@@ -425,28 +513,46 @@ async function stop(params) {
   return { closed: true, tabId: session.tabId }
 }
 
-async function state(params) {
-  const target = targetFrom(params)
+async function state(params, connection) {
+  const target = targetFrom(params, connection)
   const session = sessionFor(target)
   return pageState(Number(session.tabId))
 }
 
-async function handle(method, params) {
+async function handle(method, params, connection, requestState) {
   switch (method) {
     case 'start':
-      return start(params)
+      return start(params, connection, requestState)
     case 'navigate':
-      return navigate(params)
+      return navigate(params, connection)
     case 'click':
-      return click(params)
+      return click(params, connection)
     case 'type':
-      return type(params)
+      return type(params, connection)
     case 'screenshot':
-      return screenshot(params)
+      return screenshot(params, connection)
     case 'stop':
-      return stop(params)
+      return stop(params, connection)
     case 'state':
-      return state(params)
+      return state(params, connection)
+    case 'cancel': {
+      const request = activeRequests.get(params.requestId)
+      if (request) {
+        request.cancelled = true
+        return { cancelled: true }
+      }
+      const completed = completedStarts.get(params.requestId)
+      if (completed) {
+        completedStarts.delete(params.requestId)
+        try {
+          await stop({ target: completed.target }, completed.connection)
+        } catch (error) {
+          if (!/no longer running/i.test(String(error?.message ?? error))) throw error
+        }
+        return { cancelled: true }
+      }
+      return { cancelled: false }
+    }
     default:
       throw new Error(`Unknown Codync Browser method ${method}`)
   }
@@ -464,22 +570,34 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 })
 
 chrome.debugger.onDetach.addListener((source) => {
-  if (Number.isInteger(source.tabId)) attachedTabs.delete(source.tabId)
+  if (!Number.isInteger(source.tabId)) return
+  attachedTabs.delete(source.tabId)
+  let changed = false
+  for (const [browserId, session] of sessions) {
+    if (session.tabId !== String(source.tabId)) continue
+    sessions.delete(browserId)
+    changed = true
+  }
+  if (changed) void persistSessions()
 })
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type !== 'status') return false
   void chrome.storage.local.get(['bridgeStatus']).then(({ bridgeStatus }) => {
     sendResponse({
-      bridgeStatus: bridgeStatus ?? { status: port ? 'connecting' : 'disconnected' },
+      bridgeStatus: bridgeStatus ?? { status: connections.size ? 'connecting' : 'disconnected' },
       extensionVersion: chrome.runtime.getManifest().version,
-      sessions: sessions.size
+      sessions: sessions.size,
+      connections: [...connections.entries()].map(([hostName, connection]) => ({
+        hostName,
+        hostId: connection.hostId
+      }))
     })
   })
   return true
 })
 
-chrome.runtime.onStartup.addListener(connectNative)
-chrome.runtime.onInstalled.addListener(connectNative)
+chrome.runtime.onStartup.addListener(() => NATIVE_HOSTS.forEach(connectNative))
+chrome.runtime.onInstalled.addListener(() => NATIVE_HOSTS.forEach(connectNative))
 
-void restoreSessions().finally(connectNative)
+void restoreSessions().finally(() => NATIVE_HOSTS.forEach(connectNative))

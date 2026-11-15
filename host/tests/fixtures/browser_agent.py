@@ -43,7 +43,13 @@ def prompt(message):
     assert match, f'supply a page URL: {text}'
     url = match.group(0).rstrip('.,)')
     tool = next(server for server in session['mcpServers'] if server['name'] == 'computer')
-    results = {'mode': None}
+    results = {
+        'mode': 'concurrent' if 'browser-concurrent' in text
+        else 'start-stop' if 'browser-start-stop' in text
+        else 'happy' if 'browser-happy' in text
+        else 'takeover' if 'browser-takeover' in text
+        else 'stop'
+    }
     progress = {'stage': 'spawn-mcp'}
 
     def checkpoint(stage, detail=None):
@@ -95,11 +101,73 @@ def prompt(message):
             checkpoint(f'tool:{name}:reply', {'ok': ok, 'error': None if ok else value})
             return ok, value
 
+        if results['mode'] == 'concurrent':
+            def send_start():
+                nonlocal sequence
+                sequence += 1
+                request_id = sequence
+                mcp.stdin.write(json.dumps({
+                    'jsonrpc': '2.0',
+                    'id': request_id,
+                    'method': 'tools/call',
+                    'params': {'name': 'browser_start', 'arguments': {'url': url}},
+                }) + '\n')
+                mcp.stdin.flush()
+                return request_id
+
+            pending_ids = {send_start(), send_start()}
+            replies = {}
+            while pending_ids:
+                line = mcp.stdout.readline()
+                assert line, 'MCP exited before replying to concurrent browser_start'
+                message = json.loads(line)
+                if message.get('id') in pending_ids:
+                    pending_ids.remove(message['id'])
+                    replies[message['id']] = message['result']
+            starts = []
+            for reply in replies.values():
+                assert not reply.get('isError'), reply
+                starts.append(json.loads(reply['content'][0]['text']))
+            starts.sort(key=lambda item: item['reused'])
+            assert starts[0]['reused'] is False and starts[1]['reused'] is True, starts
+            assert binding(starts[0]) == binding(starts[1]), starts
+            results['concurrentStarts'] = starts
+            ok, closed = tool('browser_stop', binding(starts[0]))
+            assert ok, closed
+            results['stop'] = closed
+            (cwd / 'browser-results.json').write_text(json.dumps(results, indent=2))
+            checkpoint('results-written')
+            mcp.stdin.close()
+            send({
+                'jsonrpc': '2.0',
+                'method': 'session/update',
+                'params': {
+                    'sessionId': params['sessionId'],
+                    'update': {'sessionUpdate': 'agent_message_chunk', 'content': {'type': 'text', 'text': 'Concurrent browser start reused one tab.'}},
+                },
+            })
+            return {'stopReason': 'end_turn'}
+
         ok, start = tool('browser_start', {'url': url})
+        if results['mode'] == 'start-stop':
+            assert not ok and ('cancelled' in start or 'no longer running' in start), (ok, start)
+            results['startError'] = start
+            checkpoint('start-cancelled')
+            (cwd / 'browser-results.json').write_text(json.dumps(results, indent=2))
+            checkpoint('results-written')
+            mcp.stdin.close()
+            send({
+                'jsonrpc': '2.0',
+                'method': 'session/update',
+                'params': {
+                    'sessionId': params['sessionId'],
+                    'update': {'sessionUpdate': 'agent_message_chunk', 'content': {'type': 'text', 'text': 'Browser start cancelled.'}},
+                },
+            })
+            return {'stopReason': 'end_turn'}
         assert ok, start
         bound = binding(start)
         results['start'] = start
-        results['mode'] = 'happy' if 'browser-happy' in text else 'takeover' if 'browser-takeover' in text else 'stop'
         checkpoint('start-complete', {'mode': results['mode']})
 
         if results['mode'] == 'happy':

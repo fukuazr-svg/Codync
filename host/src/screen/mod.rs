@@ -34,6 +34,7 @@
 
 mod browser;
 mod browser_extension;
+mod browser_headless;
 mod computer;
 mod cua;
 mod helper;

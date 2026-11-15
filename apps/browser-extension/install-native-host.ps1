@@ -21,8 +21,34 @@ if ($LASTEXITCODE -ne 0) {
     throw "The native-messaging helper could not install its manifest (exit $LASTEXITCODE)"
 }
 
-$hostName = 'dev.codync.browser'
-$manifestPath = Join-Path $env:LOCALAPPDATA 'Codync\BrowserExtension\dev.codync.browser.json'
+$variants = @(
+    [pscustomobject]@{
+        HostName = 'codync.browser'
+        Manifest = Join-Path $env:LOCALAPPDATA 'Codync\BrowserExtension\codync.browser.json'
+    },
+    [pscustomobject]@{
+        HostName = 'codync.browser.dev'
+        Manifest = Join-Path $env:LOCALAPPDATA 'Codync Dev\BrowserExtension\codync.browser.dev.json'
+    }
+)
+$installed = foreach ($variant in $variants) {
+    if (-not (Test-Path -LiteralPath $variant.Manifest -PathType Leaf)) {
+        continue
+    }
+    $candidate = Get-Content -LiteralPath $variant.Manifest -Raw | ConvertFrom-Json
+    if ($candidate.path -eq $helper) {
+        [pscustomobject]@{
+            HostName = $variant.HostName
+            ManifestPath = $variant.Manifest
+        }
+    }
+}
+$installed = @($installed)
+if ($installed.Count -ne 1) {
+    throw "Expected exactly one native-messaging manifest for $helper, found $($installed.Count)"
+}
+$hostName = $installed[0].HostName
+$manifestPath = $installed[0].ManifestPath
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 if ($manifest.name -ne $hostName -or $manifest.path -ne $helper) {
     throw "The installed native-messaging manifest does not match the selected helper"

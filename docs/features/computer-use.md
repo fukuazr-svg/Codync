@@ -50,17 +50,21 @@ Descriptions come from the running driver, so they match the platform; when it c
 
 On Windows, the same `computer` server offers `browser_start`, `browser_navigate`, `browser_click`,
 `browser_type`, `browser_screenshot` and `browser_stop`. Its Codync Browser extension creates one
-dedicated foreground tab for the user message, uses Chrome's real mouse and keyboard input paths, and
-publishes screenshots through the chat's existing file card. A missing extension is an explicit
-error; the host never opens another browser, profile or computer as a fallback.
+dedicated foreground tab in a separate Codync profile for the user message, uses Chrome's real mouse
+and keyboard input paths, and publishes screenshots through the chat's existing file card. A missing
+extension is an explicit error; the host never opens another browser, profile or computer as a
+fallback.
 
 The installer bundles the unpacked extension under Codync's `resources/browser-extension` directory
-and registers the `dev.codync.browser` native-messaging helper with Chrome and Edge. In the browser,
-open `chrome://extensions` (or `edge://extensions`), enable Developer mode, choose **Load unpacked**,
-and select that directory. The fixed manifest key gives the extension ID
-`dgejialhpalhoigbkmgeabgpphlipiek`. The popup should say **Connected to Codync** while the matching
-host runs. Uninstalling Codync removes the native-messaging registration; removing the extension in
-the browser removes its local tab bindings and stored status.
+and registers `codync.browser` (`codync.browser.dev` for Codync Dev) with Chrome and Edge. The two
+environments use different manifests, registry keys, profiles and host names, so neither install or
+uninstall overwrites the other. In the browser, open `chrome://extensions` (or
+`edge://extensions`), enable Developer mode, choose **Load unpacked**, and select that directory
+once. The fixed manifest key gives the extension ID `dgejialhpalhoigbkmgeabgpphlipiek`. Its first
+connection opens the dedicated Codync profile with the packaged extension and refuses the ordinary
+profile. The Codync Browser popup should say **Connected to Codync** while the matching host runs.
+Uninstalling Codync removes the native-messaging registration; removing the extension in the
+browser removes its local tab bindings and stored status.
 
 The extension asks for `debugger`, `nativeMessaging`, `storage` and `tabs`, with no web-origin host
 permission. Every operation carries the exact host, bot, user message, tab and generation. Existing

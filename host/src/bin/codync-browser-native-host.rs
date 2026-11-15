@@ -8,6 +8,8 @@ use anyhow::{Context as _, Result, bail, ensure};
 use futures::{SinkExt as _, StreamExt as _};
 use serde_json::{Value, json};
 use std::io::{Read, Write as _};
+#[cfg(windows)]
+use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -17,10 +19,11 @@ use tokio_tungstenite::tungstenite::{Message, http::header};
 const MAX_FRAME: usize = 32 * 1024 * 1024;
 const INSTALL_COMMAND: &str = "--install-native-messaging";
 const UNINSTALL_COMMAND: &str = "--uninstall-native-messaging";
-const NATIVE_HOST: &str = "dev.codync.browser";
 const EXTENSION_ID: &str = "dgejialhpalhoigbkmgeabgpphlipiek";
-const CHROME_REGISTRY: &str = r"HKCU\Software\Google\Chrome\NativeMessagingHosts\dev.codync.browser";
-const EDGE_REGISTRY: &str = r"HKCU\Software\Microsoft\Edge\NativeMessagingHosts\dev.codync.browser";
+#[cfg(windows)]
+const CHROME_REGISTRY: &str = r"HKCU\Software\Google\Chrome\NativeMessagingHosts";
+#[cfg(windows)]
+const EDGE_REGISTRY: &str = r"HKCU\Software\Microsoft\Edge\NativeMessagingHosts";
 
 #[tokio::main]
 async fn main() {
@@ -57,12 +60,31 @@ async fn main() {
 }
 
 async fn run() -> Result<()> {
-    let url = host_url()?;
+    let isolated_profile = std::env::var_os("CODYNC_BROWSER_ISOLATED_PROFILE").is_some();
+    let first = tokio::task::spawn_blocking(|| {
+        let stdin = std::io::stdin();
+        read_native(&mut stdin.lock())
+    })
+    .await
+    .context("reading Chrome's initial browser bridge message")??;
+    let Some(first) = first else {
+        return Ok(());
+    };
+    let first = relay_message(&first, isolated_profile)?;
+    if !isolated_profile {
+        launch_isolated_browser().context("opening Codync Browser's dedicated profile")?;
+        write_native(&json!({
+            "type": "bridgeError",
+            "error": "Opened Codync Browser in its dedicated profile. Use that window for bot browser tabs."
+        }))?;
+        return Ok(());
+    }
+
     let token = std::fs::read_to_string(token_path()?).context("reading the Codync loopback token")?.trim().to_owned();
     if token.is_empty() {
         bail!("The Codync loopback token is empty");
     }
-
+    let url = host_url()?;
     let mut request = url.into_client_request()?;
     request.headers_mut().insert(header::AUTHORIZATION, format!("Bearer {token}").parse()?);
     let (socket, _) = tokio::time::timeout(Duration::from_secs(5), tokio_tungstenite::connect_async(request))
@@ -70,6 +92,7 @@ async fn run() -> Result<()> {
         .context("Connecting to Codync timed out")?
         .context("Connecting to Codync")?;
     let (mut sink, mut stream) = socket.split();
+    sink.send(Message::Text(first.into())).await?;
 
     let (from_chrome, mut chrome) = mpsc::channel::<String>(32);
     let reader = tokio::task::spawn_blocking(move || {
@@ -107,6 +130,138 @@ async fn run() -> Result<()> {
     drop(chrome);
     reader.abort();
     Ok(())
+}
+
+fn relay_message(message: &str, isolated_profile: bool) -> Result<String> {
+    let mut value: Value = serde_json::from_str(message).context("Chrome sent invalid browser bridge JSON")?;
+    if value["type"] == "hello" {
+        // The helper, not extension JavaScript, owns this bit. A normal browser profile cannot
+        // claim that it is the dedicated Codync profile.
+        value["isolatedProfile"] = Value::Bool(isolated_profile);
+    }
+    Ok(value.to_string())
+}
+
+fn native_host() -> &'static str {
+    native_host_for(option_env!("CODYNC_ENV"))
+}
+
+fn native_host_for(build_env: Option<&str>) -> &'static str {
+    match build_env {
+        Some("main") => "codync.browser",
+        _ => "codync.browser.dev",
+    }
+}
+
+fn native_manifest_dir() -> Result<PathBuf> {
+    Ok(dirs::data_local_dir()
+        .context("finding the local application data directory")?
+        .join(app_folder(option_env!("CODYNC_ENV")))
+        .join("BrowserExtension"))
+}
+
+fn app_folder(build_env: Option<&str>) -> &'static str {
+    match build_env {
+        Some("main") => "Codync",
+        _ => "Codync Dev",
+    }
+}
+
+#[cfg(windows)]
+fn launch_isolated_browser() -> Result<()> {
+    use std::process::{Command, Stdio};
+
+    let extension = extension_dir()?;
+    ensure!(
+        extension.join("manifest.json").is_file(),
+        "the packaged Codync Browser extension is missing from {}",
+        extension.display()
+    );
+    let profile = native_manifest_dir()?.join("DedicatedProfile");
+    std::fs::create_dir_all(&profile)
+        .with_context(|| format!("creating the dedicated browser profile at {}", profile.display()))?;
+    let marker = profile.join(".last-launch");
+    let recently_opened = std::fs::metadata(&marker)
+        .and_then(|metadata| metadata.modified())
+        .ok()
+        .and_then(|modified| modified.elapsed().ok())
+        .is_some_and(|elapsed| elapsed < Duration::from_secs(15));
+    if recently_opened {
+        return Ok(());
+    }
+    std::fs::write(&marker, b"launched")
+        .with_context(|| format!("recording the dedicated browser launch at {}", marker.display()))?;
+
+    let executable = browser_executable()?;
+    let extension_arg = format!("--load-extension={}", extension.display());
+    let only_extension_arg = format!("--disable-extensions-except={}", extension.display());
+    let profile_arg = format!("--user-data-dir={}", profile.display());
+    Command::new(executable)
+        .args([
+            profile_arg.as_str(),
+            extension_arg.as_str(),
+            only_extension_arg.as_str(),
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--new-window",
+            "about:blank",
+        ])
+        .env("CODYNC_BROWSER_ISOLATED_PROFILE", "1")
+        .env("CODYNC_BROWSER_EXTENSION_DIR", &extension)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .context("starting Chrome for Codync Browser")?;
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn launch_isolated_browser() -> Result<()> {
+    bail!("the Codync Browser native host is available on Windows only")
+}
+
+#[cfg(windows)]
+fn extension_dir() -> Result<PathBuf> {
+    let mut candidates = Vec::new();
+    if let Some(path) = std::env::var_os("CODYNC_BROWSER_EXTENSION_DIR") {
+        candidates.push(PathBuf::from(path));
+    }
+    if let Ok(executable) = std::env::current_exe()
+        && let Some(parent) = executable.parent()
+    {
+        candidates.push(parent.join("browser-extension"));
+        candidates.push(parent.join("../../../browser-extension"));
+    }
+    for candidate in candidates {
+        if let Ok(canonical) = candidate.canonicalize()
+            && canonical.join("manifest.json").is_file()
+        {
+            return Ok(canonical);
+        }
+    }
+    bail!("the packaged Codync Browser extension directory was not found")
+}
+
+#[cfg(windows)]
+fn browser_executable() -> Result<PathBuf> {
+    if let Some(path) = std::env::var_os("CODYNC_BROWSER_BIN") {
+        let path = PathBuf::from(path);
+        ensure!(path.is_file(), "CODYNC_BROWSER_BIN does not name a file: {}", path.display());
+        return Ok(path);
+    }
+    for candidate in [
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+    ] {
+        let path = Path::new(candidate);
+        if path.is_file() {
+            return Ok(path.to_owned());
+        }
+    }
+    bail!("Chrome or Edge was not found for Codync Browser")
 }
 
 fn host_url() -> Result<String> {
@@ -160,19 +315,17 @@ fn install_native_messaging() -> Result<()> {
         .context("finding the Codync Browser native host")?
         .canonicalize()
         .context("resolving the Codync Browser native host")?;
-    let manifest_dir = dirs::data_local_dir()
-        .context("finding the local application data directory")?
-        .join("Codync")
-        .join("BrowserExtension");
+    let manifest_dir = native_manifest_dir()?;
     std::fs::create_dir_all(&manifest_dir)?;
-    let manifest_path = manifest_dir.join(format!("{NATIVE_HOST}.json"));
+    let manifest_path = manifest_dir.join(format!("{}.json", native_host()));
     let manifest = native_manifest(&executable, EXTENSION_ID);
     std::fs::write(&manifest_path, serde_json::to_vec_pretty(&manifest)?)
         .with_context(|| format!("writing {}", manifest_path.display()))?;
 
-    for key in [CHROME_REGISTRY, EDGE_REGISTRY] {
+    for root in [CHROME_REGISTRY, EDGE_REGISTRY] {
+        let key = format!(r"{root}\{}", native_host());
         let output = Command::new("reg.exe")
-            .args(["add", key, "/ve", "/t", "REG_SZ", "/d", manifest_path.to_string_lossy().as_ref(), "/f"])
+            .args(["add", &key, "/ve", "/t", "REG_SZ", "/d", manifest_path.to_string_lossy().as_ref(), "/f"])
             .stdin(Stdio::null())
             .output()
             .context("starting reg.exe to register the Codync Browser bridge")?;
@@ -194,20 +347,18 @@ fn install_native_messaging() -> Result<()> {
 fn uninstall_native_messaging() -> Result<()> {
     use std::process::{Command, Stdio};
 
-    for key in [CHROME_REGISTRY, EDGE_REGISTRY] {
+    for root in [CHROME_REGISTRY, EDGE_REGISTRY] {
+        let key = format!(r"{root}\{}", native_host());
         // A missing key already represents the requested state.
         let _ = Command::new("reg.exe")
-            .args(["delete", key, "/f"])
+            .args(["delete", &key, "/f"])
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status();
     }
-    let manifest_dir = dirs::data_local_dir()
-        .context("finding the local application data directory")?
-        .join("Codync")
-        .join("BrowserExtension");
-    let manifest_path = manifest_dir.join(format!("{NATIVE_HOST}.json"));
+    let manifest_dir = native_manifest_dir()?;
+    let manifest_path = manifest_dir.join(format!("{}.json", native_host()));
     match std::fs::remove_file(&manifest_path) {
         Ok(()) => {}
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
@@ -228,7 +379,7 @@ fn uninstall_native_messaging() -> Result<()> {
 
 fn native_manifest(executable: &std::path::Path, extension_id: &str) -> Value {
     json!({
-        "name": NATIVE_HOST,
+        "name": native_host(),
         "description": "Codync Browser native-messaging bridge",
         "path": native_manifest_path(executable),
         "type": "stdio",
@@ -322,7 +473,7 @@ mod tests {
         );
         let encoded = serde_json::to_vec(&manifest).unwrap();
         let decoded: Value = serde_json::from_slice(&encoded).unwrap();
-        assert_eq!(decoded["name"], NATIVE_HOST);
+        assert_eq!(decoded["name"], native_host());
         assert_eq!(decoded["path"], r"C:\Users\Example User\Codync\codync-browser-native-host.exe");
         assert_eq!(decoded["allowed_origins"][0], format!("chrome-extension://{EXTENSION_ID}/"));
     }
@@ -354,5 +505,23 @@ mod tests {
         ] {
             assert!(checked_host_url(invalid).is_err(), "{invalid}");
         }
+    }
+
+    #[test]
+    fn bridge_relays_the_helper_owned_profile_marker() {
+        let hello = r#"{"type":"hello","isolatedProfile":true}"#;
+        let isolated: Value = serde_json::from_str(&relay_message(hello, true).unwrap()).unwrap();
+        assert_eq!(isolated["isolatedProfile"], true);
+
+        let normal: Value = serde_json::from_str(&relay_message(hello, false).unwrap()).unwrap();
+        assert_eq!(normal["isolatedProfile"], false);
+    }
+
+    #[test]
+    fn development_and_release_hosts_have_separate_installations() {
+        assert_eq!(native_host_for(Some("main")), "codync.browser");
+        assert_eq!(native_host_for(Some("dev")), "codync.browser.dev");
+        assert_eq!(app_folder(Some("main")), "Codync");
+        assert_eq!(app_folder(Some("dev")), "Codync Dev");
     }
 }
