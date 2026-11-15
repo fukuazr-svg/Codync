@@ -1,6 +1,7 @@
 //! A real host and Chrome: one user message binds an isolated tab, clicks, types, posts a screenshot
 //! to the same chat, and resists stale targets, user takeover and Stop.
 
+#![cfg(windows)]
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
 mod common;
