@@ -78,6 +78,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   const root = useRef<HTMLDivElement>(null)
   const dock = useRef<HTMLDivElement>(null)
   const aside = useRef<HTMLDivElement>(null)
+  const pill = useRef<HTMLButtonElement>(null)
   // The width is measured, not rendered: resizing re-renders only when `wide` flips, or while the
   // window is narrow enough to squeeze the open side panel.
   const width = useRef(800)
@@ -132,7 +133,13 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   // The aside is not a modal, but it starts with the focus so Escape closes it; a click anywhere
   // else closes it too, because the chat behind it stays live.
   useEffect(() => {
-    if (compactDetails) aside.current?.focus()
+    if (!compactDetails) return
+    aside.current?.focus()
+    return () => {
+      // The button that opened the aside is unmounted while it is open, so closing would leave the
+      // focus on the page: it goes to the title pill, which opens the same details.
+      if (!document.activeElement || document.activeElement === document.body) pill.current?.focus()
+    }
   }, [compactDetails])
   const toggleDetails = useCallback(() => {
     if (!wide) setCompactDetails((c) => !c)
@@ -223,7 +230,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
             ) : null}
           </div>
           {/* The call bar takes the pill's place; its frosted glass would show the name blurred. */}
-          <button className={`title-pill ${calling ? 'hidden-by-call' : ''}`} inert={calling} onClick={openFromTitle} aria-label={tr('{name}, view details').replaceAll('{name}', () => bot?.name ?? tr('Conversation'))} title="View conversation details">
+          <button ref={pill} className={`title-pill ${calling ? 'hidden-by-call' : ''}`} inert={calling} onClick={openFromTitle} aria-label={tr('{name}, view details').replaceAll('{name}', () => bot?.name ?? tr('Conversation'))} title="View conversation details">
             <HStack as="span" gap={7}>
               {bot ? isGroup(bot) ? <GroupAvatar members={store.members(bot)} size={22} /> : <BotAvatar bot={bot} size={22} /> : null}
               <Text size="body" weight="medium" tone="text" truncate>{bot?.name ?? ''}</Text>
