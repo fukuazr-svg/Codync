@@ -427,12 +427,16 @@
 /* The compact details keep to the right at desktop widths too narrow to dock the panel beside the
    chat: an aside over the conversation, with no dim and no inert, so the chat behind stays usable.
    It starts below the title band: the pill that opens it is centred in the chat, and the aside
-   would otherwise cover the pill — at a 900-wide window its centre sits under the aside's edge. */
+   would otherwise cover the pill — at a 900-wide window its centre sits under the aside's edge.
+   It stops above the composer, whose height this view measures as `--composer-height`: reaching
+   the bottom edge put the right of the message box, send button included, under the aside, so a
+   click meant for the box landed on a control in the details. Reading a detail and answering a
+   message is the point of the aside; the box has to stay whole. */
 .details-aside {
   position: absolute;
   top: 60px;
   right: 0;
-  bottom: 0;
+  bottom: var(--composer-height, 0);
   z-index: 7;
   display: flex;
   width: min(360px, 92%);
