@@ -398,7 +398,7 @@ fn install_native_messaging() -> Result<()> {
 fn uninstall_native_messaging() -> Result<()> {
     let host_name = native_host();
     for root in [CHROME_REGISTRY, EDGE_REGISTRY] {
-        delete_native_messaging_key(root, host_name.as_str())?;
+        delete_native_messaging_key(root, host_name)?;
     }
     let manifest_dir = native_manifest_dir()?;
     let manifest_path = manifest_dir.join(format!("{}.json", native_host()));
