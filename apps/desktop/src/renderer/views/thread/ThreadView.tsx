@@ -180,7 +180,7 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
           <Spacer />
           {/* The panel's own actions live here, flush with the window's caption buttons. */}
           {panelOpen && bot && !isGroup(bot) ? (
-            <CaptionButton title="Create template" onClick={shareDetails}>
+            <CaptionButton title={tr('Create template')} onClick={shareDetails}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <path d="M17 8l-5-5-5 5" />
@@ -188,7 +188,7 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
               </svg>
             </CaptionButton>
           ) : null}
-          <CaptionButton title="Conversation details" pressed={panelOpen} onClick={toggleDetails}>
+          <CaptionButton title={tr('Conversation details')} pressed={panelOpen} onClick={toggleDetails}>
             <PanelIcon side="right" />
           </CaptionButton>
         </div>
@@ -196,7 +196,7 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
       <div className="conversation">
         {/* A flat breadcrumb where a shadowed pill used to float. */}
         <div className="top-crumb-bar">
-          <button className="top-crumb" onClick={openFromTitle} aria-label={tr('{name}, view details').replaceAll('{name}', () => bot?.name ?? tr('Conversation'))} title="View conversation details">
+          <button className="top-crumb" onClick={openFromTitle} aria-label={tr('{name}, view details').replaceAll('{name}', () => bot?.name ?? tr('Conversation'))} title={tr('View conversation details')}>
             {bot ? isGroup(bot) ? <GroupAvatar members={store.members(bot)} size={18} /> : <BotAvatar bot={bot} size={18} /> : null}
             <Text size="body" weight="medium" tone="text" truncate>{bot?.name ?? ''}</Text>
             {/* Offline or updating still says so, inline beside the name instead of under a pill. */}

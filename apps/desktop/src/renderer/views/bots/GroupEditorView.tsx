@@ -11,6 +11,7 @@ import { errorText } from './drafts'
 import { AutoTextArea } from './parts'
 import './bots.css'
 import { useTr } from '../../lib/use-language'
+import { fill } from '../../lib/fill'
 
 
 /**
@@ -61,7 +62,7 @@ export function GroupEditorView({ group }: { group: Bot }) {
         <div className="group-form">
           <div className="group-identity">
             <GroupAvatar members={picked} size={84} />
-            <input className="group-name" value={name} placeholder={defaultName} aria-label="Name" onChange={(e) => setName(e.target.value)} />
+            <input className="group-name" value={name} placeholder={defaultName} aria-label={tr('Name')} onChange={(e) => setName(e.target.value)} />
             <AutoTextArea className="group-about" value={about} placeholder="What this group works on" minRows={1} maxRows={4} onChange={setAbout} />
           </div>
           <VStack>
@@ -79,7 +80,7 @@ export function GroupEditorView({ group }: { group: Bot }) {
                   className="field-box fade-in group-search"
                   autoFocus
                   value={query}
-                  placeholder="Search bots"
+                  placeholder={tr('Search bots')}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.nativeEvent.isComposing && candidates[0]) toggle(candidates[0].id)
@@ -124,7 +125,7 @@ function DeleteBotDialog({ bot, onClose, onDeleted }: { bot: Bot | null; onClose
   return (
     <Dialog
       open={bot !== null}
-      title={`Delete ${bot?.name ?? 'bot'}?`}
+      title={fill(tr('Delete {name}?'), { name: bot?.name ?? 'bot' })}
       message={tr(bot && isGroup(bot) ? 'Its bots and their own chats stay.' : 'Files it changed on your computer stay as they are.')}
       actions={[
         {
