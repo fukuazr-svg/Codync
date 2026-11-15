@@ -54,6 +54,10 @@ export function DetailsPanel({ botId, routineId, tab, setTab, editGroup, openArt
   return (
     <div className="details-panel">
       <div className="details-drag" />
+      <div className="details-actions">
+        {bot && !group ? <MacChatButton className="ringed" title="Create template" icon="square.and.arrow.up" onClick={share} /> : null}
+        <MacChatButton className="ringed" title="Close details" icon="xmark" onClick={close} />
+      </div>
       <div className="details-scroll">
         {bot ? <Identity bot={bot} /> : null}
         {bot && group ? (

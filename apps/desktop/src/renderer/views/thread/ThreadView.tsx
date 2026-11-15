@@ -197,16 +197,7 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
         <TopFade />
         <div className="top-chrome-row">
           <Spacer />
-          {/* The panel's own actions live here, flush with the window's caption buttons. */}
-          {panelOpen && bot && !isGroup(bot) ? (
-            <CaptionButton title={tr('Create template')} onClick={shareDetails}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <path d="M17 8l-5-5-5 5" />
-                <path d="M12 3v12" />
-              </svg>
-            </CaptionButton>
-          ) : null}
+          {/* The panel's own actions sit on the panel (its share and close), so only the toggle lives here. */}
           <CaptionButton title={tr('Conversation details')} pressed={panelOpen} onClick={toggleDetails}>
             <PanelIcon side="right" />
           </CaptionButton>
