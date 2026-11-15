@@ -398,7 +398,7 @@ fn install_native_messaging() -> Result<()> {
 fn uninstall_native_messaging() -> Result<()> {
     let host_name = native_host();
     for root in [CHROME_REGISTRY, EDGE_REGISTRY] {
-        delete_native_messaging_key(root, &host_name)?;
+        delete_native_messaging_key(root, host_name.as_str())?;
     }
     let manifest_dir = native_manifest_dir()?;
     let manifest_path = manifest_dir.join(format!("{}.json", native_host()));
@@ -427,7 +427,7 @@ fn delete_native_messaging_key(root: &str, host_name: &str) -> Result<()> {
     if registry_delete_completed(status) {
         return Ok(());
     }
-    Err(std::io::Error::from_raw_os_error(status as i32)).with_context(|| format!("removing registry key {key}"))
+    Err(std::io::Error::from_raw_os_error(status.cast_signed())).with_context(|| format!("removing registry key {key}"))
 }
 
 #[cfg(windows)]
