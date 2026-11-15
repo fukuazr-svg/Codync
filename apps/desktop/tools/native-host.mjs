@@ -7,7 +7,7 @@
 // nothing to do there.
 import { copyFileSync, mkdirSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 if (!['darwin', 'win32'].includes(process.platform)) process.exit(0)
@@ -16,6 +16,9 @@ if (!['dev', 'main'].includes(env)) throw new Error(`unknown environment ${env}`
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const host = join(root, '../../host')
 const out = join(root, 'build/native')
+const targetRoot = process.env.CARGO_TARGET_DIR
+  ? resolve(host, process.env.CARGO_TARGET_DIR)
+  : join(host, 'target')
 // The pinned toolchain (rust-toolchain.toml) through rustup, even when another cargo (Homebrew's)
 // comes first on PATH: only rustup's has the x86_64 target.
 const tool = (name) => execFileSync('rustup', ['which', name], { cwd: host, encoding: 'utf8' }).trim()
@@ -35,7 +38,7 @@ const build = (target, binaries) => run(cargo, [
   target,
   ...binaries.flatMap((binary) => ['--bin', binary]),
 ])
-const built = (target, name) => join(host, 'target', target, profile, name)
+const built = (target, name) => join(targetRoot, target, profile, name)
 // Keychain trusts a certificate across rebuilds, but an ad hoc signature only for that one build. A Mac without
 // this certificate keeps the ad hoc signature, and Codync Dev's host asks for its key again after each rebuild.
 const signDevHost = (file) => {
