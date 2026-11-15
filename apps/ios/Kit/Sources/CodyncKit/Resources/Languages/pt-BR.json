@@ -2118,5 +2118,9 @@
   "Using {to} while {own} is signed out": "Usando {to} porque {own} saiu da conta",
   "Using {to} while {own} couldn't start": "Usando {to} porque {own} não conseguiu iniciar",
   "Using {to} while {own} doesn't have this bot's model": "Usando {to} porque {own} não tem o modelo deste bot",
-  "Using {to} while {own} doesn't have this bot's mode": "Usando {to} porque {own} não tem o modo deste bot"
+  "Using {to} while {own} doesn't have this bot's mode": "Usando {to} porque {own} não tem o modo deste bot",
+  "Server": "Servidor",
+  "Your own server works in Speech mode only.": "Seu próprio servidor só funciona no modo Fala.",
+  "An OpenAI-compatible server for Speech mode: https, or http on this computer. Empty uses OpenAI.": "Um servidor compatível com a OpenAI para o modo Fala: https, ou http neste computador. Vazio usa a OpenAI.",
+  "Select Text": "Selecionar texto"
 }

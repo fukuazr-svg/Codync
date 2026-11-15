@@ -2118,5 +2118,9 @@
   "Using {to} while {own} is signed out": "{own}이(가) 로그아웃되어 {to} 사용 중",
   "Using {to} while {own} couldn't start": "{own}을(를) 시작할 수 없어 {to} 사용 중",
   "Using {to} while {own} doesn't have this bot's model": "{own}에 이 Bot의 모델이 없어 {to} 사용 중",
-  "Using {to} while {own} doesn't have this bot's mode": "{own}에 이 Bot의 모드가 없어 {to} 사용 중"
+  "Using {to} while {own} doesn't have this bot's mode": "{own}에 이 Bot의 모드가 없어 {to} 사용 중",
+  "Server": "서버",
+  "Your own server works in Speech mode only.": "내 서버는 음성 모드에서만 작동합니다.",
+  "An OpenAI-compatible server for Speech mode: https, or http on this computer. Empty uses OpenAI.": "음성 모드용 OpenAI 호환 서버: https 또는 이 컴퓨터의 http. 비워 두면 OpenAI를 사용합니다.",
+  "Select Text": "텍스트 선택"
 }
