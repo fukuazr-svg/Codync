@@ -247,6 +247,7 @@ async fn fake_extension(
     })
 }
 
+#[cfg(windows)]
 #[tokio::test]
 async fn screenshot_returns_to_the_same_chat_with_guards() {
     if !browser_available() {

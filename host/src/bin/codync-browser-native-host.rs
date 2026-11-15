@@ -19,6 +19,7 @@ use tokio_tungstenite::tungstenite::{Message, http::header};
 const MAX_FRAME: usize = 32 * 1024 * 1024;
 const INSTALL_COMMAND: &str = "--install-native-messaging";
 const UNINSTALL_COMMAND: &str = "--uninstall-native-messaging";
+const BROWSER_PROFILE_OWNER_ENV: &str = "CODYNC_BROWSER_PROFILE_OWNER";
 #[cfg(any(windows, test))]
 const EXTENSION_ID: &str = "dgejialhpalhoigbkmgeabgpphlipiek";
 #[cfg(windows)]
@@ -61,7 +62,10 @@ async fn main() {
 }
 
 async fn run() -> Result<()> {
-    let isolated_profile = std::env::var_os("CODYNC_BROWSER_ISOLATED_PROFILE").is_some();
+    let isolated_profile = std::env::var(BROWSER_PROFILE_OWNER_ENV)
+        .ok()
+        .as_deref()
+        .is_some_and(|owner| profile_owner_matches(Some(owner), option_env!("CODYNC_ENV")));
     let first = tokio::task::spawn_blocking(|| {
         let stdin = std::io::stdin();
         read_native(&mut stdin.lock())
@@ -172,6 +176,17 @@ fn app_folder(build_env: Option<&str>) -> &'static str {
     }
 }
 
+fn profile_owner(build_env: Option<&str>) -> &'static str {
+    match build_env {
+        Some("main") => "main",
+        _ => "dev",
+    }
+}
+
+fn profile_owner_matches(owner: Option<&str>, build_env: Option<&str>) -> bool {
+    owner == Some(profile_owner(build_env))
+}
+
 #[cfg(windows)]
 fn launch_isolated_browser() -> Result<()> {
     use std::process::{Command, Stdio};
@@ -211,7 +226,7 @@ fn launch_isolated_browser() -> Result<()> {
             "--new-window",
             "about:blank",
         ])
-        .env("CODYNC_BROWSER_ISOLATED_PROFILE", "1")
+        .env(BROWSER_PROFILE_OWNER_ENV, profile_owner(option_env!("CODYNC_ENV")))
         .env("CODYNC_BROWSER_EXTENSION_DIR", &extension)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
@@ -235,8 +250,7 @@ fn extension_dir() -> Result<PathBuf> {
     if let Ok(executable) = std::env::current_exe()
         && let Some(parent) = executable.parent()
     {
-        candidates.push(parent.join("browser-extension"));
-        candidates.push(parent.join("../../../browser-extension"));
+        candidates.extend(extension_candidates(parent));
     }
     for candidate in candidates {
         if let Ok(canonical) = candidate.canonicalize()
@@ -246,6 +260,15 @@ fn extension_dir() -> Result<PathBuf> {
         }
     }
     bail!("the packaged Codync Browser extension directory was not found")
+}
+
+#[cfg(any(windows, test))]
+fn extension_candidates(parent: &Path) -> Vec<PathBuf> {
+    vec![
+        parent.join("browser-extension"),
+        parent.join("../../../apps/browser-extension"),
+        parent.join("../../../browser-extension"),
+    ]
 }
 
 #[cfg(windows)]
@@ -526,5 +549,24 @@ mod tests {
         assert_eq!(native_host_for(Some("dev")), "codync.browser.dev");
         assert_eq!(app_folder(Some("main")), "Codync");
         assert_eq!(app_folder(Some("dev")), "Codync Dev");
+    }
+
+    #[test]
+    fn profile_owner_marker_is_bound_to_the_helper_variant() {
+        assert!(profile_owner_matches(Some("main"), Some("main")));
+        assert!(profile_owner_matches(Some("dev"), Some("dev")));
+        assert!(profile_owner_matches(Some("dev"), None));
+        assert!(!profile_owner_matches(Some("dev"), Some("main")));
+        assert!(!profile_owner_matches(Some("main"), Some("dev")));
+        assert!(!profile_owner_matches(None, Some("main")));
+    }
+
+    #[test]
+    fn local_installation_finds_the_workspace_extension() {
+        let release = Path::new(r"C:\Codync\host\target\release");
+        assert!(
+            extension_candidates(release).contains(&release.join("../../../apps/browser-extension")),
+            "the documented development layout must be searched"
+        );
     }
 }

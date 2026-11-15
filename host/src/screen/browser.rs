@@ -430,7 +430,11 @@ impl Browsers {
             current_url,
         };
         let profile = crate::service::data_dir().join("browsers").join(bot).join(&browser_id).join("extension");
-        std::fs::create_dir_all(&profile).context("creating the extension browser evidence directory")?;
+        let profile_for_io = profile.clone();
+        tokio::task::spawn_blocking(move || std::fs::create_dir_all(&profile_for_io))
+            .await
+            .context("the extension browser directory task failed")?
+            .context("creating the extension browser evidence directory")?;
         let extension_version = started["extensionVersion"].as_str().unwrap_or("unknown").to_owned();
         let session = Session {
             child: None,
@@ -614,9 +618,16 @@ impl Browsers {
         tokio::task::spawn_blocking(move || write_whole(&write_path, &bytes))
             .await
             .context("the screenshot writer task failed")??;
-        {
+        let current_url = string_field(&page, "url", &binding.current_url);
+        let still_bound = {
             let mut state = self.state.lock().await;
-            bound_session(&mut state, hub, bot, &bound, true)?;
+            bound_session(&mut state, hub, bot, &bound, true).map(|session| {
+                session.binding.current_url = current_url;
+            })
+        };
+        if let Err(error) = still_bound {
+            discard_screenshot(path.clone()).await;
+            return Err(error);
         }
         let screenshot = json!({
             "path": path.display().to_string(),
@@ -799,6 +810,33 @@ fn write_whole(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
+fn remove_screenshot_artifacts(path: &Path) -> Result<()> {
+    match std::fs::remove_file(path) {
+        Ok(()) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error).context("removing an abandoned screenshot"),
+    }
+    let Some(parent) = path.parent() else {
+        return Ok(());
+    };
+    match std::fs::remove_dir(parent) {
+        Ok(()) => {}
+        Err(error) if matches!(error.kind(), std::io::ErrorKind::NotFound | std::io::ErrorKind::DirectoryNotEmpty) => {}
+        Err(error) => return Err(error).context("removing an abandoned screenshot directory"),
+    }
+    Ok(())
+}
+
+async fn discard_screenshot(path: PathBuf) {
+    if let Err(error) = tokio::task::spawn_blocking(move || remove_screenshot_artifacts(&path))
+        .await
+        .context("the screenshot cleanup task failed")
+        .and_then(|result| result)
+    {
+        tracing::warn!(%error, "could not remove a screenshot after its browser stopped");
+    }
+}
+
 fn digest(bytes: &[u8]) -> String {
     crate::chat::files::digest_hex(&Sha256::digest(bytes))
 }
@@ -841,6 +879,19 @@ mod tests {
         assert!(checked_url(&format!("https://example.com/{}", "x".repeat(MAX_URL))).is_err());
         assert!(checked_selector("").is_err());
         assert!(checked_selector(&"x".repeat(MAX_SELECTOR + 1)).is_err());
+    }
+
+    #[tokio::test]
+    async fn abandoned_screenshots_are_removed_with_their_empty_evidence_directory() {
+        let root = std::env::temp_dir().join(format!("codync-browser-{}", uuid::Uuid::new_v4()));
+        let path = root.join("screenshot-1.png");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(&path, b"abandoned").unwrap();
+
+        discard_screenshot(path.clone()).await;
+
+        assert!(!path.exists(), "the abandoned screenshot remained on disk");
+        assert!(!root.exists(), "the empty screenshot directory remained on disk");
     }
 
     #[test]
