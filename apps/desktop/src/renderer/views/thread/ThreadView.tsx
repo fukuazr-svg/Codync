@@ -63,9 +63,10 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   const [callLine, setCallLine] = useState<string | null>(null)
   const [editingGroup, setEditingGroup] = useState(false)
   const [templateDraft, setTemplateDraft] = useState<BotDraft | null>(null)
-  const [showSettings, setShowSettings] = useState(false)
+  // One open state for the details: the window's width decides whether they dock beside the chat or
+  // sit over it, so resizing across that breakpoint never closes what the user was reading.
+  const [detailsOpen, setDetailsOpen] = useState(false)
   const [detailsTab, setDetailsTab] = useState<DetailsTab>('details')
-  const [compactDetails, setCompactDetails] = useState(false)
   // A keyboard close hands the focus back to the pill; a click elsewhere already put it somewhere
   // the user chose, so the aside does not take it away from there.
   const giveFocusBack = useRef(true)
@@ -86,6 +87,10 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   // window is narrow enough to squeeze the open side panel.
   const width = useRef(800)
   const [wide, setWide] = useState(true)
+  // The aside's cleanup runs after a resize has already changed `wide`, so the measurement keeps
+  // this in step: widening the window is not the user closing the details, and must not move the
+  // focus to the pill either.
+  const wideNow = useRef(wide)
   const [, setSqueezed] = useState(0)
   const squeezeBelow = useRef(0)
   const [detailsWidth, setDetailsWidth] = usePref(prefs.detailsPanelWidth)
@@ -101,7 +106,8 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
       // comparing the fraction would drop a desktop window into the compact sheet a hair early.
       const w = Math.round(e!.contentRect.width)
       width.current = w
-      setWide(w >= WIDE)
+      wideNow.current = w >= WIDE
+      setWide(wideNow.current)
       setSqueezed(w - 380 < squeezeBelow.current ? w : 0)
     })
     observer.observe(el)
@@ -114,18 +120,14 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
     }
   }, [])
 
-  const panelOpen = wide && showSettings
+  const panelOpen = wide && detailsOpen
   squeezeBelow.current = panelOpen ? Math.max(360, detailsWidth) : 0
   // The side panel's edge drags its width, leaving the conversation at least 380 wide.
   const panelWidth = (w: number) => Math.min(Math.max(360, w), width.current - 380)
-  // A compact Details presentation dismisses once the window is wide enough for the inspector.
-  useEffect(() => {
-    if (wide) setCompactDetails(false)
-  }, [wide])
   // The compact details sit over the chat without a dim, so a click anywhere else closes them and
   // the conversation underneath keeps working.
   useEffect(() => {
-    if (!compactDetails) return
+    if (wide || !detailsOpen) return
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Element | null
       // The title pill is the details' own toggle: its click closes them. Closing here first would
@@ -133,15 +135,15 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
       // pointer still inside one belongs to the aside's own surface.
       if (target?.closest('.details-aside, .title-pill, .anchored, .modal-card, .dialog')) return
       giveFocusBack.current = false
-      setCompactDetails(false)
+      setDetailsOpen(false)
     }
     document.addEventListener('pointerdown', onPointerDown, true)
     return () => document.removeEventListener('pointerdown', onPointerDown, true)
-  }, [compactDetails])
+  }, [detailsOpen, wide])
   // The aside is not a modal, but it starts with the focus so Escape closes it; a click anywhere
   // else closes it too, because the chat behind it stays live.
   useEffect(() => {
-    if (!compactDetails) return
+    if (wide || !detailsOpen) return
     giveFocusBack.current = true
     // The aside itself scrolls nothing (its overflow is hidden); PageDown and the arrow keys act on
     // the scroll box inside it, so that is what takes the focus the aside would otherwise hold.
@@ -152,13 +154,11 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
       // The button that opened the aside is unmounted while it is open, so closing would leave the
       // focus on the page: it goes to the title pill, which opens the same details.
       if (!giveFocusBack.current) return
+      if (wideNow.current) return
       if (!document.activeElement || document.activeElement === document.body) pill.current?.focus()
     }
-  }, [compactDetails])
-  const toggleDetails = useCallback(() => {
-    if (!wide) setCompactDetails((c) => !c)
-    else setShowSettings((s) => !s)
-  }, [wide])
+  }, [detailsOpen, wide])
+  const toggleDetails = useCallback(() => setDetailsOpen((open) => !open), [])
   const devServers = devServerSummary(bot?.devServers ?? [])
   // The title's port leads to its row, whichever page the inspector was left on.
   const openFromTitle = useCallback(() => {
@@ -175,17 +175,21 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   )
 
   const openTrace = useCallback(() => setShowTrace(true), [])
-  const openArtifact = useCallback((id: string) => {
-    setArtifactId(id)
-    setCompactDetails(false)
-  }, [])
+  const openArtifact = useCallback(
+    (id: string) => {
+      setArtifactId(id)
+      // The artifact takes the chat's place, not the docked panel beside it.
+      if (!wide) setDetailsOpen(false)
+    },
+    [wide],
+  )
 
+  // The one way in: the tab is picked here, and whether the details dock or sit over the chat is
+  // decided by the width at render time, so a resize never closes what the user was reading.
   const showDetails = useCallback((tab: DetailsTab) => {
     setDetailsTab(tab)
-    setShowSettings(true)
-    if (!wide) setCompactDetails(true)
-  }, [wide])
-
+    setDetailsOpen(true)
+  }, [])
   const presentRoutine = useCallback((id: string | null) => {
     setRoutineId(id)
     setRoutineRequest((r) => r + 1)
@@ -198,11 +202,11 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   const openWork = useCallback(() => showDetails('details'), [showDetails])
   // The chat at the approval card of an item that needs the user.
   const openCard = useCallback((itemId: string) => {
-    setCompactDetails(false)
+    if (!wide) setDetailsOpen(false)
     // ponytail: looks among the loaded messages only; a card still waiting is among the newest. Load older pages
     // until it is found if cards ever wait that long.
     requestAnimationFrame(() => root.current?.querySelector(`[data-work-item="${CSS.escape(itemId)}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
-  }, [])
+  }, [wide])
   // The view of all bots' work asks for the same, each time: a bot's heading for its Details, a row for its card.
   useEffect(() => {
     if (!request) return
@@ -222,13 +226,11 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
       openArtifact={openArtifact}
       openCard={openCard}
       share={() => {
-        setCompactDetails(false)
+        // The template opens as its own sheet over the chat; the docked panel beside it stays.
+        if (!wide) setDetailsOpen(false)
         if (bot) setTemplateDraft(draftOf(bot))
       }}
-      close={() => {
-        setShowSettings(false)
-        setCompactDetails(false)
-      }}
+      close={() => setDetailsOpen(false)}
     />
   )
 
@@ -239,7 +241,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
           <TopFade />
           <div className="top-chrome-row">
             <Spacer />
-            {(!showSettings || !wide) && !compactDetails ? (
+            {!detailsOpen ? (
               <MacChatButton className="ringed" title="Conversation details" icon="chevron.left.2" direction={[-1, 0]} onClick={toggleDetails} />
             ) : null}
           </div>
@@ -297,7 +299,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
         {details}
       </ChatSidePanel>
 
-      {compactDetails ? (
+      {!wide && detailsOpen ? (
         <div
           ref={aside}
           className="details-aside"
@@ -307,7 +309,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
               event.stopPropagation()
-              setCompactDetails(false)
+              setDetailsOpen(false)
             }
           }}
         >
