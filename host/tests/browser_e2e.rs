@@ -139,10 +139,15 @@ fn capture_failure(home: &Path) -> std::io::Result<PathBuf> {
 }
 
 async fn wait_json(home: &Path, path: &Path, within: Duration) -> Value {
+    wait_json_where(home, path, within, |_| true).await
+}
+
+async fn wait_json_where(home: &Path, path: &Path, within: Duration, matches: impl Fn(&Value) -> bool) -> Value {
     let deadline = Instant::now() + within;
     loop {
         if let Ok(text) = tokio::fs::read_to_string(path).await
             && let Ok(value) = serde_json::from_str(&text)
+            && matches(&value)
         {
             return value;
         }
@@ -432,7 +437,10 @@ async fn stopping_during_a_delayed_start_closes_the_late_tab() {
 
     let _ = send(&host, &bot, "browser-start-stop http://127.0.0.1/").await;
     let progress = host.home.join("bots").join(&bot).join("workspace").join("browser-progress.json");
-    let state = wait_json(&host.home, &progress, Duration::from_secs(30)).await;
+    let state = wait_json_where(&host.home, &progress, Duration::from_secs(30), |state| {
+        state["stage"] == "tool:browser_start:request"
+    })
+    .await;
     assert_eq!(state["stage"], "tool:browser_start:request", "{state}");
     host.call("stop", json!({"botId": bot})).await;
     let result = wait_json(&host.home, &results_path(&host, &bot), Duration::from_secs(45)).await;
