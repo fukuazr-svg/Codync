@@ -243,6 +243,10 @@ impl Actor {
             self.set_inflight(true);
         }
         // From here what changes in its memory folders is the bot's, however it changed them.
+        if !self.goal_can_prompt() {
+            let _ = done_tx.send(Ok(json!({"stopReason": "cancelled"})));
+            return Ok(());
+        }
         // ponytail: a task's edits to the memory files aren't tracked as a turn's (the tracker keeps one turn per
         // bot): they are taken at its bot's next scan and credited as changes outside a turn. Track turns per
         // session if a task's writes need its own credit.

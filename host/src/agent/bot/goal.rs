@@ -42,7 +42,7 @@ impl Actor {
 
     pub(super) async fn dequeue_goal(&mut self, id: String, done_tx: &tokio::sync::mpsc::UnboundedSender<Done>) {
         let backend = self.next_agent_backend();
-        match goal::begin(&self.hub, &self.cfg.id, &id, &backend) {
+        match goal::begin(&self.hub, &self.cfg, &id, &backend) {
             Ok(Some(text)) => self.start_goal(id, text, done_tx).await,
             Ok(None) => {}
             Err(error) => {

@@ -1,5 +1,9 @@
 //! Bounded, opt-in turns in a bot's own conversation.
-use crate::{LockExt, hub::Hub, store::now_ms};
+use crate::{
+    LockExt,
+    hub::Hub,
+    store::{BotConfig, now_ms},
+};
 use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -151,23 +155,16 @@ fn reason(why: Stopped) -> &'static str {
     }
 }
 
-/// Usage of the plan the step would run on: the agent the chain picked now, on the bot's login profile.
-/// A bot with no config row (only in tests) has no plan to read.
-fn near_usage(hub: &Hub, bot: &str, backend: &str) -> Result<bool> {
-    let Some(mut cfg) = hub.store.bot(bot)?.map(|row| row.config) else { return Ok(false) };
-    backend.clone_into(&mut cfg.backend);
-    Ok(crate::usage::near_limit(hub, &cfg))
-}
-
 /// Check at dequeue time: stale steps cost no turns and never start an agent.
-pub fn begin(hub: &Hub, bot: &str, id: &str, backend: &str) -> Result<Option<String>> {
+pub fn begin(hub: &Hub, cfg: &BotConfig, id: &str, backend: &str) -> Result<Option<String>> {
+    let bot = cfg.id.as_str();
     let lock = WRITE.locked();
     let Some(mut goal) = read(hub, bot)?.filter(|g| g.id == id && g.stopped.is_none()) else { return Ok(None) };
     let why = if goal.turns >= goal.max_turns
         || now_ms().saturating_sub(goal.started_at) >= i64::from(goal.max_minutes) * 60_000
     {
         Some(Stopped::Limit)
-    } else if near_usage(hub, bot, backend)? {
+    } else if crate::usage::near_limit_for(hub, cfg, backend) {
         Some(Stopped::Usage)
     } else {
         None

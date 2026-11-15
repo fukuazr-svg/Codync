@@ -300,6 +300,11 @@ impl Actor {
                     }
                     continue;
                 }
+                Some(Queued::Goal(_)) => {
+                    let Some(Queued::Goal(id)) = self.queue.pop_front() else { unreachable!("goal step") };
+                    self.dequeue_goal(id, done_tx).await;
+                    continue;
+                }
                 Some(Queued::TaskReport(_)) => {
                     // Reports that came in while the bot worked are one turn, as replies are.
                     let mut reports = Vec::new();
@@ -317,11 +322,6 @@ impl Actor {
                         Ok(()) => self.hub.tasks.answering(&self.cfg.id, hops),
                         Err(e) => self.start_error(e, done_tx).await,
                     }
-                    continue;
-                }
-                Some(Queued::Goal(_)) => {
-                    let Some(Queued::Goal(id)) = self.queue.pop_front() else { unreachable!("goal step") };
-                    self.dequeue_goal(id, done_tx).await;
                     continue;
                 }
                 Some(Queued::Prompt { .. }) => {
