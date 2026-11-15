@@ -62,10 +62,8 @@ async fn main() {
 }
 
 async fn run() -> Result<()> {
-    let isolated_profile = std::env::var(BROWSER_PROFILE_OWNER_ENV)
-        .ok()
-        .as_deref()
-        .is_some_and(|owner| profile_owner_matches(Some(owner), option_env!("CODYNC_ENV")));
+    let profile_owner = std::env::var(BROWSER_PROFILE_OWNER_ENV).ok();
+    let profile = profile_ownership(profile_owner.as_deref(), option_env!("CODYNC_ENV"));
     let first = tokio::task::spawn_blocking(|| {
         let stdin = std::io::stdin();
         read_native(&mut stdin.lock())
@@ -75,15 +73,25 @@ async fn run() -> Result<()> {
     let Some(first) = first else {
         return Ok(());
     };
-    let first = relay_message(&first, isolated_profile)?;
-    if !isolated_profile {
-        launch_isolated_browser().context("opening Codync Browser's dedicated profile")?;
-        write_native(&json!({
-            "type": "bridgeError",
-            "error": "Opened Codync Browser in its dedicated profile. Use that window for bot browser tabs."
-        }))?;
-        return Ok(());
+    match profile {
+        ProfileOwnership::Other => {
+            write_native(&json!({
+                "type": "bridgeError",
+                "error": "This Chrome window belongs to the other Codync variant."
+            }))?;
+            return Ok(());
+        }
+        ProfileOwnership::Normal => {
+            launch_isolated_browser().context("opening Codync Browser's dedicated profile")?;
+            write_native(&json!({
+                "type": "bridgeError",
+                "error": "Opened Codync Browser in its dedicated profile. Use that window for bot browser tabs."
+            }))?;
+            return Ok(());
+        }
+        ProfileOwnership::Owned => {}
     }
+    let first = relay_message(&first, true)?;
 
     let token = std::fs::read_to_string(token_path()?).context("reading the Codync loopback token")?.trim().to_owned();
     if token.is_empty() {
@@ -185,6 +193,21 @@ fn profile_owner(build_env: Option<&str>) -> &'static str {
 
 fn profile_owner_matches(owner: Option<&str>, build_env: Option<&str>) -> bool {
     owner == Some(profile_owner(build_env))
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ProfileOwnership {
+    Normal,
+    Owned,
+    Other,
+}
+
+fn profile_ownership(owner: Option<&str>, build_env: Option<&str>) -> ProfileOwnership {
+    match owner {
+        None => ProfileOwnership::Normal,
+        Some(_) if profile_owner_matches(owner, build_env) => ProfileOwnership::Owned,
+        Some(_) => ProfileOwnership::Other,
+    }
 }
 
 #[cfg(windows)]
@@ -559,6 +582,16 @@ mod tests {
         assert!(!profile_owner_matches(Some("dev"), Some("main")));
         assert!(!profile_owner_matches(Some("main"), Some("dev")));
         assert!(!profile_owner_matches(None, Some("main")));
+    }
+
+    #[test]
+    fn profile_ownership_rejects_the_other_variant_without_relaunching() {
+        assert_eq!(profile_ownership(None, Some("main")), ProfileOwnership::Normal);
+        assert_eq!(profile_ownership(Some("main"), Some("main")), ProfileOwnership::Owned);
+        assert_eq!(profile_ownership(Some("dev"), None), ProfileOwnership::Owned);
+        assert_eq!(profile_ownership(Some("dev"), Some("main")), ProfileOwnership::Other);
+        assert_eq!(profile_ownership(Some("main"), Some("dev")), ProfileOwnership::Other);
+        assert_eq!(profile_ownership(Some("unknown"), Some("dev")), ProfileOwnership::Other);
     }
 
     #[test]
