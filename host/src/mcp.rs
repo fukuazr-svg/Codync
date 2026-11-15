@@ -54,7 +54,14 @@ Don't approve payments: ask the user to do that from their phone.";
 fn plain_instructions(server: Server) -> String {
     let plain = match server {
         Server::Connectors => crate::market::requests::INSTRUCTIONS,
-        Server::Computer => INSTRUCTIONS,
+        // The browser tools are Windows-only, so their words are empty elsewhere.
+        Server::Computer => {
+            return [INSTRUCTIONS, BROWSER_INSTRUCTIONS]
+                .into_iter()
+                .filter(|part| !part.is_empty())
+                .collect::<Vec<_>>()
+                .join(" ");
+        }
         Server::Routines => crate::routines::INSTRUCTIONS,
         Server::Chat => return crate::chat::outbox::instructions(),
         // The host's answer, or the bot's own setting when it can't be read for long.
@@ -82,6 +89,14 @@ async fn team_instructions(bot: &str, port: u16) -> Option<String> {
     let body: Value = reply.json().await.ok()?;
     body["instructions"].as_str().map(str::to_owned)
 }
+
+#[cfg(windows)]
+const BROWSER_INSTRUCTIONS: &str = "For a web page, prefer the browser tools: browser_start binds one dedicated tab \
+to the user's message; then use browser_navigate, browser_click and browser_type with that exact binding. \
+browser_screenshot posts the picture to the same chat.";
+
+#[cfg(not(windows))]
+const BROWSER_INSTRUCTIONS: &str = "";
 
 /// Serves MCP on stdio until the agent closes it.
 pub async fn serve(bot: String, port: u16, server: Server) -> Result<()> {
