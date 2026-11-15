@@ -1,4 +1,4 @@
-//! Isolated Chrome DevTools Protocol engine used by browser end-to-end tests.
+//! Isolated Chrome `DevTools` Protocol engine used by browser end-to-end tests.
 //!
 //! Product browser calls use the installed Codync Browser extension. Keeping the test-only
 //! headless engine here prevents product routing and test automation rules from sharing one file.
