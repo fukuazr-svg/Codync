@@ -68,7 +68,11 @@ function targetFrom(params, connection, requireTab = true) {
 
 function sessionFor(target) {
   const session = sessions.get(target.browserId)
-  if (!session) throw new Error('Browser operation is no longer running in Codync Browser')
+  if (!session) {
+    const error = new Error('Browser operation is no longer running in Codync Browser')
+    error.code = 'browser_session_closed'
+    throw error
+  }
   for (const key of ['hostId', 'botId', 'messageId', 'operationId']) {
     if (session[key] !== target[key]) throw new Error('Browser target changed')
   }
@@ -213,11 +217,13 @@ function reply(connection, message, result) {
 
 function fail(connection, message, error) {
   if (connections.get(connection.name)?.port !== connection.port) return
-  connection.port.postMessage({
+  const reply = {
     id: message.id,
     ok: false,
     error: String(error?.message ?? error ?? 'Codync Browser request failed')
-  })
+  }
+  if (typeof error?.code === 'string') reply.code = error.code
+  connection.port.postMessage(reply)
 }
 
 async function runRequest(message, connection) {
@@ -370,9 +376,9 @@ async function start(params, connection, state) {
   try {
     ensureRequestActive(state)
     const tab = await chrome.tabs.create({ url, active: true })
-    ensureRequestActive(state)
     if (!Number.isInteger(tab.id)) throw new Error('Chrome did not return a tab id')
     tabId = tab.id
+    ensureRequestActive(state)
     await waitForTab(tabId, (current) => current.status === 'complete', navigateTimeout)
     ensureRequestActive(state)
     await attach(tabId)

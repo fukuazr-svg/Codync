@@ -196,10 +196,12 @@ impl ExtensionBridge {
                     let answer = if value["ok"] == true {
                         Ok(value.get("result").cloned().unwrap_or(Value::Null))
                     } else {
-                        Err(value["error"]
-                            .as_str()
-                            .unwrap_or("the Codync Browser extension returned an invalid error")
-                            .to_owned())
+                        let message =
+                            value["error"].as_str().unwrap_or("the Codync Browser extension returned an invalid error");
+                        match value["code"].as_str() {
+                            Some(code) => Err(format!("{code}: {message}")),
+                            None => Err(message.to_owned()),
+                        }
                     };
                     let _ = reply.send(answer);
                 }
