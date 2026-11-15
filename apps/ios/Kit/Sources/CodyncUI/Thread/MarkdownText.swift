@@ -84,6 +84,9 @@ private struct CodeBlock: View {
                 .font(.system(.footnote, design: .monospaced))
                 .foregroundStyle(Palette.text)
                 .padding(10)
+                // The copy button always sits over the top-right corner on a phone; the extra top
+                // padding keeps the first line, and a long line scrolled fully right, clear of it.
+                .padding(.top, 34)
         }
         .background(Palette.codeBackground, in: RoundedRectangle(cornerRadius: 8))
         .overlay(alignment: .topTrailing) {
