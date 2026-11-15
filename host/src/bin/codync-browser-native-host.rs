@@ -466,10 +466,8 @@ mod tests {
 
     #[test]
     fn native_manifest_serializes_windows_paths_as_json() {
-        let manifest = native_manifest(
-            std::path::Path::new(r"C:\Users\Example User\Codync\codync-browser-native-host.exe"),
-            EXTENSION_ID,
-        );
+        let manifest =
+            native_manifest(Path::new(r"C:\Users\Example User\Codync\codync-browser-native-host.exe"), EXTENSION_ID);
         let encoded = serde_json::to_vec(&manifest).unwrap();
         let decoded: Value = serde_json::from_slice(&encoded).unwrap();
         assert_eq!(decoded["name"], native_host());
@@ -479,13 +477,11 @@ mod tests {
 
     #[test]
     fn native_manifest_removes_windows_verbatim_path_prefixes() {
-        let drive_path = native_manifest_path(std::path::Path::new(
-            r"\\?\C:\Users\Example User\Codync\codync-browser-native-host.exe",
-        ));
+        let drive_path =
+            native_manifest_path(Path::new(r"\\?\C:\Users\Example User\Codync\codync-browser-native-host.exe"));
         assert_eq!(drive_path, r"C:\Users\Example User\Codync\codync-browser-native-host.exe");
 
-        let unc_path =
-            native_manifest_path(std::path::Path::new(r"\\?\UNC\server\share\Codync\codync-browser-native-host.exe"));
+        let unc_path = native_manifest_path(Path::new(r"\\?\UNC\server\share\Codync\codync-browser-native-host.exe"));
         assert_eq!(unc_path, r"\\server\share\Codync\codync-browser-native-host.exe");
     }
 
