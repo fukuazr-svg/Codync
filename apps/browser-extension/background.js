@@ -7,6 +7,8 @@ const MAX_URL = 8 * 1024
 const attachTimeout = 10_000
 const navigateTimeout = 20_000
 const settleTimeout = 200
+const PERMANENT_BRIDGE_ERROR =
+  /(?:Opened Codync Browser in its dedicated profile|belongs to the other Codync variant)/i
 
 const connections = new Map()
 const reconnects = new Map()
@@ -25,6 +27,10 @@ function describeError(error) {
 
 function isMissingTabError(error) {
   return /No tab with id|Invalid tab ID|Tab not found/i.test(describeError(error))
+}
+
+function isPermanentBridgeError(detail) {
+  return PERMANENT_BRIDGE_ERROR.test(detail)
 }
 
 async function removeTab(tabId) {
@@ -139,7 +145,7 @@ function connectNative(hostName) {
     if (message.type === 'bridgeError') {
       const detail = String(message.error ?? 'Browser bridge error')
       const connection = connections.get(hostName)
-      if (connection?.port === port && /Opened Codync Browser in its dedicated profile/i.test(detail)) {
+      if (connection?.port === port && isPermanentBridgeError(detail)) {
         connection.stopReconnect = true
         connection.stopReason = detail
         reconnectSuppressed.add(hostName)
