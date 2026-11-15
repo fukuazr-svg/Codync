@@ -27,6 +27,9 @@ pub enum Event {
     RemoteScreenPaused,
     ImagePreviewOpened,
     ImagePreviewAction,
+    /// A fenced code block's copy button put its code on the clipboard (desktop and phones, each sending
+    /// its own; the terminal UI has no code blocks).
+    CodeBlockCopied,
     ConversationFindOpened,
     ConversationFindSearched,
     BotCreated,
@@ -192,6 +195,7 @@ impl Event {
             Self::RemoteScreenPaused => "remote_screen_paused",
             Self::ImagePreviewOpened => "image_preview_opened",
             Self::ImagePreviewAction => "image_preview_action",
+            Self::CodeBlockCopied => "code_block_copied",
             Self::ConversationFindOpened => "conversation_find_opened",
             Self::ConversationFindSearched => "conversation_find_searched",
             Self::BotCreated => "bot_created",

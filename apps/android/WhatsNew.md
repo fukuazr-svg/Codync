@@ -18,6 +18,7 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - 可以只回覆訊息的其中一段：長按訊息選「選取文字」。
 - 開始 OpenAI 即時語音通話或遠端螢幕時，App 不會再關閉。
 - 選擇卡片可以直接打字回答。
+- 程式碼區塊右上角多了複製鍵：點一下就把程式碼放進剪貼簿，不帶外框與語言標記。
 
 ### en-US
 - Bots do long work in the background and keep answering.
@@ -29,3 +30,4 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - Reply to one part of a message.
 - OpenAI calls and remote screen no longer close the app.
 - Choice cards take your own answer.
+- A code block now has a copy button in its corner: one tap copies the code without its fences or language tag.

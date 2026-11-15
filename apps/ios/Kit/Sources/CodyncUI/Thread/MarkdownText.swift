@@ -67,13 +67,40 @@ private struct MarkdownBlock: View {
                 .padding(.leading, 10)
                 .overlay(alignment: .leading) { Rectangle().fill(Palette.border).frame(width: 3) }
         case let .code(t, _):
-            ScrollView(.horizontal, showsIndicators: false) {
-                Text(t)
-                    .font(.system(.footnote, design: .monospaced))
-                    .foregroundStyle(Palette.text)
-                    .padding(10)
+            CodeBlock(text: t)
+        }
+    }
+}
+
+/// A fenced code block: the code, and a button that copies it without the fences.
+private struct CodeBlock: View {
+    let text: String
+
+    @State private var copied = false
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            Text(text)
+                .font(.system(.footnote, design: .monospaced))
+                .foregroundStyle(Palette.text)
+                .padding(10)
+                // The copy button always sits over the top-right corner on a phone; the extra top
+                // padding keeps the first line, and a long line scrolled fully right, clear of it.
+                .padding(.top, 34)
+        }
+        .background(Palette.codeBackground, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(alignment: .topTrailing) {
+            IconButton(copied ? "Copied" : "Copy code", systemImage: copied ? "checkmark" : "doc.on.doc") {
+                Pasteboard.copy(text)
+                Analytics.shared.capture(.codeBlockCopied)
+                copied = true
             }
-            .background(Palette.codeBackground, in: RoundedRectangle(cornerRadius: 8))
+            .padding(2)
+        }
+        .task(id: copied) {
+            guard copied else { return }
+            try? await Task.sleep(for: .seconds(1.5))
+            copied = false
         }
     }
 }
