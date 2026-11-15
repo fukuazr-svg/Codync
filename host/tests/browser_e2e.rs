@@ -139,15 +139,10 @@ fn capture_failure(home: &Path) -> std::io::Result<PathBuf> {
 }
 
 async fn wait_json(home: &Path, path: &Path, within: Duration) -> Value {
-    wait_json_where(home, path, within, |_| true).await
-}
-
-async fn wait_json_where(home: &Path, path: &Path, within: Duration, matches: impl Fn(&Value) -> bool) -> Value {
     let deadline = Instant::now() + within;
     loop {
         if let Ok(text) = tokio::fs::read_to_string(path).await
             && let Ok(value) = serde_json::from_str(&text)
-            && matches(&value)
         {
             return value;
         }
@@ -432,16 +427,20 @@ async fn stopping_during_a_delayed_start_closes_the_late_tab() {
         .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
         .unwrap();
     let requests = Arc::new(StdMutex::new(Vec::new()));
-    let extension = fake_extension(&host, png, Duration::from_secs(1), requests.clone()).await;
+    let extension = fake_extension(&host, png, Duration::from_secs(3), requests.clone()).await;
     let bot = browser_bot(&host).await;
 
     let _ = send(&host, &bot, "browser-start-stop http://127.0.0.1/").await;
-    let progress = host.home.join("bots").join(&bot).join("workspace").join("browser-progress.json");
-    let state = wait_json_where(&host.home, &progress, Duration::from_secs(30), |state| {
-        state["stage"] == "tool:browser_start:request"
-    })
-    .await;
-    assert_eq!(state["stage"], "tool:browser_start:request", "{state}");
+    let deadline = Instant::now() + Duration::from_secs(30);
+    while !requests.lock().unwrap().iter().any(|request| request["method"] == "start") {
+        assert!(
+            Instant::now() < deadline,
+            "timed out waiting for the browser start to reach the extension; preserved evidence at {}",
+            capture_failure(&host.home)
+                .map_or_else(|error| format!("unavailable: {error}"), |path| path.display().to_string())
+        );
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
     host.call("stop", json!({"botId": bot})).await;
     let result = wait_json(&host.home, &results_path(&host, &bot), Duration::from_secs(45)).await;
     assert!(result["startError"].as_str().unwrap().contains("cancelled"), "{result}");
