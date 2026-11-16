@@ -294,9 +294,11 @@ impl Actor {
         }
     }
 
-    pub(super) async fn answer_permission(&mut self, entry_id: &str, option_id: Option<String>) {
-        let Some(answer) = self.perms.remove(entry_id) else { return };
+    /// Answers the card; false when it was gone (or its tool stopped waiting), so a caller can say so.
+    pub(super) async fn answer_permission(&mut self, entry_id: &str, option_id: Option<String>) -> bool {
+        let Some(answer) = self.perms.remove(entry_id) else { return false };
         let mut status = if option_id.is_some() { "answered" } else { "cancelled" };
+        let mut applied = true;
         match answer {
             Answer::Agent(rpc_id) => {
                 if let Some(conn) = &self.conn {
@@ -307,6 +309,7 @@ impl Actor {
                 // The tool stopped waiting (see `expire_abandoned`): nothing acts on the answer.
                 if reply.send(option_id.as_deref() == Some("allow")).is_err() {
                     status = "expired";
+                    applied = false;
                 }
             }
         }
@@ -321,6 +324,7 @@ impl Actor {
                 r.activity = "Continuing…".into();
             });
         }
+        applied
     }
 
     /// A `send_message`: the user's next bubble, in the turn's lane, right away. Only in the

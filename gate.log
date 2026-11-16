@@ -1,0 +1,8 @@
+[08:07:40] head=84de563fd81898fbdffb6582eaaabbccaec9f226
+[08:07:40] lock acquired token=z15gate-61e0f198b3
+[08:07:50] fmt exit=0 9.5s
+[08:18:50] head=84de563fd81898fbdffb6582eaaabbccaec9f226
+[08:18:50] lock acquired token=z15gate-43ebfcd929
+[08:18:52] fmt exit=1 2.5s
+[08:20:05] check exit=101 72.9s
+[08:20:05] lock released

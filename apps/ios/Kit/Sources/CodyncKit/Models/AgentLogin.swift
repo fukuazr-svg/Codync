@@ -37,18 +37,43 @@ public extension Bot {
         resting.first { $0.login == login && Date(milliseconds: $0.until) > now }
     }
 
-    /// The Agent card's first line while the bot runs on a fallback; nil on its own agent. `name` says what to call
+    /// The Agent card's first line before it is translated; nil on its own agent. `name` says what to call
     /// a login ("Claude Code (Work)" on a login profile); `own` asks for the computer's own login by its login profile too,
     /// which tells two logins of one agent apart.
-    func stepBanner(now: Date = .now, name: (AgentLogin, _ own: Bool) -> String) -> String? {
+    func stepBannerPhrase(now: Date = .now, name: (AgentLogin, _ own: Bool) -> String) -> FallbackPhrase? {
         guard let step = stepLogin else { return nil }
         let same = step.backend == backend
         let to = name(step, same), own = name(login, same)
-        let rest = rest(of: login, now: now)
-        if let rest, rest.reason == "usageLimit" {
-            return "Using \(to) until \(own) resets at \(RelativeTime.clock(Date(milliseconds: rest.until)))"
+        let names = ["to": to, "own": own]
+        guard let rest = rest(of: login, now: now) else {
+            return FallbackPhrase(key: "Using {to} while {own} can't answer", values: names)
         }
-        return "Using \(to) while \(own) \(rest?.phrase ?? "can't answer")"
+        if rest.reason == "usageLimit" {
+            return FallbackPhrase(
+                key: "Using {to} until {own} resets at {time}",
+                values: names.merging(["time": RelativeTime.clock(Date(milliseconds: rest.until))]) { _, new in new }
+            )
+        }
+        guard let phrase = rest.phrase else {
+            return FallbackPhrase(key: "Using {to} while {own} can't answer", values: names)
+        }
+        return FallbackPhrase(key: "Using {to} while {own} \(phrase)", values: names)
+    }
+
+    /// The banner as one English line, for callers that show English; views translate the phrase first.
+    func stepBanner(now: Date = .now, name: (AgentLogin, _ own: Bool) -> String) -> String? {
+        stepBannerPhrase(now: now, name: name).map { L10n.fill($0.key, $0.values) }
+    }
+}
+
+/** A sentence before it is translated: the phrase, and the names to put in once it is read in the app's language. */
+public struct FallbackPhrase: Equatable {
+    public let key: String
+    public let values: [String: String]
+
+    public init(key: String, values: [String: String]) {
+        self.key = key
+        self.values = values
     }
 }
 

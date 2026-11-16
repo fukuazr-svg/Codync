@@ -382,6 +382,16 @@ impl Exchange<'_> {
 /// The team tools that look at another bot: their answers are the user's to decide.
 pub(crate) const INSPECTING: [&str; 4] = ["bot_status", "recent_messages", "answer_approval", "stop_bot"];
 
+/// Of those, the ones the user answers: their outcome is reported as the user decides (`inspect::asked`).
+pub(crate) const ASKING: [&str; 2] = ["answer_approval", "stop_bot"];
+
+/// The team server's words, with what looking at another bot allows under `permission`.
+pub fn instructions(permission: crate::store::Permission) -> String {
+    let inspect =
+        if permission == crate::store::Permission::Auto { inspect::AUTO_INSTRUCTIONS } else { inspect::INSTRUCTIONS };
+    format!("{INSTRUCTIONS}\n\n{inspect}")
+}
+
 /// The prompt that starts the recipient's turn: `who` opens it ("Another Codync bot, Ada,") and
 /// its reply goes back to `to`.
 fn request_prompt(who: &str, to: &str, access: Access, message: &str) -> String {
