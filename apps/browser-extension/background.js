@@ -229,21 +229,34 @@ function fail(connection, message, error) {
 async function runRequest(message, connection) {
   const state = { cancelled: false, connection }
   activeRequests.set(message.id, state)
+  let completedTarget = null
   try {
     const result = await handle(message.method, message.params ?? {}, connection, state)
+    const startTarget =
+      message.method === 'start' && message.params?.target && result?.tabId
+        ? {
+            ...message.params.target,
+            tabId: String(result.tabId)
+          }
+        : null
     if (state.cancelled) {
-      if (message.method === 'start' && message.params?.target) {
-        await stop({ target: message.params.target }, connection)
+      if (startTarget?.tabId) {
+        try {
+          await stop({ target: startTarget }, connection)
+        } catch (stopError) {
+          if (!/no longer running/i.test(String(stopError?.message ?? stopError))) throw stopError
+        }
       }
       throw new Error('Codync Browser request was cancelled')
     }
+    if (startTarget?.tabId) completedTarget = startTarget
     reply(connection, message, result)
   } catch (error) {
     fail(connection, message, error)
   } finally {
     activeRequests.delete(message.id)
-    if (message.method === 'start' && message.params?.target) {
-      completedStarts.set(message.id, { target: message.params.target, connection })
+    if (completedTarget) {
+      completedStarts.set(message.id, { target: completedTarget, connection })
       setTimeout(() => completedStarts.delete(message.id), 60_000)
     }
   }
@@ -296,9 +309,10 @@ async function closeSessionsForHost(hostName) {
   }
 }
 
-async function waitForTab(tabId, predicate, timeoutMs) {
+async function waitForTab(tabId, predicate, timeoutMs, requestState = null) {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
+    if (requestState) ensureRequestActive(requestState)
     let tab
     try {
       tab = await chrome.tabs.get(tabId)
@@ -369,6 +383,14 @@ async function pageState(tabId) {
   }
 }
 
+async function syncSessionUrl(session, nextState) {
+  if (nextState?.url && nextState.url !== session.currentUrl) {
+    session.currentUrl = nextState.url
+    await persistSessions()
+  }
+  return nextState
+}
+
 async function start(params, connection, state) {
   const target = targetFrom(params, connection, false)
   const url = checkedUrl(params.url)
@@ -379,10 +401,20 @@ async function start(params, connection, state) {
     if (!Number.isInteger(tab.id)) throw new Error('Chrome did not return a tab id')
     tabId = tab.id
     ensureRequestActive(state)
-    await waitForTab(tabId, (current) => current.status === 'complete', navigateTimeout)
+    await waitForTab(
+      tabId,
+      (current) => current.status === 'complete' && /^https?:/i.test(current.url ?? ''),
+      navigateTimeout,
+      state
+    )
     ensureRequestActive(state)
     await attach(tabId)
     ensureRequestActive(state)
+    const initialState = await pageState(tabId)
+    ensureRequestActive(state)
+    if (!/^https?:/i.test(initialState.url)) {
+      throw new Error('The browser did not open an HTTP or HTTPS page')
+    }
     const session = {
       hostId: target.hostId,
       hostName: connection.name,
@@ -393,7 +425,7 @@ async function start(params, connection, state) {
       tabId: String(tabId),
       generation: target.generation,
       initialUrl: url,
-      currentUrl: url
+      currentUrl: initialState.url || url
     }
     sessions.set(target.browserId, session)
     await persistSessions()
@@ -404,7 +436,7 @@ async function start(params, connection, state) {
       browserExecutable: 'unknown',
       extensionId: EXTENSION_ID,
       extensionVersion: chrome.runtime.getManifest().version,
-      state: await pageState(tabId)
+      state: initialState
     }
   } catch (error) {
     if (tabId != null) {
@@ -426,26 +458,29 @@ async function navigate(params, connection, state) {
   const tabId = Number(session.tabId)
   return runInTabOrder(tabId, state, async () => {
     ensureRequestActive(state)
-    const previousUrl = session.currentUrl
+    const beforeTab = await chrome.tabs.get(tabId)
+    const previousUrl = beforeTab.url || session.currentUrl
     const updated = await chrome.tabs.update(tabId, { url })
     ensureRequestActive(state)
     if (updated.status !== 'loading' && updated.url === previousUrl) {
       await waitForTab(
         tabId,
         (current) => current.status === 'loading' || current.url !== previousUrl,
-        navigateTimeout
+        navigateTimeout,
+        state
       )
       ensureRequestActive(state)
     }
     const tab = await waitForTab(
       tabId,
       (current) => current.status === 'complete' && /^https?:/i.test(current.url ?? ''),
-      navigateTimeout
+      navigateTimeout,
+      state
     )
     ensureRequestActive(state)
     session.currentUrl = tab.url ?? url
     await persistSessions()
-    return pageState(tabId)
+    return syncSessionUrl(session, await pageState(tabId))
   })
 }
 
@@ -506,7 +541,7 @@ async function click(params, connection, state) {
       clickCount: 1
     })
     await sleep(settleTimeout)
-    return pageState(tabId)
+    return syncSessionUrl(session, await pageState(tabId))
   })
 }
 
@@ -602,7 +637,7 @@ async function state(params, connection, requestState) {
   const target = targetFrom(params, connection)
   const session = sessionFor(target)
   const tabId = Number(session.tabId)
-  return runInTabOrder(tabId, requestState, async () => pageState(tabId))
+  return runInTabOrder(tabId, requestState, async () => syncSessionUrl(session, await pageState(tabId)))
 }
 
 async function handle(method, params, connection, requestState) {
