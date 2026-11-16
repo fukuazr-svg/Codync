@@ -117,15 +117,9 @@ impl Actor {
             composio.then_some("composio"),
         ];
         for name in builtin.into_iter().flatten() {
-            // A task's memory is its bot's; everything else of it is its own.
-            let bot = if name == "memory" { self.cfg.owner() } else { &self.cfg.id };
-            // The team server's own words follow the bot's approvals; they travel with the server's start.
-            let env = if name == "team" {
-                vec![(crate::mcp::INSTRUCTIONS_ENV, crate::chat::team::instructions(self.cfg.permission))]
-            } else {
-                Vec::new()
-            };
-            servers.push(crate::mcp::acp_server(name, &exe, &[name, "--bot", bot], port, &env));
+            // A task's `memory` server is the task's too: it reads and writes its bot's memory (`memory::tool_call`),
+            // and what it writes is its own turn's.
+            servers.push(crate::mcp::acp_server(name, &exe, &[name, "--bot", &self.cfg.id], port));
         }
         Ok(Value::Array(servers))
     }
@@ -288,7 +282,8 @@ impl Actor {
             }
         }
         // A task's first session: a fork of its bot's main one where the agent can, so it starts knowing the chat;
-        // otherwise a new session that is told the chat so far.
+        // otherwise a new session that is told the chat so far. A routine's run gets neither (no fork source, no
+        // chat): a new session with its own prompt, as a run in the chat has.
         if slot.is_none() && crate::chat::tasks::first_session(&self.hub.store, &self.cfg) {
             match self.fork_owner_session(&servers, &renamed, instructions).await {
                 Ok(true) => return Ok(()),
@@ -302,7 +297,9 @@ impl Actor {
             if self.conn.is_none() {
                 return Box::pin(self.ensure_session(slot)).await;
             }
-            self.handoff = crate::chat::tasks::chat_so_far(&self.hub.store, self.cfg.owner());
+            if crate::chat::tasks::from_chat(&self.task_source) {
+                self.handoff = crate::chat::tasks::chat_so_far(&self.hub.store, self.cfg.owner());
+            }
             crate::chat::tasks::started(&self.hub, &self.cfg, crate::chat::tasks::Start::Brief);
         }
         let (revision, system) = {
@@ -316,12 +313,6 @@ impl Actor {
         self.instruct(&mut params, instructions, &system);
         let res = self.session_request("session/new", params).await?;
         let sid = self.adopt_opened(&res, slot, renamed).await?;
-        // A fresh conversation inherits no approvals. An agent numbers its sessions from the start in each process,
-        // so the id it returns here can be the one an earlier conversation was always allowed under.
-        if let Some(stale) = self.session_for(slot).filter(|stale| stale != &sid) {
-            self.always_allowed.forget(&stale);
-        }
-        self.always_allowed.forget(&sid);
         context::adopt(&self.hub.store, &self.cfg.as_owner(), &sid, system.clone(), revision)?;
         if instructions == Instructions::ClaudeMeta {
             self.applied_system.insert(sid, system);
@@ -413,7 +404,7 @@ impl Actor {
 
     /// A routine's time limit cut a session request short. An agent that can resume stops, so a session it might
     /// still open goes with its process; one that can't keeps running rather than lose the sessions it has.
-    pub(super) async fn drop_unanswered(&mut self) {
+    async fn drop_unanswered(&mut self) {
         let Some(conn) = self.conn.as_mut() else { return };
         if !std::mem::take(&mut conn.opening) {
             return;
@@ -429,12 +420,8 @@ impl Actor {
         }
     }
 
-    /// Drops the main ACP session so the next turn starts a fresh one. Its approvals go with it: the next
-    /// conversation may come back on the same session id.
+    /// Drops the main ACP session so the next turn starts a fresh one.
     pub(super) fn forget_session(&mut self) {
-        if let Some(sid) = self.session_id.clone() {
-            self.always_allowed.forget(&sid);
-        }
         self.set_session(None, None);
     }
 }

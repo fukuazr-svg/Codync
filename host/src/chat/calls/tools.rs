@@ -1,10 +1,9 @@
 //! The voice's tools (`callTool`): what it may do for the user on the call. They run here, on the bot's chat.
 
-use super::context;
+use super::context::{self, RECENT};
 use crate::agent::bot::Cmd;
-use crate::chat::insight;
-use crate::hub::Hub;
-use crate::store::BotConfig;
+use crate::hub::{Hub, Runtime};
+use crate::store::{BotConfig, Entry, EntryKind};
 use anyhow::{Result, anyhow};
 use serde_json::{Value, json};
 use std::sync::Arc;
@@ -38,7 +37,7 @@ pub async fn call(hub: &Arc<Hub>, call: &str, name: &str, args: &Value, lines: &
         match name {
             "send_to_bot" => relay(hub, &cfg, call, args["text"].as_str().unwrap_or_default()),
             "bot_status" => Ok(status(hub, &cfg)),
-            "recent_messages" => Ok(recent_messages(hub, &cfg, args["count"].as_i64().unwrap_or(6))),
+            "recent_messages" => Ok(recent(hub, &cfg, args["count"].as_i64().unwrap_or(6))),
             "answer_approval" => answer(hub, &cfg, args["option"].as_str().unwrap_or_default()),
             "stop_bot" => stop(hub, &cfg),
             "search_memory" if !cfg.is_group() => {
@@ -69,11 +68,15 @@ fn relay(hub: &Arc<Hub>, cfg: &BotConfig, call: &str, text: &str) -> Result<Valu
 }
 
 fn status(hub: &Hub, cfg: &BotConfig) -> Value {
-    let rt = insight::runtime(hub, cfg);
+    let rt = runtime(hub, cfg);
     let mut out = json!({"status": rt.status, "activity": rt.activity});
-    let recent = hub.store.history(&cfg.id, i64::MAX, insight::RECENT_ENTRIES).unwrap_or_default();
-    if let Some(w) = insight::waiting(&recent) {
+    let recent = hub.store.history(&cfg.id, i64::MAX, RECENT).unwrap_or_default();
+    if let Some(w) = waiting(&recent) {
         out["approval"] = json!({"request": w.request, "options": w.options});
+        // Asked by its work in the background: which.
+        if let Some(work) = w.work {
+            out["approval"]["work"] = work.into();
+        }
     }
     // What it works on away from the chat, and what waits.
     if let Some(lines) = crate::chat::tasks::lines(hub, cfg, "Its").filter(|_| !cfg.is_group()) {
@@ -82,30 +85,48 @@ fn status(hub: &Hub, cfg: &BotConfig) -> Value {
     out
 }
 
-/// What an approval card asks and its options' names.
-pub(super) fn approval(data: &Value) -> (&str, Vec<&str>) {
-    let request = data["title"].as_str().or_else(|| data["command"].as_str()).unwrap_or_default();
-    (request, data["options"].as_array().into_iter().flatten().filter_map(insight::option_name).collect())
-}
-
-/// The bot's latest entries, old enough to hold the approval it may wait for.
-fn recent_messages(hub: &Hub, cfg: &BotConfig, count: i64) -> Value {
+fn recent(hub: &Hub, cfg: &BotConfig, count: i64) -> Value {
     let said = context::said(hub, cfg, count.clamp(1, 20), 1_500);
     json!({"messages": said.into_iter().map(|(from, text)| json!({"from": from, "text": text})).collect::<Vec<_>>()})
 }
 
-fn recent(hub: &Hub, cfg: &BotConfig) -> Vec<crate::store::Entry> {
-    hub.store.history(&cfg.id, i64::MAX, insight::RECENT_ENTRIES).unwrap_or_default()
+/// The bot's runtime; a group's is that of the member working in it.
+pub(super) fn runtime(hub: &Hub, cfg: &BotConfig) -> Runtime {
+    if cfg.is_group() { hub.group_runtime(cfg) } else { hub.runtime(&cfg.id) }
+}
+
+/// An approval the bot waits for: its card, what it asks and its options' names.
+pub(super) struct Waiting<'a> {
+    pub card: &'a Entry,
+    pub request: &'a str,
+    pub options: Vec<&'a str>,
+    /// The work in the background that asks, by its title; none for the chat's own turn.
+    pub work: Option<&'a str>,
+}
+
+/// The newest approval card still pending in `recent` (oldest first).
+pub(super) fn waiting(recent: &[Entry]) -> Option<Waiting<'_>> {
+    let card =
+        recent.iter().rev().find(|e| e.kind == EntryKind::Permission.as_str() && e.data["status"] == "pending")?;
+    let (request, options) = approval(&card.data);
+    let work = card.data["task"]["title"].as_str().filter(|title| !title.is_empty());
+    Some(Waiting { card, request, options, work })
+}
+
+/// What an approval card asks and its options' names.
+pub(super) fn approval(data: &Value) -> (&str, Vec<&str>) {
+    let request = data["title"].as_str().or_else(|| data["command"].as_str()).unwrap_or_default();
+    (request, data["options"].as_array().into_iter().flatten().filter_map(|o| o["name"].as_str()).collect())
 }
 
 fn answer(hub: &Hub, cfg: &BotConfig, option: &str) -> Result<Value> {
-    let recent = recent(hub, cfg);
-    let Some(card) = insight::waiting(&recent).map(|w| w.card) else {
+    let recent = hub.store.history(&cfg.id, i64::MAX, RECENT).unwrap_or_default();
+    let Some(card) = waiting(&recent).map(|w| w.card) else {
         return Ok(json!({"error": "Nothing is waiting for approval."}));
     };
     let options = card.data["options"].as_array().cloned().unwrap_or_default();
     let Some(pick) = pick(&options, option) else {
-        let names: Vec<String> = options.iter().filter_map(insight::option_name).map(str::to_owned).collect();
+        let names: Vec<String> = options.iter().map(option_name).collect();
         return Ok(json!({"error": "No such option.", "options": names}));
     };
     // A card in a group belongs to the bot that asked.
@@ -115,16 +136,17 @@ fn answer(hub: &Hub, cfg: &BotConfig, option: &str) -> Result<Value> {
     Ok(json!({"answered": pick["name"]}))
 }
 
+fn option_name(o: &Value) -> String {
+    o["name"].as_str().unwrap_or_default().to_lowercase()
+}
+
 /// The option the user picked by name (any case) or id, else the one whose name holds what they said or the other
 /// way round.
 fn pick<'a>(options: &'a [Value], wanted: &str) -> Option<&'a Value> {
     let lower = wanted.to_lowercase();
-    let name = |o: &Value| insight::option_name(o).unwrap_or_default().to_lowercase();
-    options.iter().find(|o| name(o) == lower || o["optionId"] == wanted).or_else(|| {
-        let near = |o: &&Value| {
-            let option = name(o);
-            !lower.is_empty() && (option.contains(&lower) || lower.contains(&option))
-        };
+    options.iter().find(|o| option_name(o) == lower || o["optionId"] == wanted).or_else(|| {
+        let near =
+            |o: &&Value| !lower.is_empty() && (option_name(o).contains(&lower) || lower.contains(&option_name(o)));
         options.iter().find(near)
     })
 }
@@ -143,7 +165,6 @@ fn stop(hub: &Arc<Hub>, cfg: &BotConfig) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::chat::calls::context;
     use crate::store::{BotKind, EntryKind, Lane};
 
     fn options() -> Vec<Value> {
@@ -170,13 +191,17 @@ mod tests {
         let hub = context::tests::hub();
         let bot = context::tests::bot("b1", "Mika", "/tmp");
         hub.store.save_bot(&bot).unwrap();
-        assert_eq!(insight::status(&hub, &bot, &[]), json!({"status": "idle", "activity": ""}));
+        assert_eq!(status(&hub, &bot), json!({"status": "idle", "activity": ""}));
         let card = json!({"title": "Edit a.txt", "status": "pending", "options": options()});
         hub.store.insert_entry(&Lane::main("b1"), EntryKind::Permission, 1, &card).unwrap();
         assert_eq!(
-            insight::status(&hub, &bot, &recent(&hub, &bot))["approval"],
+            status(&hub, &bot)["approval"],
             json!({"request": "Edit a.txt", "options": ["Allow", "Always", "Reject"]})
         );
+        let from_task = json!({"title": "Run tests", "status": "pending", "options": options(),
+            "task": {"id": "task-1", "title": "Fix login"}});
+        hub.store.insert_entry(&Lane::main("b1"), EntryKind::Permission, 1, &from_task).unwrap();
+        assert_eq!(status(&hub, &bot)["approval"]["work"], "Fix login", "the item that asks");
         crate::chat::tasks::put_working_for_test(&hub.store, "b1", "task-1");
         let background = status(&hub, &bot)["background"].as_str().unwrap().to_owned();
         assert!(background.starts_with("Its work in the background: 1 working, 0 waiting"), "{background}");
@@ -189,7 +214,7 @@ mod tests {
             rt.activity = "Running tests".into();
             rt.lane = Some(Lane::main("g"));
         });
-        let busy = insight::status(&hub, &group, &[]);
+        let busy = status(&hub, &group);
         assert_eq!(
             (busy["status"].as_str(), busy["activity"].as_str()),
             (Some("working"), Some("Mika: Running tests"))
@@ -209,7 +234,7 @@ mod tests {
         hub.store
             .insert_entry(&chat, EntryKind::Agent, 2, &json!({"text": "**Clean.**", "final": true, "author": "b1"}))
             .unwrap();
-        let said = recent_messages(&hub, &bot, 99)["messages"].clone();
+        let said = recent(&hub, &bot, 99)["messages"].clone();
         assert_eq!(
             said,
             json!([
@@ -218,6 +243,6 @@ mod tests {
                 {"from": "Mika", "text": "Clean."},
             ])
         );
-        assert_eq!(recent_messages(&hub, &bot, 0)["messages"].as_array().map(Vec::len), Some(1), "at least one");
+        assert_eq!(recent(&hub, &bot, 0)["messages"].as_array().map(Vec::len), Some(1), "at least one");
     }
 }

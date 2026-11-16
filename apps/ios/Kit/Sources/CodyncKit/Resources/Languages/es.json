@@ -1418,11 +1418,19 @@
   "Bots message the bots on these computers as bot@computer.{network}.": "Los bots escriben a los bots de estas computadoras como bot@computadora.{network}.",
   "Who may message bots here": "Quién puede escribir a los bots de aquí",
   "Who may message bots on {name}": "Quién puede escribir a los bots de {name}",
+  "The first rule that matches decides. A computer no rule matches gets Auto. Answers to this computer's own messages always get in.": "Decide la primera regla que coincide. Un ordenador al que no se aplica ninguna regla queda en Auto. Las respuestas a los mensajes de este ordenador siempre entran.",
   "The first rule that matches decides. Without rules, every computer in the network may message every bot here. Answers to this computer's own messages always get in.": "Decide la primera regla que coincida. Sin reglas, cada computadora de la red puede escribir a cada bot de aquí. Las respuestas a los mensajes de esta computadora siempre llegan.",
   "Add rule": "Añadir regla",
   "Delete rule": "Eliminar regla",
   "Allow: {from} → {to}": "Permitir: {from} → {to}",
   "Deny: {from} → {to}": "Denegar: {from} → {to}",
+  "Auto: {from} → {to}": "Auto: {from} → {to}",
+  "Ask: {from} → {to}": "Preguntar: {from} → {to}",
+  "Ask": "Preguntar",
+  "Its requests run as the bot is set.": "Sus solicitudes se ejecutan según la configuración del bot.",
+  "The bot does by itself only what its agent judges safe, and asks you about the rest.": "El bot solo hace por su cuenta lo que su agente considera seguro y te pregunta por el resto.",
+  "Every change and command the bot makes for it waits for your approval.": "Cada cambio y cada comando del bot para él espera tu aprobación.",
+  "Its messages are refused.": "Sus mensajes se rechazan.",
   "any bot on any computer": "cualquier bot en cualquier computadora",
   "any bot on {computer}": "cualquier bot en {computer}",
   "{bot} on {computer}": "{bot} en {computer}",
@@ -2142,4 +2150,7 @@
   "Also in this release": "También en esta versión",
   "Watch the full video": "Ver el vídeo completo",
   "Copy code": "Copiar código"
+  "Work": "Trabajo",
+  "Worktree per agent": "Un worktree por agente",
+  "Agents that work at once in this repository each get their own branch.": "Los agentes que trabajan a la vez en este repositorio tienen cada uno su propia rama."
 }

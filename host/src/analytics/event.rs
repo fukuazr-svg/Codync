@@ -42,6 +42,8 @@ pub enum Event {
     MessageSent,
     /// The user had a queued message handled now (`agent::bot::steer`).
     MessageSteered,
+    /// The user sent one of the agent's own `/` commands (`agent::bot::commands`).
+    AgentCommandSent,
     QueuedMessageRemoved,
     TurnStopped,
     TurnFinished,
@@ -207,6 +209,7 @@ impl Event {
             Self::BotDeleted => "bot_deleted",
             Self::MessageSent => "message_sent",
             Self::MessageSteered => "message_steered",
+            Self::AgentCommandSent => "agent_command_sent",
             Self::QueuedMessageRemoved => "queued_message_removed",
             Self::TurnStopped => "turn_stopped",
             Self::TurnFinished => "turn_finished",

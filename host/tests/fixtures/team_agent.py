@@ -1,7 +1,6 @@
 """Deterministic ACP agent for delegation tests; no provider or network access."""
 
 import json
-import os
 import pathlib
 import subprocess
 import sys
@@ -31,9 +30,8 @@ def update(value):
 
 def mcp_call(server_name, tool, arguments):
     server = next(s for s in servers if s["name"] == server_name)
-    env = {**os.environ, **{v["name"]: v["value"] for v in server.get("env", [])}}
     with subprocess.Popen([server["command"], *server["args"]], stdin=subprocess.PIPE,
-                          stdout=subprocess.PIPE, text=True, encoding="utf-8", env=env) as mcp:
+                          stdout=subprocess.PIPE, encoding="utf-8") as mcp:
         def rpc(identifier, method, params):
             mcp.stdin.write(json.dumps({"jsonrpc": "2.0", "id": identifier, "method": method, "params": params}) + "\n")
             mcp.stdin.flush()
@@ -69,11 +67,6 @@ def prompt(request):
     text = request["params"]["prompt"][0]["text"]
     with open("prompts.jsonl", "a") as log:
         log.write(json.dumps(text) + "\n")
-    if "GOAL_DECISION" in text and "[Codync: goal step " in text:
-        mcp_call("chat", "request_decision", {"question": "Which way?", "options": ["Left", "Right"]})
-        update({"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "Continuing work."}})
-        send({"id": request["id"], "result": {"stopReason": "end_turn"}})
-        return
     if "ROOM_DECISION" in text and "[Group chat" in text:
         response = mcp_call("chat", "request_decision", {"question": "Which way?", "options": ["Left", "Right"]})
         update({"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "Refused: " + response["content"][0]["text"]}})
@@ -184,20 +177,6 @@ def prompt(request):
         update({"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": reply}})
         send({"id": request["id"], "result": {"stopReason": "end_turn"}})
         return
-    last = text.split("\n\n")[-1]
-    if "[Codync: goal step " in text and "GOAL_BLOCK" not in text and "PERMISSION" not in text and "FAIL" not in text:
-        if "GOAL_SEND" in text:
-            mcp_call("chat", "send_message", {"text": "The notes have been shipped."})
-            update({"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "GOAL_COMPLETE"}})
-            send({"id": request["id"], "result": {"stopReason": "end_turn"}})
-            return
-        # A goal step: the bot works on, and its words are the turn's reply.
-        reply = "GOAL_COMPLETE" if "GOAL_DONE" in text and "[Codync: goal step 1/" not in text else "Step done, more to come."
-        if "GOAL_ASK" in text:
-            reply = "Which one should I publish?"
-        update({"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": reply}})
-        send({"id": request["id"], "result": {"stopReason": "end_turn"}})
-        return
     if text.split("\n\n")[-1] == "OK":
         update({"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "(pass)"}})
         send({"id": request["id"], "result": {"stopReason": "end_turn"}})
@@ -209,9 +188,6 @@ def prompt(request):
         send({"id": request["id"], "result": {"stopReason": "end_turn"}})
         return
     if "PERMISSION" in text:
-        if "WAIT_PERMISSION" in text:
-            while not pathlib.Path("permission-ready").exists() and not cancel.wait(0.01):
-                pass
         send({"id": "permission", "method": "session/request_permission", "params": {
             "sessionId": "session", "toolCall": {"toolCallId": "edit", "title": "Edit a file"},
             "options": [{"optionId": "allow", "name": "Allow", "kind": "allow_once"}],
@@ -246,8 +222,6 @@ def prompt(request):
         return
     if cancel.is_set():
         send({"id": request["id"], "result": {"stopReason": "cancelled"}})
-    elif "PERMISSION_RATE_LIMIT" in text:
-        send({"id": request["id"], "error": {"code": -32603, "message": "usage limit", "data": {"errorKind": "rate_limit"}}})
     elif "FAIL" in text:
         send({"id": request["id"], "error": {"code": -32000, "message": "fixture failure"}})
     elif "REFUSE" in text:
@@ -274,13 +248,20 @@ for line in sys.stdin:
         pathlib.Path("servers.json").write_text(json.dumps(request["params"]["mcpServers"]))
         if pathlib.Path("slow-start").exists():
             time.sleep(2)
-        send({"id": request["id"], "result": {"sessionId": "session"}})
+        # modes.json in the bot's folder: the session modes this agent lists (none without it).
+        listed = pathlib.Path("modes.json")
+        modes = json.loads(listed.read_text()) if listed.exists() else {}
+        send({"id": request["id"], "result": {"sessionId": "session", **modes}})
     elif method == "session/prompt":
         cancel = threading.Event()
         permission = threading.Event()
         threading.Thread(target=prompt, args=(request,), daemon=True).start()
     elif method == "session/cancel":
         cancel.set()
+    elif method == "session/set_mode":
+        with open("modes.jsonl", "a") as log:
+            log.write(json.dumps(request["params"]["modeId"]) + "\n")
+        send({"id": request["id"], "result": {}})
     elif request.get("id") == "permission":
         permission_reply = request.get("result")
         permission.set()

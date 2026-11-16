@@ -1418,11 +1418,19 @@
   "Bots message the bots on these computers as bot@computer.{network}.": "ボットは bot@コンピューター.{network} でこれらのコンピューターのボットにメッセージを送ります。",
   "Who may message bots here": "ここのボットにメッセージを送れる相手",
   "Who may message bots on {name}": "{name} のボットにメッセージを送れる相手",
+  "The first rule that matches decides. A computer no rule matches gets Auto. Answers to this computer's own messages always get in.": "最初に一致したルールで決まります。どのルールにも一致しないコンピュータは「自動」になります。このコンピュータが送ったメッセージへの返信は常に届きます。",
   "The first rule that matches decides. Without rules, every computer in the network may message every bot here. Answers to this computer's own messages always get in.": "最初に一致したルールで決まります。ルールがなければ、ネットワーク内のすべてのコンピューターがここのすべてのボットにメッセージを送れます。このコンピューターが送ったメッセージへの返信は常に届きます。",
   "Add rule": "ルールを追加",
   "Delete rule": "ルールを削除",
   "Allow: {from} → {to}": "許可：{from} → {to}",
   "Deny: {from} → {to}": "拒否：{from} → {to}",
+  "Auto: {from} → {to}": "自動：{from} → {to}",
+  "Ask: {from} → {to}": "確認：{from} → {to}",
+  "Ask": "確認",
+  "Its requests run as the bot is set.": "リクエストはボットの設定どおりに実行されます。",
+  "The bot does by itself only what its agent judges safe, and asks you about the rest.": "ボットはエージェントが安全と判断した操作だけを自分で行い、それ以外は確認を求めます。",
+  "Every change and command the bot makes for it waits for your approval.": "ボットが行う変更とコマンドはすべて、あなたの承認を待ちます。",
+  "Its messages are refused.": "メッセージは拒否されます。",
   "any bot on any computer": "どのコンピューターのどのボットも",
   "any bot on {computer}": "{computer} のどのボットも",
   "{bot} on {computer}": "{computer} の {bot}",
@@ -2142,4 +2150,7 @@
   "Also in this release": "このリリースのその他の変更",
   "Watch the full video": "動画を全編見る",
   "Copy code": "コードをコピー"
+  "Work": "作業",
+  "Worktree per agent": "エージェントごとに worktree",
+  "Agents that work at once in this repository each get their own branch.": "このリポジトリで同時に作業するエージェントは、それぞれ自分のブランチを使います。"
 }

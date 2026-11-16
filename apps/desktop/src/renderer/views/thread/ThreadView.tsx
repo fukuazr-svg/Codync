@@ -51,8 +51,9 @@ const WIDE = 740
 /**
  * One endless conversation with a bot or a group chat. Only deliberate messages show here; tool
  * calls and thinking live in the "Full conversation" sheet. Replying to a message quotes it in the composer.
+ * `request` is what something outside asks it to show, counted per asking: the card of `item`, else the bot's Details.
  */
-export const ThreadView = memo(function ThreadView({ botId }: { botId: string }) {
+export const ThreadView = memo(function ThreadView({ botId, request = null }: { botId: string; request?: { count: number; item?: string } | null }) {
   const tr = useTr()
   const store = useStore()
   const bot = store.bots.get(botId) ?? null
@@ -164,6 +165,12 @@ export const ThreadView = memo(function ThreadView({ botId }: { botId: string })
     // until it is found if cards ever wait that long.
     requestAnimationFrame(() => root.current?.querySelector(`[data-work-item="${CSS.escape(itemId)}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
   }, [])
+  // The view of all bots' work asks for the same, each time: a bot's heading for its Details, a row for its card.
+  useEffect(() => {
+    if (!request) return
+    if (request.item) openCard(request.item)
+    else showDetails('details')
+  }, [request?.count])
   const member = editingMember ? store.bots.get(editingMember) : undefined
 
   // The panel's share sits in the top bar with its other actions, not on the panel itself.

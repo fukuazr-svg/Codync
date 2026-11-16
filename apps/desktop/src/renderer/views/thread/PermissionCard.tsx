@@ -49,71 +49,67 @@ export function optionLabel(o: PermissionOption) {
   }
 }
 
-/** Approval card in the chat: what the agent wants, where it runs, the answers. */
+/** Under what a task put in the chat (its approval or choice card, a file, an artifact): that it comes from the
+ * background, and which item. Nothing for the chat's own. */
+export function TaskLine({ entry }: { entry: Entry }) {
+  const tr = useTr()
+  const task = entry.data.task
+  return task ? <Text as="div" size="caption" tone="tertiary" truncate className="task-line">{tr('In the background')} · {task.title}</Text> : null
+}
+
+/** Approval card in Grok Bot's choice-card style: what the agent wants, where it runs, the answers. */
 export function PermissionCard({ entry, hostName, answering, respond }: { entry: Entry; hostName: string; answering: string | null; respond: (option: string | null) => void }) {
   const tr = useTr()
   const [expanded, setExpanded] = useState(false)
   const d = entry.data
   const pending = d.status === 'pending'
-  const hasDetail = !!d.detail || !!d.diffs?.length
+  const hasDetail = !!d.command || !!d.detail || !!d.diffs?.length
   const options = sortedOptions(d.options ?? [])
   const cwd = d.cwd ? ` · ${d.cwd.split('/').filter(Boolean).pop() ?? d.cwd}` : ''
-  const runsOn = fill(tr('Runs on {name}{path}'), { name: hostName, path: cwd })
-
-  // Answered: one dim line, no card left behind (the decision is in the transcript anyway).
-  if (!pending) {
-    return (
-      <div className="agent-inset">
-        <HStack gap={6} className="permission-outcome">
-          <Icon name={d.status === 'cancelled' ? 'xmark' : 'checkmark'} size={11} color="var(--tertiary)" />
-          <Text size="caption" tone="tertiary" truncate>
-            {outcome(entry)}{d.title ? ` · ${d.title}` : ''}
-          </Text>
-        </HStack>
-      </div>
-    )
-  }
-
   return (
     // The item's row on the bot's Details finds its card by this.
     <div className="agent-inset" data-work-item={d.item}>
       <VStack gap={10} className="permission-card">
         <HStack gap={8}>
           <Text size="headline" tone="text">{permissionHeadline(d.toolKind)}</Text>
-          <span className="permission-card-dot" />
+          {pending ? <span className="permission-card-dot" /> : null}
         </HStack>
-        <Text as="div" size="body" tone="secondary" lines={expanded ? undefined : 2} className="selectable permission-card-title">
+        <Text as="div" size="subheadline" mono tone="secondary" lines={expanded ? undefined : 3} className="selectable permission-card-title">
           {d.title ?? ''}
         </Text>
-        {d.command ? <CodeBox text={d.command} quiet /> : null}
         <HStack gap={6}>
           <Icon name="desktopcomputer" size={10} color="var(--tertiary)" />
-          <Text size="caption" tone="tertiary">{runsOn}</Text>
+          <Text size="caption" tone="tertiary">{fill(tr('Runs on {name}{path}'), { name: hostName, path: cwd })}</Text>
         </HStack>
-        {d.task ? <Text as="div" size="caption" tone="tertiary" truncate>{tr('In the background')} · {d.task.title}</Text> : null}
+        <TaskLine entry={entry} />
         {hasDetail ? (
           <Disclosure expanded={expanded} onToggle={() => setExpanded((e) => !e)} label={<Text size="caption" weight="medium" tone="secondary">{tr(`Details`)}</Text>}>
             <VStack gap={8} className="permission-card-details">
+              {d.command ? <CodeBox text={d.command} /> : null}
               {d.detail ? <CodeBox text={d.detail.slice(0, 2000)} /> : null}
               {(d.diffs ?? []).map((diff, i) => <DiffView key={i} diff={diff} />)}
             </VStack>
           </Disclosure>
         ) : null}
-        <div className="permission-card-options">
-          {options.map((o, i) => (
-            <div key={o.optionId}>
-              {i > 0 ? <div className="thread-hairline" /> : null}
-              <button
-                className={answering === null || answering === o.optionId ? 'permission-option' : 'permission-option dimmed'}
-                disabled={answering !== null}
-                onClick={() => respond(o.optionId)}
-              >
-                <Text size="body" weight={o.kind === 'allow_once' ? 'semibold' : 'regular'} tone={o.kind.startsWith('allow') ? 'text' : 'danger'} className="permission-option-label">{optionLabel(o)}</Text>
-                {answering === o.optionId ? <Spinner size={14} /> : null}
-              </button>
-            </div>
-          ))}
-        </div>
+        {pending ? (
+          <div className="permission-card-options">
+            {options.map((o, i) => (
+              <div key={o.optionId}>
+                {i > 0 ? <div className="thread-hairline" /> : null}
+                <button
+                  className={answering === null || answering === o.optionId ? 'permission-option' : 'permission-option dimmed'}
+                  disabled={answering !== null}
+                  onClick={() => respond(o.optionId)}
+                >
+                  <Text size="body" weight={o.kind === 'allow_once' ? 'semibold' : 'regular'} tone={o.kind.startsWith('allow') ? 'text' : 'danger'} className="permission-option-label">{optionLabel(o)}</Text>
+                  {answering === o.optionId ? <Spinner size={14} /> : null}
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Text as="div" size="caption" weight="medium" tone="secondary">{outcome(entry)}</Text>
+        )}
       </VStack>
     </div>
   )
@@ -144,9 +140,9 @@ function outcome(entry: Entry) {
   }
 }
 
-export function CodeBox({ text, quiet }: { text: string; quiet?: boolean }) {
+export function CodeBox({ text }: { text: string }) {
   return (
-    <div className={quiet ? 'code-box quiet' : 'code-box'}>
+    <div className="code-box">
       <pre className="selectable code-box-text">{text}</pre>
     </div>
   )

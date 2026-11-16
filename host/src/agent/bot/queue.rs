@@ -11,6 +11,7 @@ use crate::hub::BotStatus;
 use crate::market::agent_sign_in;
 use crate::store::{Lane, now_ms};
 use anyhow::{Result, anyhow};
+use codync_network::Access;
 use serde_json::json;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
@@ -18,7 +19,6 @@ use tokio::sync::mpsc;
 impl Actor {
     pub(super) async fn on_cmd(&mut self, cmd: Cmd, done_tx: &mpsc::UnboundedSender<Done>) -> bool {
         match cmd {
-            Cmd::Goal(id) => self.enqueue(Queued::Goal(id), done_tx).await,
             Cmd::RefreshTools => {
                 self.tools_changed = true;
             }
@@ -46,6 +46,10 @@ impl Actor {
                     self.cancel_turn().await;
                 }
             }
+            // An item in its box, so the chat stays free; a bot that needs its chat's tools for it takes it here.
+            Cmd::BotRequest(request) if tasks::boxed(&self.base) => {
+                tasks::add_request(&self.hub, &self.cfg.id, request);
+            }
             Cmd::BotRequest(request) => self.enqueue(Queued::BotRequest(request), done_tx).await,
             Cmd::BotReply(reply) => self.enqueue(Queued::BotReply(reply), done_tx).await,
             Cmd::Prompt { text, call } => self.enqueue(Queued::Prompt { text, call }, done_tx).await,
@@ -67,28 +71,7 @@ impl Actor {
                 let _ = reply.send(self.post_artifact(data));
             }
             Cmd::Stop => self.stop().await,
-            Cmd::Permission { entry_id, option_id } => {
-                self.answer_permission(&entry_id, option_id).await;
-            }
-            Cmd::StopTurn { key, reply } => {
-                if !reply.is_closed() {
-                    let current = self.turn.is_some()
-                        && !self.stop_requested
-                        && self.hub.runtime(&self.cfg.id).turn_key == Some(key);
-                    if current {
-                        self.cancel_turn().await;
-                    }
-                    // This acknowledges a cancellation request, not that the process has already exited.
-                    let _ = reply.send(current);
-                }
-            }
-            Cmd::AnswerPermission { entry_id, option_id, reply } => {
-                if !reply.is_closed() {
-                    let applied = self.answer_permission(&entry_id, Some(option_id)).await;
-                    // The caller may have been cancelled while the agent's response was being written.
-                    let _ = reply.send(applied);
-                }
-            }
+            Cmd::Permission { entry_id, option_id } => self.answer_permission(&entry_id, option_id).await,
             Cmd::Approve { title, detail, reply } => self.ask_approval(&title, &detail, reply),
             Cmd::NewSession => {
                 if self.turn.is_some() {
@@ -175,7 +158,6 @@ impl Actor {
     }
 
     pub(super) async fn stop(&mut self) {
-        crate::chat::goal::finish(&self.hub, &self.cfg.id, None, crate::chat::goal::Stopped::Manual);
         self.hub.team.end_turn(&self.cfg.id);
         if let Err(error) = self.hub.routines.cancel_queued(&self.hub.store, &self.cfg.id) {
             tracing::error!(error = format!("{error:#}"), "couldn't cancel queued routines");
@@ -211,7 +193,6 @@ impl Actor {
             return;
         }
         self.stop_requested = true;
-        self.hub.screen.cancel_browsers(&self.cfg.id).await;
         self.expire_decisions(crate::chat::decision::Expiry::Stopped);
         self.cancel_deadline.get_or_insert_with(|| Instant::now() + CANCEL_GRACE);
         self.files.cancel();
@@ -234,9 +215,6 @@ impl Actor {
             self.set_session(Some(&slot), None);
         }
         self.forget_session();
-        // Every conversation starts over on a restarted agent, so none of the old approvals may answer a new one:
-        // an agent that numbers sessions per process hands out the same ids again.
-        self.always_allowed.forget_all();
     }
 
     pub(super) async fn next_in_queue(&mut self, done_tx: &mpsc::UnboundedSender<Done>) {
@@ -245,6 +223,9 @@ impl Actor {
         }
         let main = Lane::main(&self.cfg.id);
         while self.turn.is_none() && self.routine_completion.is_none() && !self.queue.is_empty() {
+            // What the rest of the queue works on is the user's, or this computer's own: only a bot request and
+            // bot replies carry another computer's text.
+            self.hub.ceilings.set(&self.cfg.id, Access::Allow);
             match self.queue.front() {
                 Some(Queued::Routine(_)) => {
                     let Some(Queued::Routine(id)) = self.queue.pop_front() else { unreachable!("front is a routine") };
@@ -263,11 +244,8 @@ impl Actor {
                             self.hub.routines.release(&self.cfg.id);
                         }
                         Err(error) => {
-                            self.finish_routine(
-                                crate::routines::Status::Failed,
-                                Some(format!("Could not start routine: {error:#}")),
-                                None,
-                            );
+                            let why = crate::routines::could_not_start(format_args!("{error:#}"));
+                            self.finish_routine(crate::routines::Status::Failed, Some(why), None);
                         }
                     }
                     continue;
@@ -278,6 +256,7 @@ impl Actor {
                     };
                     let ids = [request.entry_id.clone()];
                     let prompt = request.prompt.clone();
+                    self.hub.ceilings.set(&self.cfg.id, request.access());
                     request.mark_started();
                     self.active_request = Some(request);
                     let result = self.start_turn(main.clone(), &ids, &prompt, false, done_tx).await;
@@ -287,23 +266,24 @@ impl Actor {
                     continue;
                 }
                 Some(Queued::BotReply(_)) => {
-                    // Replies that came in while the bot worked are one turn, as the user's messages are.
-                    let mut replies = Vec::new();
-                    while let Some(Queued::BotReply(_)) = self.queue.front() {
+                    // Replies that came in while the bot worked are one turn, as the user's messages are, those a
+                    // network rule holds to the same level: a turn that can't start under a ceiling takes no other
+                    // bot's reply down with it.
+                    let mut replies: Vec<crate::chat::team::BotReply> = Vec::new();
+                    while let Some(Queued::BotReply(next)) = self.queue.front()
+                        && replies.first().is_none_or(|first| first.access() == next.access())
+                    {
                         if let Some(Queued::BotReply(reply)) = self.queue.pop_front() {
                             replies.push(reply);
                         }
                     }
+                    let access = replies.first().map_or(Access::Allow, crate::chat::team::BotReply::access);
+                    self.hub.ceilings.set(&self.cfg.id, access);
                     self.reply_hops = replies.iter().map(crate::chat::team::BotReply::hops).max();
-                    let prompt = crate::chat::team::reply_prompt(&replies);
+                    let prompt = crate::chat::team::reply_prompt(&replies, access);
                     if let Err(e) = self.start_turn(main.clone(), &[], &prompt, false, done_tx).await {
                         self.start_error(e, done_tx).await;
                     }
-                    continue;
-                }
-                Some(Queued::Goal(_)) => {
-                    let Some(Queued::Goal(id)) = self.queue.pop_front() else { unreachable!("goal step") };
-                    self.dequeue_goal(id, done_tx).await;
                     continue;
                 }
                 Some(Queued::TaskReport(_)) => {
@@ -418,10 +398,11 @@ impl Actor {
             let why = step.stopped.unwrap_or(crate::chat::goal::Stopped::Failed);
             crate::chat::goal::finish(&self.hub, &self.cfg.id, Some(&step.id), why);
         }
-        self.finish_routine(crate::routines::Status::Failed, Some(format!("Could not start routine: {e:#}")), None);
-        self.complete_request(Err(anyhow!("couldn't start recipient: {e:#}")), false);
+        let why = crate::routines::could_not_start(format_args!("{e:#}"));
+        self.finish_routine(crate::routines::Status::Failed, Some(why), None);
+        self.complete_request(Err(crate::chat::team::no_reply::not_started(format_args!("{e:#}"))), false);
         self.complete_group(Err(anyhow!("couldn't start: {e:#}")));
-        self.turn_over(Outcome::Failed(Failure::Start, format!("it could not start: {e:#}")));
+        self.turn_over(Outcome::not_started(e));
         if !self.invite_sign_in(e) {
             // `{:#}` keeps the reason ("starting `npx …`: EACCES"), not just "agent process exited".
             self.failure_notice(e, &format!("Couldn't start the agent: {e:#}"), "start_failed");
@@ -439,7 +420,6 @@ impl Actor {
             r.status = BotStatus::Error;
             r.activity = "Couldn't start".into();
             r.started_at = None;
-            r.turn_key = None;
             r.lane = None;
             r.message = None;
             r.session = None;
@@ -525,7 +505,8 @@ impl Actor {
                 self.notice(&tasks::report_notice(report), NoticeStyle::Info);
             }
         }
-        tasks::reported(&self.hub, &self.cfg.id, &reports);
+        let items: Vec<String> = reports.into_iter().map(|report| report.item).collect();
+        tasks::reported(&self.hub, &self.cfg.id, &items);
     }
 
     /// The turn is over, however it ended (or never began): a task's item says how and its bot gets the report;
@@ -571,13 +552,14 @@ impl Actor {
         let Some(completion) = &self.routine_completion else {
             return true;
         };
+        let ran = crate::routines::Ran { timed_out: completion.timed_out, task: None };
         match self.hub.routines.complete(
             &self.hub,
             &completion.id,
             completion.status,
             completion.detail.clone(),
             completion.text.clone(),
-            completion.timed_out,
+            &ran,
         ) {
             Ok(()) => {
                 // A finished run's session is never resumed.

@@ -1418,11 +1418,19 @@
   "Bots message the bots on these computers as bot@computer.{network}.": "봇은 bot@컴퓨터.{network} 형식으로 이 컴퓨터들의 봇에게 메시지를 보냅니다.",
   "Who may message bots here": "여기 봇에게 메시지를 보낼 수 있는 대상",
   "Who may message bots on {name}": "{name} 봇에게 메시지를 보낼 수 있는 대상",
+  "The first rule that matches decides. A computer no rule matches gets Auto. Answers to this computer's own messages always get in.": "처음 일치하는 규칙이 결정합니다. 어떤 규칙에도 해당하지 않는 컴퓨터는 '자동'으로 처리됩니다. 이 컴퓨터가 보낸 메시지에 대한 답장은 항상 들어옵니다.",
   "The first rule that matches decides. Without rules, every computer in the network may message every bot here. Answers to this computer's own messages always get in.": "처음 일치하는 규칙이 결정합니다. 규칙이 없으면 네트워크의 모든 컴퓨터가 여기 모든 봇에게 메시지를 보낼 수 있습니다. 이 컴퓨터가 보낸 메시지에 대한 답장은 항상 들어옵니다.",
   "Add rule": "규칙 추가",
   "Delete rule": "규칙 삭제",
   "Allow: {from} → {to}": "허용: {from} → {to}",
   "Deny: {from} → {to}": "거부: {from} → {to}",
+  "Auto: {from} → {to}": "자동: {from} → {to}",
+  "Ask: {from} → {to}": "확인: {from} → {to}",
+  "Ask": "확인",
+  "Its requests run as the bot is set.": "요청은 봇에 설정된 대로 실행됩니다.",
+  "The bot does by itself only what its agent judges safe, and asks you about the rest.": "봇은 에이전트가 안전하다고 판단한 작업만 스스로 수행하고 나머지는 사용자에게 묻습니다.",
+  "Every change and command the bot makes for it waits for your approval.": "봇이 수행하는 모든 변경과 명령은 사용자의 승인을 기다립니다.",
+  "Its messages are refused.": "메시지가 거부됩니다.",
   "any bot on any computer": "모든 컴퓨터의 모든 봇",
   "any bot on {computer}": "{computer}의 모든 봇",
   "{bot} on {computer}": "{computer}의 {bot}",
@@ -2142,4 +2150,7 @@
   "Also in this release": "이번 릴리스의 다른 변경 사항",
   "Watch the full video": "전체 영상 보기",
   "Copy code": "코드 복사"
+  "Work": "작업",
+  "Worktree per agent": "에이전트마다 worktree",
+  "Agents that work at once in this repository each get their own branch.": "이 저장소에서 동시에 작업하는 에이전트는 각자 자신의 브랜치를 갖습니다."
 }

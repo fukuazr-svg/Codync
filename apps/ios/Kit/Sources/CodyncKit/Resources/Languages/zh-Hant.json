@@ -1418,11 +1418,19 @@
   "Bots message the bots on these computers as bot@computer.{network}.": "Bot 用 bot@電腦.{network} 傳訊息給這些電腦上的 Bot。",
   "Who may message bots here": "誰可以傳訊息給這裡的 Bot",
   "Who may message bots on {name}": "誰可以傳訊息給 {name} 上的 Bot",
+  "The first rule that matches decides. A computer no rule matches gets Auto. Answers to this computer's own messages always get in.": "由第一條符合的規則決定。沒有符合任何規則的電腦以「自動」處理。回覆這臺電腦自己送出的訊息一律可以進來。",
   "The first rule that matches decides. Without rules, every computer in the network may message every bot here. Answers to this computer's own messages always get in.": "由第一條符合的規則決定。沒有規則時，網路裡的每臺電腦都能傳訊息給這裡的每個 Bot。回覆這臺電腦自己送出的訊息一律可以進來。",
   "Add rule": "新增規則",
   "Delete rule": "刪除規則",
   "Allow: {from} → {to}": "允許：{from} → {to}",
   "Deny: {from} → {to}": "拒絕：{from} → {to}",
+  "Auto: {from} → {to}": "自動：{from} → {to}",
+  "Ask: {from} → {to}": "詢問：{from} → {to}",
+  "Ask": "詢問",
+  "Its requests run as the bot is set.": "它的請求會依照 Bot 的設定執行。",
+  "The bot does by itself only what its agent judges safe, and asks you about the rest.": "Bot 只會自行執行 agent 判斷為安全的操作，其餘的會先問你。",
+  "Every change and command the bot makes for it waits for your approval.": "Bot 為它所做的每個變更和指令都要等你批准。",
+  "Its messages are refused.": "它的訊息會被拒絕。",
   "any bot on any computer": "任何電腦上的任何 Bot",
   "any bot on {computer}": "{computer} 上的任何 Bot",
   "{bot} on {computer}": "{computer} 上的 {bot}",
@@ -2142,4 +2150,7 @@
   "Also in this release": "此版本的其他更新",
   "Watch the full video": "觀看完整影片",
   "Copy code": "複製程式碼"
+  "Work": "工作",
+  "Worktree per agent": "每個 agent 一個 worktree",
+  "Agents that work at once in this repository each get their own branch.": "同時在這個 repository 工作的 agent 各有自己的分支。"
 }
