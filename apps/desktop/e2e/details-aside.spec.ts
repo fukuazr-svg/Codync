@@ -30,6 +30,20 @@ async function awaitHost(page: Page) {
   }), { timeout: 20_000 }).toBe(true)
 }
 
+/**
+ * A sandbox that has not seen this release opens the What's new sheet over everything, and it swallows every
+ * click the test makes: a developer's sandbox has usually dismissed it, a fresh one never has, and it appears a
+ * moment after the window connects, so wait for it before deciding there is none.
+ */
+async function dismissReleaseSheet(page: Page) {
+  // The details aside is a dialog too, so match the release sheet by its version label, not by role alone.
+  const sheet = page.locator('[role="dialog"]:visible').filter({ has: page.locator('.whats-new-version') })
+  await sheet.first().waitFor({ state: 'visible', timeout: 4_000 }).catch(() => {})
+  if (!(await sheet.count())) return
+  await sheet.first().getByRole('button', { name: /关闭|Close/ }).first().click()
+  await expect(sheet).toHaveCount(0)
+}
+
 test('the compact details sit beside the chat and close from the message box or a menu', async () => {
   const { browser, page } = await attach()
   const cdp = await page.context().newCDPSession(page)
@@ -40,6 +54,7 @@ test('the compact details sit beside the chat and close from the message box or 
   try {
     await resize(page, COMPACT, cdp)
     await awaitHost(page)
+    await dismissReleaseSheet(page)
     for (const name of names) made.push(await createBot(page, name))
     const groupId = (await api<{ bot: { id: string } }>(page, 'createBot', { name: group, kind: 'group', members: made.slice(0, 2) })).bot.id
     made.push(groupId)
@@ -112,6 +127,7 @@ test('the details dock beside the chat once the window is wide enough', async ()
   try {
     await resize(page, COMPACT, cdp)
     await awaitHost(page)
+    await dismissReleaseSheet(page)
     botId = await createBot(page, name)
     await page.locator('.roster-row', { hasText: name }).click()
     await expect(page.locator('.composer textarea')).toBeVisible()
@@ -124,6 +140,7 @@ test('the details dock beside the chat once the window is wide enough', async ()
     // Narrowing it again brings the aside back for what is still open.
     await resize(page, COMPACT, cdp)
     await awaitHost(page)
+    await dismissReleaseSheet(page)
     await expect(page.locator('.details-aside')).toBeVisible()
   } finally {
     await cdp.send('Emulation.clearDeviceMetricsOverride').catch(() => {})
