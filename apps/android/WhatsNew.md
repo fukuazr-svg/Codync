@@ -26,6 +26,7 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 - 等待核准的卡片會算在 Bot 的未讀數字裡（琥珀色），直到你回覆為止。
 - 長按 Bot 選「新會話」，讓智慧體從新的上下文開始，聊天記錄會保留。
+- 新增兩個 CLI。
 
 ### en-US
 - Bots, routines and bot requests work in the background.
