@@ -181,7 +181,7 @@ function connectNative(hostName) {
       if (request.connection?.port === port) request.cancelled = true
     }
     void closeSessionsForHost(hostName).catch((error) =>
-      setBridgeStatus(hostName, 'error', `Could not close browser tabs: ${describeError(error)}`)
+      setBridgeStatus('error', `Could not close browser tabs: ${describeError(error)}`)
     )
     if (stopReconnect) {
       void setConnectionStatus(hostName, 'error', disconnectDetail)
