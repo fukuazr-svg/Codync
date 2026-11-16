@@ -2195,5 +2195,11 @@
   "All data": "Все данные",
   "Every account, bot, conversation, key and setting on this computer.": "Все аккаунты, боты, разговоры, ключи и настройки на этом компьютере.",
   "Delete all of Codync's data for good?": "Удалить все данные Codync навсегда?",
-  "Delete everything": "Удалить всё"
+  "Delete everything": "Удалить всё",
+  "Plan limits": "Лимиты плана",
+  "Week": "Неделя",
+  "resets in": "Сброс через",
+  "day": "День",
+  "Tasks": "Задачи",
+  "This build updates only through the codync-ours release line.": "Эта сборка обновляется только через линию релизов codync-ours."
 }

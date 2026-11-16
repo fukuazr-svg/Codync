@@ -2195,5 +2195,11 @@
   "All data": "所有数据",
   "Every account, bot, conversation, key and setting on this computer.": "这台电脑上的所有账户、bot、对话、密钥和设置。",
   "Delete all of Codync's data for good?": "要永久删除 Codync 的所有数据吗？",
-  "Delete everything": "全部删除"
+  "Delete everything": "全部删除",
+  "Plan limits": "用量上限",
+  "Week": "周",
+  "resets in": "距重置",
+  "day": "本周第",
+  "Tasks": "任务",
+  "This build updates only through the codync-ours release line.": "此版本只通过 codync-ours 发布线更新。"
 }

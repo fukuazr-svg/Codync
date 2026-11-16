@@ -2195,5 +2195,11 @@
   "All data": "Tutti i dati",
   "Every account, bot, conversation, key and setting on this computer.": "Ogni account, bot, conversazione, chiave e impostazione su questo computer.",
   "Delete all of Codync's data for good?": "Eliminare definitivamente tutti i dati di Codync?",
-  "Delete everything": "Elimina tutto"
+  "Delete everything": "Elimina tutto",
+  "Plan limits": "Limiti del piano",
+  "Week": "Settimana",
+  "resets in": "Si azzera tra",
+  "day": "Giorno",
+  "Tasks": "Attività",
+  "This build updates only through the codync-ours release line.": "Questa build si aggiorna solo tramite la linea di rilascio codync-ours."
 }

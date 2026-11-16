@@ -2195,5 +2195,11 @@
   "All data": "すべてのデータ",
   "Every account, bot, conversation, key and setting on this computer.": "このコンピュータ上のすべてのアカウント、ボット、会話、キー、設定。",
   "Delete all of Codync's data for good?": "Codync のすべてのデータを完全に削除しますか？",
-  "Delete everything": "すべて削除"
+  "Delete everything": "すべて削除",
+  "Plan limits": "プラン上限",
+  "Week": "週",
+  "resets in": "リセットまで",
+  "day": "日目",
+  "Tasks": "タスク",
+  "This build updates only through the codync-ours release line.": "このビルドは codync-ours のリリースラインでのみ更新されます。"
 }

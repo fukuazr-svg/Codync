@@ -2195,5 +2195,11 @@
   "All data": "모든 데이터",
   "Every account, bot, conversation, key and setting on this computer.": "이 컴퓨터의 모든 계정, 봇, 대화, 키, 설정입니다.",
   "Delete all of Codync's data for good?": "Codync의 모든 데이터를 영구적으로 삭제할까요?",
-  "Delete everything": "모두 삭제"
+  "Delete everything": "모두 삭제",
+  "Plan limits": "요금제 한도",
+  "Week": "주",
+  "resets in": "초기화까지",
+  "day": "일차",
+  "Tasks": "작업",
+  "This build updates only through the codync-ours release line.": "이 빌드는 codync-ours 릴리스 라인으로만 업데이트됩니다."
 }
