@@ -30,7 +30,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$repo\apps\browser-exte
   -Executable "$repo\host\target\release\codync-browser-native-host.exe"
 ```
 
-When running the bare binary from `host\target\release\codync-browser-native-host.exe` (outside a packaged `resources\` directory containing `resources\browser-extension\`), its relative fallback checks `host\browser-extension` rather than `apps\browser-extension`; launch or register with `CODYNC_BROWSER_EXTENSION_DIR="$repo\apps\browser-extension"` (or place the build beside `resources\browser-extension\`).
+The helper built at `host\target\release\codync-browser-native-host.exe` finds `apps\browser-extension` through its relative fallback. For a different layout, set `CODYNC_BROWSER_EXTENSION_DIR` in Chrome's environment before starting Chrome; setting it only while registering the helper does not save the override.
 
 Then open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select this
 folder once. The manifest's fixed public key gives the extension ID
