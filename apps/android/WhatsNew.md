@@ -23,6 +23,7 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - 聽寫中按「傳送」會等說的話轉成文字再一起送出。
 - 等待核准的卡片會算在 Bot 的未讀數字裡（琥珀色），直到你回覆為止。
 - 長按 Bot 選「新會話」，讓智慧體從新的上下文開始，聊天記錄會保留。
+- 新增兩個 CLI。
 
 ### en-US
 - Bots, routines and bot requests work in the background.
