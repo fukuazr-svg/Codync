@@ -41,6 +41,8 @@ a version without one gets a generic "Bug fixes and improvements" line. Delete o
 - 程式碼區塊右上角多了複製鍵：點一下就把程式碼放進剪貼簿，不帶外框與語言標記。
 - 備援的 ⋯ 選單新增「編輯」：可以直接換它的智慧體、模型或登入設定，順序不變。
 - 聽寫中直接按「傳送」，會等說的話轉成文字，再和打好的字一起送出，不會再丟掉。
+- 可以選用的智慧體多了 MiMo Code 和 TraeCode CLI：在電腦上裝好、登入一次，bot 就能用它工作。
+- TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 
 ### en-US
 - Bots do long work in the background, several things at once, and keep answering in the chat. When it's done, the bot tells you what it found, or why it couldn't finish.
@@ -72,3 +74,5 @@ a version without one gets a generic "Bug fixes and improvements" line. Delete o
 - A code block now has a copy button in its corner: one click copies the code without its fences or language tag.
 - A fallback's ⋯ menu has Edit: change its agent, model or login profile without moving it in the list.
 - Send while dictating waits for what you said and sends it with what you typed, instead of dropping it.
+- MiMo Code and TraeCode CLI are agents you can pick now: install one on the computer and sign in once, then a bot can work with it.
+- TRAE's mark is drawn in its own green, so it stands out in the agent list.

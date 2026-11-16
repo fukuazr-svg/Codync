@@ -22,6 +22,8 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - 網路規則新增「自動」與「詢問」等級，沒有符合規則的電腦預設為「自動」。
 - 程式碼區塊右上角多了複製鍵：點一下就把程式碼放進剪貼簿，不帶外框與語言標記。
 - 聽寫中按「傳送」會等說的話轉成文字再一起送出。
+- 可以選用的智慧體多了 MiMo Code 和 TraeCode CLI：在電腦上裝好、登入一次，bot 就能用它工作。
+- TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 
 ### en-US
 - Bots do long work in the background and keep answering.
@@ -36,3 +38,5 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - Network rules gain Auto and Ask levels.
 - A code block now has a copy button in its corner: one click copies the code without its fences or language tag.
 - Send while dictating keeps your words.
+- MiMo Code and TraeCode CLI are new agent choices.
+- TRAE's mark keeps its green.
