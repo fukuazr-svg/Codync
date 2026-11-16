@@ -7,7 +7,6 @@ import { VStack } from '../components/Stack'
 import { Text } from '../components/Text'
 import { useTr } from '../lib/use-language'
 import { refKey, type BotRef, type RosterItem } from '../store/app-model'
-import { useTr } from '../lib/use-language'
 import './search-palette.css'
 
 const isMac = window.codync.platform === 'darwin'
