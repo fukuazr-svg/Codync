@@ -35,7 +35,7 @@ a version without one gets a generic "Bug fixes and improvements" line. Delete o
 - 可以只回覆訊息的其中一段：長按訊息選「選取文字」，選好文字後在選單點「回覆」，Bot 會知道你問的是哪一段。
 - Bot 設定的「技能」只列出名稱，點旁邊的資訊按鈕可以看完整說明。
 - 裝置上聽寫與語音通話不會再弄丟停頓前說的話。
-- Bot 改用備援時，「智慧體」卡片會說明原本的智慧體為什麼停下（已登出、被限速等），只有用量上限才顯示重設時間。
+- Bot 改用備援時，「智慧體」卡片會說明原本的智慧體為什麼停下（已登出、被限速等），只有用量上限才顯示重設時間；這一行和備援底下的休息時間都會跟著 App 的語言。
 - 輸入 `/` 時，清單最後會列出 Bot 所用智慧體自己的指令（Claude Code、Codex、OpenCode 等），和 Codync 自己的指令、技能分開，標上智慧體的名稱、圖示和說明；選一個會填入 `/<指令>`，送出後由智慧體直接執行。
 - 電腦的「網路」頁會列出新的規則等級：「自動」只讓其他電腦的 Bot 做 agent 判斷為安全的事，其餘先問你；「詢問」讓每個變更和指令都等你批准。沒有符合任何規則的電腦預設為「自動」，原本就在網路裡的電腦維持「允許」。
 - 程式碼區塊右上角多了複製鍵：點一下就把程式碼放進剪貼簿，不帶外框與語言標記。
@@ -70,7 +70,7 @@ a version without one gets a generic "Bug fixes and improvements" line. Delete o
 - Reply to one part of a message: touch and hold it, choose Select Text, select the words, then Reply.
 - A bot's Skills settings list only each skill's name; the info button beside one shows its description.
 - On-device dictation and calls keep the words you said before a pause.
-- On a fallback, the Agent card says why the bot's own agent stopped (signed out, rate limited and so on), with a reset time only for a usage limit.
+- On a fallback, the Agent card says in the app's language why the bot's agent stopped (signed out, rate limited, etc.); only a usage limit shows a reset time.
 - Typing `/` also lists the agent's own commands (Claude Code, Codex, OpenCode and more) under its name; pick one and the agent runs it when you send.
 - Network rules gain two levels: Auto (another computer's bots get only what the agent judges safe; the rest asks you) and Ask (everything waits for you). A computer no rule matches gets Auto; computers already in a network keep Allow.
 - A code block now has a copy button in its corner: one click copies the code without its fences or language tag.
