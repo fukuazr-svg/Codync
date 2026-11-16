@@ -108,7 +108,7 @@ export function GroupEditorView({ group }: { group: Bot }) {
           {error ? <Text size="footnote" tone="danger" className="fade-in">{error}</Text> : null}
           {current ? (
             <button className="press group-delete" onClick={() => setConfirmDelete(current)}>
-              Delete group chat
+              {tr('Delete group chat')}
             </button>
           ) : null}
         </div>
