@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -99,9 +100,11 @@ val LocalNetworkImages = staticCompositionLocalOf<ImageLoader> { error("Missing 
 /** A fenced code block: the code, and a button that copies it without the fences. */
 @Composable private fun CodeBlock(text: String) {
     var copied by remember { mutableStateOf(false) }
+    // Counts copies: a second tap restarts the check mark's timer instead of keeping the first one.
+    var copies by remember { mutableIntStateOf(0) }
     val clipboard = LocalContext.current.getSystemService(ClipboardManager::class.java)
-    LaunchedEffect(copied) {
-        if (copied) {
+    LaunchedEffect(copies) {
+        if (copies > 0) {
             delay(1500)
             copied = false
         }
@@ -121,6 +124,7 @@ val LocalNetworkImages = staticCompositionLocalOf<ImageLoader> { error("Missing 
             clipboard.setPrimaryClip(ClipData.newPlainText("Codync", text))
             Analytics.capture(AnalyticsEvent.CodeBlockCopied)
             copied = true
+            copies++
         }
     }
 }

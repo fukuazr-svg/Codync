@@ -45,8 +45,6 @@ a version without one gets a generic "Bug fixes and improvements" line. Delete o
 - TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 - 等待核准的卡片會一直算在 Bot 的未讀數字裡（顯示為琥珀色），打開聊天或「標示為已讀」都不會讓它消失，直到你回覆為止；收起的分組裡有 Bot 在等你時，分組的數字也會變成琥珀色。
 - 長按 Bot 選「新會話」，就能讓智慧體從新的上下文開始，聊天記錄會保留。
-- 可以選用的智慧體多了 MiMo Code 和 TraeCode CLI：在電腦上裝好、登入一次，bot 就能用它工作。
-- TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 
 ### en-US
 - Bots do long work in the background, several things at once, and keep answering in the chat. When it's done, the bot tells you the result, or why it couldn't finish.
@@ -82,5 +80,3 @@ a version without one gets a generic "Bug fixes and improvements" line. Delete o
 - TRAE's mark is drawn in its own green, so it stands out in the agent list.
 - A waiting approval card stays in the bot's badge, in amber, until you answer it, even after you open the chat or mark it read; a folded section turns amber too.
 - Touch and hold a bot for New session: a fresh context for its agent; the chat stays.
-- MiMo Code and TraeCode CLI are agents you can pick now: install one on the computer and sign in once, then a bot can work with it.
-- TRAE's mark is drawn in its own green, so it stands out in the agent list.
