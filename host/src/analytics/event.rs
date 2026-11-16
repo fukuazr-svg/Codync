@@ -32,6 +32,7 @@ pub enum Event {
     CodeBlockCopied,
     ConversationFindOpened,
     ConversationFindSearched,
+    QuoteOpened,
     BotCreated,
     GoalStarted,
     GoalStopped,
@@ -122,6 +123,8 @@ pub enum Event {
     VoiceNoteSent,
     /// A voice note played from its start, or failed to (`outcome`).
     VoiceNotePlayed,
+    /// A bot's `send_message` or `send_file` with `reply_to` (`tool`), quoted or sent without it (`outcome`).
+    BotQuoted,
     CredentialSaved,
     AgentSetupStarted,
     AgentSignedIn,
@@ -200,6 +203,7 @@ impl Event {
             Self::CodeBlockCopied => "code_block_copied",
             Self::ConversationFindOpened => "conversation_find_opened",
             Self::ConversationFindSearched => "conversation_find_searched",
+            Self::QuoteOpened => "quote_opened",
             Self::BotCreated => "bot_created",
             Self::GoalStarted => "goal_started",
             Self::GoalStopped => "goal_stopped",
@@ -263,6 +267,7 @@ impl Event {
             Self::ArtifactPublished => "artifact_published",
             Self::VoiceNoteSent => "voice_note_sent",
             Self::VoiceNotePlayed => "voice_note_played",
+            Self::BotQuoted => "bot_quoted",
             Self::CredentialSaved => "credential_saved",
             Self::AgentSetupStarted => "agent_setup_started",
             Self::AgentSignedIn => "agent_signed_in",

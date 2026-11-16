@@ -26,14 +26,15 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 - 等待核准的卡片會算在 Bot 的未讀數字裡（琥珀色），直到你回覆為止。
 - 長按 Bot 選「新會話」，讓智慧體從新的上下文開始，聊天記錄會保留。
+- Bot 也可以引用訊息，點一下引用會捲到那則訊息。
 
 ### en-US
 - Bots, routines and bot requests work in the background.
 - The Work button lists background work.
-- Approval cards stay in the badge, amber, until answered.
+- Approval cards stay in the badge until answered.
 - Background work can ask or send files.
 - Details: Threads, Event box.
-- Settings: Agents at once, Worktree per agent.
+- Settings: Agents at once, Worktrees.
 - On a fallback, the Agent card says why.
 - Fallbacks have Edit.
 - `/` lists the agent's commands.
@@ -43,3 +44,4 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - MiMo Code and TraeCode CLI are new agent choices.
 - TRAE's mark keeps its green.
 - Hold a bot for New session: a fresh context.
+- Bots can quote messages.
