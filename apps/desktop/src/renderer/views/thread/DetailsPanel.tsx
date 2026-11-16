@@ -48,6 +48,7 @@ export function DetailsPanel({ botId, routineId, tab, setTab, editGroup, openArt
   close: () => void
 }) {
   const store = useStore()
+  const tr = useTr()
   const bot = store.bots.get(botId) ?? null
   const group = !!bot && isGroup(bot)
   useScreenViewed('bot_details')
@@ -55,8 +56,8 @@ export function DetailsPanel({ botId, routineId, tab, setTab, editGroup, openArt
     <div className="details-panel">
       <div className="details-drag" />
       <div className="details-actions">
-        {bot && !group ? <MacChatButton className="ringed" title="Create template" icon="square.and.arrow.up" onClick={share} /> : null}
-        <MacChatButton className="ringed" title="Close details" icon="xmark" onClick={close} />
+        {bot && !group ? <MacChatButton className="ringed" title={tr('Create template')} icon="square.and.arrow.up" onClick={share} /> : null}
+        <MacChatButton className="ringed" title={tr('Close details')} icon="xmark" onClick={close} />
       </div>
       {/* The column is the scroller, so it takes the focus when the details open: the panel around it
           never scrolls, and a first PageDown aimed at the panel would move nothing. */}
