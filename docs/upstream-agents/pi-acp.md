@@ -8,6 +8,7 @@ Upstream: [svkozak/pi-acp](https://github.com/svkozak/pi-acp). Rules: [README](R
 | pi skips a registered server whose name is already in its own `mcp.json` (disabled entries too) | `host/src/agent/bot/pi_tools.rs` reads pi's and the project's `mcp.json` and renames ours to `codync-<name>` (`-` and `_` count as one), through `host/src/agent/bot/codex_names.rs` | none | Codync's servers win over pi's config, or the row above is gone and pi-acp handles name clashes |
 | pi gives up on a tool call after 60 s, before a team change's approval card can be answered | `host/src/agent/bot/pi_tools.rs` sets each server's `timeout` past `chat::manage::APPROVAL_TIMEOUT` | none | With the first row |
 | Sends banners and command lists on a timer, after it has already answered `session/new` | `host/src/agent/bot/turn.rs`: a fresh session waits 400 ms, then drops what came in (for every adapter) | none | pi-acp sends them before its answer, or not at all |
+| A provider call that fails ends the turn with `stopReason: "error"` and no JSON-RPC error, so the chat said nothing about it ([#470](https://github.com/leepokai/Codync/issues/470)) | `host/src/agent/bot/turn.rs`: `early_end_notice` shows that stop reason as an error notice (it used to fall through in silence) | none opened yet | pi-acp answers with a JSON-RPC error, or the host reads the reason itself |
 
 ## Fork
 

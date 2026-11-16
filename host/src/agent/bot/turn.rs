@@ -394,12 +394,16 @@ impl Actor {
             // A stopped turn says so even when its agent still ended it normally: its reply is withheld above.
             (_, "cancelled") | (Err(_), _) => self.stop_notice("Stopped.", "cancelled"),
             (Ok(_), _) if self.stop_requested => self.stop_notice("Stopped.", "cancelled"),
-            (_, "max_tokens") => self.stop_notice("The agent hit its output limit.", "max_tokens"),
-            (_, "max_turn_requests") => {
-                self.stop_notice("The agent hit its step limit for this turn.", "max_turn_requests");
-            }
-            (_, "refusal") => self.stop_notice("The agent declined to continue.", "refusal"),
             (Ok(_), "end_turn") if !stopped => crate::market::agent_sign_in::answered(&self.hub, &self.cfg),
+            (Ok(_), reason) if !stopped => {
+                if let Some((text, failed)) = early_end_notice(reason) {
+                    if failed {
+                        self.failure_notice(&anyhow!("the agent's turn ended with an error"), text, reason);
+                    } else {
+                        self.stop_notice(text, reason);
+                    }
+                }
+            }
             _ => {}
         }
         let failure = done.as_ref().err().filter(|_| !self.stop_requested);
@@ -586,6 +590,21 @@ impl Actor {
     }
 }
 
+/// What the chat says about a turn the agent ended without a reply: the stop reason it gave, and whether that
+/// reason is a failure (shown as an error notice). `None` for a normal end, a stop, or a reason the match above
+/// already answered.
+fn early_end_notice(stop_reason: &str) -> Option<(&'static str, bool)> {
+    Some(match stop_reason {
+        "max_tokens" => ("The agent hit its output limit.", false),
+        "max_turn_requests" => ("The agent hit its step limit for this turn.", false),
+        "refusal" => ("The agent declined to continue.", false),
+        // pi-acp ends a turn whose provider call failed with `stopReason: "error"` and no JSON-RPC error, so
+        // this notice is the only sign of that failure the user gets (#470).
+        "error" => ("The agent failed: its turn ended with an error.", true),
+        _ => return None,
+    })
+}
+
 /// A finished turn alerts once the user's work is done: not when it's `quiet` (their next message
 /// is already queued, or it said nothing on purpose). A turn that ended short of `end_turn` always
 /// reports the failure.
@@ -607,5 +626,20 @@ mod tests {
         assert_eq!(turn_alert(false, "cancelled", false), None);
         assert_eq!(turn_alert(false, "max_turn_requests", false), Some(AlertKind::Failed));
         assert_eq!(turn_alert(true, "error", true), Some(AlertKind::Failed));
+    }
+
+    #[test]
+    fn an_unfinished_turn_says_why_it_ended() {
+        assert_eq!(early_end_notice("max_tokens"), Some(("The agent hit its output limit.", false)));
+        assert_eq!(early_end_notice("max_turn_requests"), Some(("The agent hit its step limit for this turn.", false)));
+        assert_eq!(early_end_notice("refusal"), Some(("The agent declined to continue.", false)));
+        assert_eq!(
+            early_end_notice("error"),
+            Some(("The agent failed: its turn ended with an error.", true)),
+            "pi-acp's own failure ends the turn with `error` and no JSON-RPC error to show"
+        );
+        assert_eq!(early_end_notice("end_turn"), None);
+        assert_eq!(early_end_notice("cancelled"), None, "a stopped turn already says so");
+        assert_eq!(early_end_notice("a future reason"), None, "an unknown reason keeps its old silence");
     }
 }
