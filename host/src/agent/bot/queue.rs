@@ -260,7 +260,8 @@ impl Actor {
     }
 
     /// Ends a turn no agent is left to answer. The answers and steers that belonged to it are dropped first, so a late
-    /// one cannot finish the turn that starts next.
+    /// one cannot finish the turn that starts next; a message the user took back while it waited is withdrawn here
+    /// rather than left queued to go out with that next turn.
     pub(super) async fn end_turn_without_agent(&mut self, done_tx: &DoneTx) {
         if self.turn.is_none() {
             return;
@@ -268,7 +269,7 @@ impl Actor {
         if !self.steers_in_flight.is_empty() {
             tracing::debug!(bot = %self.cfg.id, "the agent is gone; its unanswered steers wait for the next turn");
         }
-        self.steers_in_flight.clear();
+        self.drop_unanswered_steers();
         self.held_done = None;
         self.on_turn_done(Err(anyhow!("the agent process is gone")), done_tx).await;
     }

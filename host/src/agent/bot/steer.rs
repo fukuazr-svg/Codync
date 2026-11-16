@@ -7,6 +7,7 @@ use crate::chat::uploads;
 use crate::store::Lane;
 use anyhow::{Result, anyhow};
 use serde_json::{Value, json};
+use std::collections::HashMap;
 use std::time::Duration;
 
 /// How long the agent may take to say whether a steered message joined its turn.
@@ -135,6 +136,17 @@ impl Actor {
         }
     }
 
+    /// The turn ended with no agent left to answer its steers. One the user took back meanwhile is withdrawn now,
+    /// through the same path a late answer would take; the rest stay queued for the next turn. Clearing the flags
+    /// alone would lose the take-back and send a withdrawn message to the next agent.
+    pub(super) fn drop_unanswered_steers(&mut self) {
+        let taken_back = taken_back_steers(&self.steers_in_flight);
+        self.steers_in_flight.clear();
+        for entry_id in &taken_back {
+            self.unqueue(entry_id);
+        }
+    }
+
     /// The agent's answer to a steer; the last one lets a held turn end (`answered`).
     pub(super) async fn steer_answered(&mut self, entry_id: &str, outcome: &Result<Value>, done_tx: &DoneTx) {
         self.steered(entry_id, outcome);
@@ -228,6 +240,11 @@ impl Actor {
     }
 }
 
+/// The steers the user took back (`unqueue`) while they waited for the agent's word.
+fn taken_back_steers(steers: &HashMap<String, InFlight>) -> Vec<String> {
+    steers.iter().filter(|(_, steer)| steer.taken_back).map(|(id, _)| id.clone()).collect()
+}
+
 /// Whether an agent's answer belongs to the turn running now. One whose turn already ended (a Stop with no agent left,
 /// then the next message) must not finish the turn that runs by then.
 fn answers_running_turn(asked: Option<i64>, running: Option<i64>) -> bool {
@@ -245,6 +262,15 @@ mod tests {
         assert_eq!(steer_outcome(&Ok(json!({"outcome": "somethingNew"}))), Steer::Failed);
         assert_eq!(steer_outcome(&Err(anyhow!("gone"))), Steer::Failed);
         assert_eq!(json!(Steer::MovedUp), "moved_up", "as the event reports it");
+    }
+
+    /// A message the user took back while the agent was deciding must not go out when that agent disappears.
+    #[test]
+    fn a_message_taken_back_while_the_agent_decided_is_withdrawn() {
+        let mut steers = HashMap::new();
+        steers.insert("withdrawn".to_owned(), InFlight { taken_back: true });
+        steers.insert("waiting".to_owned(), InFlight { taken_back: false });
+        assert_eq!(taken_back_steers(&steers), ["withdrawn".to_owned()], "only the message the user took back");
     }
 
     /// A Stop with no agent ends its turn and starts the next one; the old agent's answer may still be on its way
