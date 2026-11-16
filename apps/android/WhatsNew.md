@@ -22,6 +22,7 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - 網路規則新增「自動」與「詢問」等級，沒有符合規則的電腦預設為「自動」。
 - 聽寫中按「傳送」會等說的話轉成文字再一起送出。
 - 等待核准的卡片會算在 Bot 的未讀數字裡（琥珀色），直到你回覆為止。
+- 可選用 MiMo Code 與 TraeCode CLI；TRAE 用自己的綠色標誌。
 
 ### en-US
 - Bots, routines and other bots' requests work in the background.
