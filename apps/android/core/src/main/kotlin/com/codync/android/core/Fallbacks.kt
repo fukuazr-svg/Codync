@@ -33,19 +33,20 @@ fun fillTemplate(phrase: String, values: Map<String, String>): String =
     Regex("\\{(\\w+)\\}").replace(phrase) { values[it.groupValues[1]] ?: it.value }
 
 /**
- * The Agent card's first line before it is translated; null on its own agent. [name] says what to call a login
- * ("Claude Code (Work)" on a login profile), the computer's own by its name too when asked, which tells two logins of one
- * agent apart; [clock] writes a time.
+ * The Agent card's first line while the bot runs on a fallback, as a phrase and its names; null on its own agent. [name]
+ * says what to call a login ("Claude Code (Work)" on a login profile), the computer's own by its name too when asked,
+ * which tells two logins of one agent apart; [clock] writes a time. Translating the phrase before the names go in keeps
+ * a name that holds " while " from being read as the sentence's own word.
  */
 fun Bot.stepBannerPhrase(name: (Login, own: Boolean) -> String, clock: (Long) -> String, now: Long = System.currentTimeMillis()): StepBanner? {
     val step = agentStep?.login ?: return null
     val same = step.backend == backend
     val (to, own) = name(step, same) to name(login, same)
-    val names = mapOf("to" to to, "own" to own)
-    val rest = restOf(login, now) ?: return StepBanner("Using {to} while {own} can't answer", names)
-    if (rest.reason == "usageLimit") return StepBanner("Using {to} until {own} resets at {time}", names + ("time" to clock(rest.until)))
-    val phrase = rest.phrase ?: return StepBanner("Using {to} while {own} can't answer", names)
-    return StepBanner("Using {to} while {own} $phrase", names)
+    val rest = restOf(login, now)
+    if (rest == null) return StepBanner("Using {to} while {own} can't answer", mapOf("to" to to, "own" to own))
+    // A reset time is real only for a usage limit; another rest names what it is (signed out, rate limited…).
+    return if (rest.reason == "usageLimit") StepBanner("Using {to} until {own} resets at {time}", mapOf("to" to to, "own" to own, "time" to clock(rest.until)))
+    else StepBanner("Using {to} while {own} ${rest.phrase}", mapOf("to" to to, "own" to own))
 }
 
 /** The banner as one English line, for callers that show English; views translate the phrase first. */
@@ -74,14 +75,17 @@ data class Resting(val agent: String = "", val until: Long = 0, val reason: Stri
     /** Its line under the agent, with `until` as [time]: "Usage resets 3:00 PM", "Resting until 3:00 PM". */
     fun line(time: String): String = if (reason == "usageLimit") "Usage resets $time" else "Resting until $time"
 
-    /** Why it rests, as the host's chat notice says it (`Reason::phrase`): "is signed out". Null for a usage limit, which says when it resets instead, and for a reason this app doesn't know. */
-    val phrase: String? get() = when (reason) {
+    /** Why it rests, in the banner's words: "is signed out", "is rate limited"… */
+    val phrase: String get() = when (reason) {
+        "usageLimit" -> "reached its usage limit"
         "outOfCredits" -> "is out of credits"
         "rateLimited" -> "is rate limited"
         "overloaded" -> "is overloaded"
         "signedOut" -> "is signed out"
         "notStarting" -> "couldn't start"
-        else -> null
+        "modelMissing" -> "doesn't have this bot's model"
+        "modeMissing" -> "doesn't have this bot's mode"
+        else -> "can't answer"
     }
 }
 
