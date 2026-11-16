@@ -102,7 +102,7 @@ export function RecoveryCodeSheet({ recovery: { code, network: networkName, comp
           {fill(tr("It makes another computer the owner of {network} if {name} is lost. It's shown only once and kept on no computer."), { network: networkName, name: computer })}
         </Text>
         <HStack justify="end">
-          <Button onClick={done}>I saved it</Button>
+          <Button onClick={done}>{tr('I saved it')}</Button>
         </HStack>
       </VStack>
     </VStack>

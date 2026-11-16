@@ -84,7 +84,7 @@ function TaskTranscript({ botId, taskId, item, retry, actions }: { botId: string
           {error ? (
             <VStack gap={10} align="center" className="task-note">
               <Text size="footnote" tone="danger">{error}</Text>
-              <Button kind="secondary" onClick={retry}>Try again</Button>
+              <Button kind="secondary" onClick={retry}>{tr('Try again')}</Button>
             </VStack>
           ) : null}
           {!error && fetched === null && entries.length === 0 ? <div className="task-note" aria-label={tr('Loading')}><Spinner /></div> : null}

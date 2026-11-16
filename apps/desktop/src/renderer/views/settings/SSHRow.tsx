@@ -69,8 +69,8 @@ export function SSHRow({ profile, status, edit, attached = true }: { profile: SS
               <Text key={f} size="caption" mono className="selectable">{f}</Text>
             ))}
             <HStack align="stretch" gap={8}>
-              <Button onClick={() => bridge.trustHostKey(profile.id)}>Trust and connect</Button>
-              <Button kind="secondary" onClick={() => bridge.disconnect(profile.id)}>Cancel</Button>
+              <Button onClick={() => bridge.trustHostKey(profile.id)}>{tr('Trust and connect')}</Button>
+              <Button kind="secondary" onClick={() => bridge.disconnect(profile.id)}>{tr('Cancel')}</Button>
             </HStack>
           </VStack>
         ) : null}
@@ -80,7 +80,7 @@ export function SSHRow({ profile, status, edit, attached = true }: { profile: SS
           {status.kind === 'notInstalled' && status.failure?.output ? (
             <span className="settings-code settings-output selectable">{status.failure.output}</span>
           ) : <Spacer />}
-          <Button onClick={() => ssh.install(profile.id)}>Install</Button>
+          <Button onClick={() => ssh.install(profile.id)}>{tr('Install')}</Button>
         </HStack>
       </Reveal>
       <Reveal show={ssh.state.needsLinger.includes(profile.id)}>

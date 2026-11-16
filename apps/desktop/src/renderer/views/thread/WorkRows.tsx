@@ -53,7 +53,7 @@ export function LiveWork({ bot, openCard, plain = false }: { bot: Bot; openCard:
       item={item}
       number={at + 1}
       line={itemLine(item, tr)}
-      always={at === 0 && cutIn ? <Button kind="secondary" className="work-row-button" disabled={offline} onClick={() => setCuttingIn(item)}>Cut in</Button> : null}
+      always={at === 0 && cutIn ? <Button kind="secondary" className="work-row-button" disabled={offline} onClick={() => setCuttingIn(item)}>{tr('Cut in')}</Button> : null}
       onHover={
         <>
           {at > 0 ? <IconButton title="First" icon="arrow.up.to.line" size={24} disabled={offline} onClick={() => store.workFirst(bot.id, item.id)} /> : null}

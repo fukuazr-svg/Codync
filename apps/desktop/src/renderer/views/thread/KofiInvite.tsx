@@ -25,7 +25,7 @@ export function KofiInviteCard() {
         <Text as="div" size="callout" tone="secondary" grow className="kofi-invite-text">
           {tr('Codync is free and made by one person. If it helps you, you can support it on Ko-fi.')}
         </Text>
-        <Button kind="secondary" onClick={() => answer(true)}>Support on Ko-fi</Button>
+        <Button kind="secondary" onClick={() => answer(true)}>{tr('Support on Ko-fi')}</Button>
         <IconButton title="Dismiss" icon="xmark" size={24} onClick={() => answer(false)} />
       </HStack>
     </div>

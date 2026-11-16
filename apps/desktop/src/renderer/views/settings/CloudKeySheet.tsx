@@ -112,7 +112,7 @@ function KeyEntry({ provider, model, cancel, saved }: { provider: CloudProvider;
           {tr('Cancel')}
         </button>
       ) : null}
-      {model.busy === `saveKey:${provider.provider}` ? <Spinner /> : <Button onClick={() => void save()} disabled={!key.trim() || model.busy !== null}>Save</Button>}
+      {model.busy === `saveKey:${provider.provider}` ? <Spinner /> : <Button onClick={() => void save()} disabled={!key.trim() || model.busy !== null}>{tr('Save')}</Button>}
     </HStack>
   )
 }

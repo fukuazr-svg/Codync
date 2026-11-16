@@ -216,7 +216,7 @@ function GeneralSettings() {
         </Switch>
       </CardSection>
       <CardSection title="System">
-        {window.codync.platform === 'darwin' ? <Switch on={showInDock} onChange={(on) => void window.codync.app.setShowInDock(on).then(setShowInDock)}>Show in Dock</Switch> : null}
+        {window.codync.platform === 'darwin' ? <Switch on={showInDock} onChange={(on) => void window.codync.app.setShowInDock(on).then(setShowInDock)}>{tr('Show in Dock')}</Switch> : null}
         {window.codync.island.supported ? (
           <Switch on={island} onChange={(on) => void window.codync.island.setEnabled(on).then(setIsland)}>
             {islandLabel(window.codync.platform)}
