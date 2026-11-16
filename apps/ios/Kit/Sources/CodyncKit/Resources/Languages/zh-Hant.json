@@ -2137,5 +2137,6 @@
   "Watch the full video": "觀看完整影片",
   "Work": "工作",
   "Worktree per agent": "每個 agent 一個 worktree",
-  "Agents that work at once in this repository each get their own branch.": "同時在這個 repository 工作的 agent 各有自己的分支。"
+  "Agents that work at once in this repository each get their own branch.": "同時在這個 repository 工作的 agent 各有自己的分支。",
+  "Copy code": "複製程式碼"
 }

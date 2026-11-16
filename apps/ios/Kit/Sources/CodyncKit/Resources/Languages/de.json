@@ -2137,5 +2137,6 @@
   "Watch the full video": "Ganzes Video ansehen",
   "Work": "Arbeit",
   "Worktree per agent": "Ein Worktree pro Agent",
-  "Agents that work at once in this repository each get their own branch.": "Agenten, die gleichzeitig in diesem Repository arbeiten, erhalten jeweils einen eigenen Branch."
+  "Agents that work at once in this repository each get their own branch.": "Agenten, die gleichzeitig in diesem Repository arbeiten, erhalten jeweils einen eigenen Branch.",
+  "Copy code": "Code kopieren"
 }

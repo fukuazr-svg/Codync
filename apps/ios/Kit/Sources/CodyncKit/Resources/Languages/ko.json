@@ -2137,5 +2137,6 @@
   "Watch the full video": "전체 영상 보기",
   "Work": "작업",
   "Worktree per agent": "에이전트마다 worktree",
-  "Agents that work at once in this repository each get their own branch.": "이 저장소에서 동시에 작업하는 에이전트는 각자 자신의 브랜치를 갖습니다."
+  "Agents that work at once in this repository each get their own branch.": "이 저장소에서 동시에 작업하는 에이전트는 각자 자신의 브랜치를 갖습니다.",
+  "Copy code": "코드 복사"
 }
