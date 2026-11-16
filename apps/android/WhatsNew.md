@@ -25,7 +25,6 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - 可以選用的智慧體多了 MiMo Code 和 TraeCode CLI：在電腦上裝好、登入一次，bot 就能用它工作。
 - TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 - 等待核准的卡片會算在 Bot 的未讀數字裡（琥珀色），直到你回覆為止。
-- 可選用 MiMo Code 與 TraeCode CLI；TRAE 用自己的綠色標誌。
 
 ### en-US
 - Bots, routines and other bots' requests work in the background.

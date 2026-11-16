@@ -2156,5 +2156,6 @@
   "Copy code": "Copia il codice",
   "Work": "Lavoro",
   "Worktree per agent": "Un worktree per agente",
-  "Agents that work at once in this repository each get their own branch.": "Gli agenti che lavorano contemporaneamente in questo repository hanno ciascuno il proprio branch."
+  "Agents that work at once in this repository each get their own branch.": "Gli agenti che lavorano contemporaneamente in questo repository hanno ciascuno il proprio branch.",
+  "Copy code": "Copia il codice"
 }
