@@ -58,6 +58,23 @@
   border-radius: 8px;
   overflow-x: auto;
 }
+/* The copy button sits on the block's corner; hovering or tabbing to the block shows it. */
+.md-code-block {
+  position: relative;
+}
+.md-code-copy {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--code-background);
+  opacity: 0;
+  pointer-events: none;
+}
+.md-code-block:hover .md-code-copy,
+.md-code-copy:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
 .md-code-text {
   margin: 0;
   padding: 10px;

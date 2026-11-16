@@ -2130,5 +2130,6 @@
   "Watch the full video": "观看完整视频",
   "Work": "工作",
   "Worktree per agent": "每个 agent 一个 worktree",
-  "Agents that work at once in this repository each get their own branch.": "同时在这个 repository 工作的 agent 各有自己的分支。"
+  "Agents that work at once in this repository each get their own branch.": "同时在这个 repository 工作的 agent 各有自己的分支。",
+  "Copy code": "复制代码"
 }

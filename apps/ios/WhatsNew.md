@@ -41,6 +41,7 @@ a version without one gets a generic "Bug fixes and improvements" line. Delete o
 - 備援的 ⋯ 選單新增「編輯」：可以直接換它的智慧體、模型或登入設定，順序不變。
 - 聽寫中直接按「傳送」，會等說的話轉成文字，再和打好的字一起送出，不會再丟掉。
 - 等待核准的卡片會一直算在 Bot 的未讀數字裡（顯示為琥珀色），打開聊天或「標示為已讀」都不會讓它消失，直到你回覆為止；收起的分組裡有 Bot 在等你時，分組的數字也會變成琥珀色。
+- 程式碼區塊右上角多了複製鍵：點一下就把程式碼放進剪貼簿，不帶外框與語言標記。
 
 ### en-US
 - Bots do long work in the background, several things at once, and keep answering in the chat. When it's done, the bot tells you what it found, or why it couldn't finish.
@@ -72,3 +73,4 @@ a version without one gets a generic "Bug fixes and improvements" line. Delete o
 - A fallback's ⋯ menu has Edit: change its agent, model or login profile without moving it in the list.
 - Send while dictating waits for what you said and sends it with what you typed, instead of dropping it.
 - A waiting approval card stays counted in the bot's badge, in amber, until you answer it, even after you open the chat or mark it read; a folded section turns amber too.
+- A code block now has a copy button in its corner: one click copies the code without its fences or language tag.
