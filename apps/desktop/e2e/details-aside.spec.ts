@@ -51,6 +51,9 @@ test('the compact details sit beside the chat and close from the message box or 
 
     await pill.click()
     await expect(aside).toBeVisible()
+    // The scrolling column starts with the focus: PageDown and the arrow keys act on it, not on
+    // the title pill that opened the details.
+    await expect(page.locator('.details-aside .details-scroll')).toBeFocused()
     // Over the chat, with no dim, below the title band and above the message box.
     await expect(page.locator('.modal-dim')).toHaveCount(0)
     expect(await page.locator('.thread-view').evaluate((el) => el.closest('[inert]') === null)).toBe(true)
@@ -84,7 +87,7 @@ test('the compact details sit beside the chat and close from the message box or 
     // A keyboard close gives the focus back to the pill that opens the same details.
     await pill.click()
     await expect(aside).toBeVisible()
-    await page.locator('.details-aside .details-scroll').focus()
+    await expect(page.locator('.details-aside .details-scroll')).toBeFocused()
     await page.keyboard.press('Escape')
     await expect(aside).toHaveCount(0)
     await expect.poll(() => page.evaluate(() => document.activeElement?.classList.contains('title-pill'))).toBe(true)
