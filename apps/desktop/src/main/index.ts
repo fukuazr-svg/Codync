@@ -5,7 +5,7 @@ import { hostname } from 'node:os'
 import { join } from 'node:path'
 import { app, autoUpdater, BrowserWindow, clipboard, dialog, ipcMain, nativeTheme, session, shell, type IpcMainInvokeEvent, type OpenDialogOptions } from 'electron'
 import type { HostSnapshot, TraySummary, WindowCommand } from '../shared/ipc'
-import { chatWindowMinWidth } from '../shared/chat-layout'
+import { chatWindowMinHeight, chatWindowMinWidth, growToMinimum, windowMinimumFor } from '../shared/chat-layout'
 import { devPort, HostController } from './host-controller'
 import { registerFileSaves } from './file-saves'
 import { keepArtifactsInFrame, registerArtifacts, registerArtifactScheme } from './artifacts'
@@ -93,6 +93,32 @@ function snapshot(): HostSnapshot {
   return { state: host.state, local: host.local, dev: devPort !== null, logPath: host.logPath }
 }
 
+/**
+ * The window's minimum counts its frame and menu bar while the stylesheet's floor (chat-layout.ts) is
+ * the page: on Windows the minimum would give the page 474 points instead of 500 and cut the composer
+ * off. Raise the minimum by what the window adds around the page.
+ *
+ * Measured from the page rather than from `getContentSize()`, and only once the window is shown: a
+ * hidden window reports a shorter page than the one it lays out after the menu bar appears. A
+ * fullscreen window has no frame or menu bar around the page, so it would save a minimum that is short
+ * once the window leaves fullscreen; it skips the measurement and takes one then.
+ */
+async function holdPageMinimum(window: BrowserWindow) {
+  if (window.isDestroyed() || window.isFullScreen()) return
+  try {
+    const [pageWidth, pageHeight] = (await window.webContents.executeJavaScript('[innerWidth, innerHeight]')) as [number, number]
+    // The window can go fullscreen while the page measures itself; that measurement is the wrong one.
+    if (window.isDestroyed() || window.isFullScreen()) return
+    const [width, height] = window.getSize()
+    const minimum = windowMinimumFor({ width: pageWidth, height: pageHeight }, { width, height })
+    window.setMinimumSize(minimum.width, minimum.height)
+    const size = growToMinimum({ width, height }, minimum)
+    if (size.width !== width || size.height !== height) window.setSize(size.width, size.height)
+  } catch {
+    // The page went away before it could measure itself; the constructor's own minimum still holds.
+  }
+}
+
 /** The chat window: roster on the left, the conversation on the right (Grok Bot's desktop layout). */
 function openChat() {
   if (chat) {
@@ -105,8 +131,10 @@ function openChat() {
   chat = new BrowserWindow({
     width: 1100,
     height: 760,
+    // The stylesheet's floor is the page, so the minimum is raised past the constructor's by the
+    // frame and menu bar once the page can report them (holdPageMinimum).
     minWidth: chatWindowMinWidth,
-    minHeight: 500,
+    minHeight: chatWindowMinHeight,
     title: app.getName(),
     show: false,
     backgroundColor: background(),
@@ -122,6 +150,15 @@ function openChat() {
     chat.setMenuBarVisibility(false)
     registerAccelerators(chat)
   }
+  const window = chat
+  // A window minimum is frame-sized while the page floor is the page's own: measure the chrome once
+  // the window is shown. A reload of an already visible window measures again, and one that reloads
+  // in fullscreen measures when it leaves it.
+  window.once('show', () => void holdPageMinimum(window))
+  window.webContents.on('did-finish-load', () => {
+    if (window.isVisible()) void holdPageMinimum(window)
+  })
+  window.on('leave-full-screen', () => void holdPageMinimum(window))
   // CODYNC_SHOW_INACTIVE: development and UI checks open the window without taking focus.
   chat.on('ready-to-show', () => (process.env.CODYNC_SHOW_INACTIVE ? chat?.showInactive() : chat?.show()))
   // Closing hides: the window keeps the stores (and the menu bar's data) alive.
