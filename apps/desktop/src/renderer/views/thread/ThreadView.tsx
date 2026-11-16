@@ -41,6 +41,7 @@ import { FormSheet } from '../marketplace/pieces'
 import { CallView } from '../call/CallView'
 import { MacChatButton } from './MacChatButton'
 import { TaskChecklist } from './TaskChecklist'
+import { PlanLimits } from './PlanLimits'
 import { ArtifactView } from '../library/ArtifactView'
 import { KofiInviteCard } from './KofiInvite'
 import { useKofiInviteAt } from '../../lib/use-kofi-invite'
@@ -309,6 +310,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
             <>
               <WorkCapsule botId={botId} open={openWork} />
               <TaskChecklist botId={botId} />
+              <PlanLimits botId={botId} />
               <QueuedMessages botId={botId} />
               {bot ? <GoalBanner bot={bot} /> : null}
               <Composer
