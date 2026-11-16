@@ -35,7 +35,8 @@ $installed = foreach ($variant in $variants) {
     if (-not (Test-Path -LiteralPath $variant.Manifest -PathType Leaf)) {
         continue
     }
-    $candidate = Get-Content -LiteralPath $variant.Manifest -Raw | ConvertFrom-Json
+    $candidateText = [System.IO.File]::ReadAllText($variant.Manifest, [System.Text.UTF8Encoding]::new($false))
+    $candidate = $candidateText | ConvertFrom-Json
     if ($candidate.path -eq $helper) {
         [pscustomobject]@{
             HostName = $variant.HostName
@@ -49,7 +50,8 @@ if ($installed.Count -ne 1) {
 }
 $hostName = $installed[0].HostName
 $manifestPath = $installed[0].ManifestPath
-$manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+$manifestText = [System.IO.File]::ReadAllText($manifestPath, [System.Text.UTF8Encoding]::new($false))
+$manifest = $manifestText | ConvertFrom-Json
 if ($manifest.name -ne $hostName -or $manifest.path -ne $helper) {
     throw "The installed native-messaging manifest does not match the selected helper"
 }
