@@ -23,14 +23,14 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 
 ### en-US
-- Bots do long work in the background and keep answering.
-- Routines and other bots' requests run there too.
-- The bot list's Work button shows all background work.
-- Background work can ask, or send a file, in the chat.
-- Details: Threads (running), Event box (waiting: First, Cut in, Drop).
-- Settings: Agents at once; Worktree per agent gives each its own branch.
-- On a fallback, the Agent card says why.
-- `/` also lists the agent's own commands.
-- Network rules gain Auto and Ask levels.
-- MiMo Code and TraeCode CLI are agents you can pick now: install one on the computer and sign in once, then a bot can work with it.
-- TRAE's mark is drawn in its own green, so it stands out in the agent list.
+- Long work runs in the background; bots keep answering.
+- Routines and other bots' requests run there as well.
+- Work lists all background work.
+- Background work can ask or send files in chat.
+- Details: Threads; Event box (First, Cut, Drop).
+- Settings: agents at once, worktree per agent.
+- A fallback says why on the Agent card.
+- `/` lists the agent's own commands too.
+- Network rules gain Auto and Ask.
+- MiMo Code and TraeCode CLI are new agent choices.
+- TRAE's mark keeps its green.
