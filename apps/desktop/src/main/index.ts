@@ -33,6 +33,7 @@ import { registerRendererRecovery } from './renderer-recovery'
 import { reportHostSetupFailure } from './analytics'
 import { launchAtLogin, openedAtLogin, setLaunchAtLogin, updateLoginItem } from './login-item'
 import { applyMenu } from './app-menu'
+import { activate, present, webPreferences } from './headless'
 import { resolvedLanguage } from '../renderer/lib/l10n'
 
 /** macOS's user-facing computer name, else the host name. */
@@ -124,8 +125,7 @@ function openChat() {
   if (chat) {
     // Shown again after being hidden (closed to the background): the launch itself is `app_opened`.
     if (!chat.isVisible() && !chat.webContents.isLoading()) chat.webContents.send('app:command', { kind: 'windowOpened' } satisfies WindowCommand)
-    chat.show()
-    chat.focus()
+    present(chat)
     return chat
   }
   chat = new BrowserWindow({
@@ -142,7 +142,7 @@ function openChat() {
     // controls drawn over the page (titleBarOverlay).
     titleBarStyle: isMac || isWindows ? 'hidden' : 'default',
     ...(isWindows ? { titleBarOverlay: windowControls() } : {}),
-    webPreferences: { preload: join(__dirname, '../preload/index.js'), sandbox: true, contextIsolation: true },
+    webPreferences: webPreferences(join(__dirname, '../preload/index.js')),
   })
   // The menu keeps its accelerators (⌘/Ctrl+N, R, ±, 0, I, F, …) but no bar on Windows: the
   // hidden title bar leaves none to click anyway.
@@ -160,7 +160,7 @@ function openChat() {
   })
   window.on('leave-full-screen', () => void holdPageMinimum(window))
   // CODYNC_SHOW_INACTIVE: development and UI checks open the window without taking focus.
-  chat.on('ready-to-show', () => (process.env.CODYNC_SHOW_INACTIVE ? chat?.showInactive() : chat?.show()))
+  chat.on('ready-to-show', () => chat && present(chat, Boolean(process.env.CODYNC_SHOW_INACTIVE)))
   // Closing hides: the window keeps the stores (and the menu bar's data) alive.
   chat.on('close', (e) => quitLifecycle.closeToBackground(e, () => chat?.hide()))
   chat.on('closed', () => (chat = null))
@@ -173,8 +173,7 @@ function openChat() {
 function openPairing() {
   if (pairing) {
     pairing.webContents.send('app:command', { kind: 'reviewApprovals' } satisfies WindowCommand)
-    pairing.show()
-    pairing.focus()
+    present(pairing)
     return
   }
   pairing = new BrowserWindow({
@@ -183,16 +182,18 @@ function openPairing() {
     useContentSize: true,
     resizable: false,
     title: 'Pair iPhone',
+    show: false,
     backgroundColor: background(),
-    webPreferences: { preload: join(__dirname, '../preload/index.js'), sandbox: true, contextIsolation: true },
+    webPreferences: webPreferences(join(__dirname, '../preload/index.js')),
   })
+  pairing.once('ready-to-show', () => pairing && present(pairing))
   pairing.on('closed', () => (pairing = null))
   void pairing.loadURL(rendererURL('pairing'))
 }
 
 export function send(command: WindowCommand, show = true) {
   const window = show ? openChat() : chat
-  if (show && isMac) app.focus({ steal: true })
+  if (show) activate()
   window?.webContents.send('app:command', command)
 }
 
@@ -280,7 +281,7 @@ function registerIPC(tray: Tray) {
   })
   ipcMain.on('app:showWindow', () => {
     openChat()
-    if (isMac) app.focus({ steal: true })
+    activate()
   })
   ipcMain.handle('app:showInDock', () => showInDock())
   ipcMain.handle('app:setShowInDock', (_e, on: boolean) => {
