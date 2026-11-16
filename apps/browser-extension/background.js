@@ -458,6 +458,7 @@ async function navigate(params, connection, state) {
   const tabId = Number(session.tabId)
   return runInTabOrder(tabId, state, async () => {
     ensureRequestActive(state)
+    sessionFor(target)
     const beforeTab = await chrome.tabs.get(tabId)
     const previousUrl = beforeTab.url || session.currentUrl
     const updated = await chrome.tabs.update(tabId, { url })
@@ -493,6 +494,7 @@ async function click(params, connection, state) {
   const tabId = Number(session.tabId)
   return runInTabOrder(tabId, state, async () => {
     ensureRequestActive(state)
+    sessionFor(target)
     await attach(tabId)
     ensureRequestActive(state)
     const selector = JSON.stringify(params.selector)
@@ -557,6 +559,7 @@ async function type(params, connection, state) {
   const tabId = Number(session.tabId)
   return runInTabOrder(tabId, state, async () => {
     ensureRequestActive(state)
+    sessionFor(target)
     await attach(tabId)
     ensureRequestActive(state)
     const selector = JSON.stringify(params.selector)
@@ -607,6 +610,7 @@ async function screenshot(params, connection, state) {
   const tabId = Number(session.tabId)
   return runInTabOrder(tabId, state, async () => {
     ensureRequestActive(state)
+    sessionFor(target)
     await attach(tabId)
     ensureRequestActive(state)
     const capture = await chrome.debugger.sendCommand({ tabId }, 'Page.captureScreenshot', {
@@ -637,7 +641,10 @@ async function state(params, connection, requestState) {
   const target = targetFrom(params, connection)
   const session = sessionFor(target)
   const tabId = Number(session.tabId)
-  return runInTabOrder(tabId, requestState, async () => syncSessionUrl(session, await pageState(tabId)))
+  return runInTabOrder(tabId, requestState, async () => {
+    sessionFor(target)
+    return syncSessionUrl(session, await pageState(tabId))
+  })
 }
 
 async function handle(method, params, connection, requestState) {
