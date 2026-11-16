@@ -20,7 +20,7 @@ import { AgentsPanel, ConnectorsPanel, MarketPanel, SkillsPanel } from './Market
 import { AppLogo, ExtensionTabs, FormSheet, ItemGrid, ItemRow, MarketSection, ScreenHeader, ServiceLogo, SkillGlyph, SlideStack } from './pieces'
 import { usePlugins } from './plugins'
 import { useTr } from '../../lib/use-language'
-import { fill } from '../../lib/fill'
+import { fill } from '@shared/fill'
 
 /**
  * Extensions for the bots on one computer (the store in context): Agents, Connectors

@@ -5,7 +5,7 @@ import { Text } from '../../components/Text'
 import type { OutgoingFile } from '../../store/outgoing-files'
 import { attachmentSymbol } from './Attachments'
 import { useTr } from '../../lib/use-language'
-import { fill } from '../../lib/fill'
+import { fill } from '@shared/fill'
 
 /**
  * A local attachment, shown before it is sent: images as a whole-image thumbnail with the

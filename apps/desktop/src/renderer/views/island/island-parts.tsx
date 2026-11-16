@@ -6,7 +6,7 @@ import { ThinkingOrb } from '../../components/ThinkingOrb'
 import { useArrivals, useFlip } from './island-motion'
 import { avatarColor, palette, withAlpha } from '../../lib/theme'
 import { useTr } from '../../lib/use-language'
-import { fill } from '../../lib/fill'
+import { fill } from '@shared/fill'
 
 // Pieces the island's views share: the big character with its glow and
 // badge, the agent row, the column of other bots and the key hint on a button.

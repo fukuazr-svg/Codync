@@ -11,7 +11,7 @@ import { errorText } from './drafts'
 import { AutoTextArea } from './parts'
 import './bots.css'
 import { useTr } from '../../lib/use-language'
-import { fill } from '../../lib/fill'
+import { fill } from '@shared/fill'
 
 
 /**
