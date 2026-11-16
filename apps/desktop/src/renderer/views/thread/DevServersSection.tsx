@@ -146,7 +146,7 @@ function Logs({ bot, server }: { bot: Bot; server: DevServer }) {
         trailing={<IconButton title="Refresh" icon="arrow.clockwise" onClick={load} />}
       />
       {failed ? (
-        state(<><Text tone="danger">{failed}</Text><Button kind="secondary" onClick={load}>Try again</Button></>)
+        state(<><Text tone="danger">{failed}</Text><Button kind="secondary" onClick={load}>{tr('Try again')}</Button></>)
       ) : text === null ? (
         state(<Spinner />)
       ) : text === '' ? (
