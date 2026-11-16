@@ -5,7 +5,7 @@ import { hostname } from 'node:os'
 import { join } from 'node:path'
 import { app, autoUpdater, BrowserWindow, clipboard, dialog, ipcMain, nativeTheme, session, shell, type IpcMainInvokeEvent, type OpenDialogOptions } from 'electron'
 import type { HostSnapshot, TraySummary, WindowCommand } from '../shared/ipc'
-import { chatWindowMinWidth } from '../shared/chat-layout'
+import { chatWindowMinHeight, chatWindowMinWidth, growToMinimum, windowMinimumFor } from '../shared/chat-layout'
 import { devPort, HostController } from './host-controller'
 import { registerFileSaves } from './file-saves'
 import { keepArtifactsInFrame, registerArtifacts, registerArtifactScheme } from './artifacts'
@@ -64,6 +64,23 @@ let chat: BrowserWindow | null = null
 let pairing: BrowserWindow | null = null
 const quitLifecycle = new QuitLifecycle(app, autoUpdater)
 const isMac = process.platform === 'darwin'
+// Windows draws its own title bar: the window controls sit over the page's top-right corner.
+const isWindows = process.platform === 'win32'
+
+/**
+ * The Windows window-controls overlay follows the app's appearance. It takes the colour of the
+ * frost a sheet lays over the page (`--scrim` in theme.css), so the buttons stay part of the same
+ * surface when a settings sheet is open, and read as the page colour when none is.
+ */
+function windowControls() {
+  const dark = nativeTheme.shouldUseDarkColors
+  return {
+    // T3's overlay is the page itself: a 1/255 alpha, not pure zero (which breaks on Linux).
+    color: '#01000000',
+    symbolColor: dark ? '#F8FAFC' : '#1F2937',
+    height: 40,
+  }
+}
 
 function rendererURL(page: string) {
   return process.env.ELECTRON_RENDERER_URL
@@ -71,10 +88,36 @@ function rendererURL(page: string) {
     : `file://${join(__dirname, '../renderer/index.html')}?window=${page}`
 }
 
-const background = () => (nativeTheme.shouldUseDarkColors ? '#0A0A0A' : '#FFFFFF')
+const background = () => (nativeTheme.shouldUseDarkColors ? '#000000' : '#FDFDFD')
 
 function snapshot(): HostSnapshot {
   return { state: host.state, local: host.local, dev: devPort !== null, logPath: host.logPath }
+}
+
+/**
+ * The window's minimum counts its frame and menu bar while the stylesheet's floor (chat-layout.ts) is
+ * the page: on Windows the minimum would give the page 474 points instead of 500 and cut the composer
+ * off. Raise the minimum by what the window adds around the page.
+ *
+ * Measured from the page rather than from `getContentSize()`, and only once the window is shown: a
+ * hidden window reports a shorter page than the one it lays out after the menu bar appears. A
+ * fullscreen window has no frame or menu bar around the page, so it would save a minimum that is short
+ * once the window leaves fullscreen; it skips the measurement and takes one then.
+ */
+async function holdPageMinimum(window: BrowserWindow) {
+  if (window.isDestroyed() || window.isFullScreen()) return
+  try {
+    const [pageWidth, pageHeight] = (await window.webContents.executeJavaScript('[innerWidth, innerHeight]')) as [number, number]
+    // The window can go fullscreen while the page measures itself; that measurement is the wrong one.
+    if (window.isDestroyed() || window.isFullScreen()) return
+    const [width, height] = window.getSize()
+    const minimum = windowMinimumFor({ width: pageWidth, height: pageHeight }, { width, height })
+    window.setMinimumSize(minimum.width, minimum.height)
+    const size = growToMinimum({ width, height }, minimum)
+    if (size.width !== width || size.height !== height) window.setSize(size.width, size.height)
+  } catch {
+    // The page went away before it could measure itself; the constructor's own minimum still holds.
+  }
 }
 
 /** The chat window: roster on the left, the conversation on the right (Grok Bot's desktop layout). */
@@ -88,14 +131,34 @@ function openChat() {
   chat = new BrowserWindow({
     width: 1100,
     height: 760,
+    // The stylesheet's floor is the page, so the minimum is raised past the constructor's by the
+    // frame and menu bar once the page can report them (holdPageMinimum).
     minWidth: chatWindowMinWidth,
-    minHeight: 500,
+    minHeight: chatWindowMinHeight,
     title: app.getName(),
     show: false,
     backgroundColor: background(),
-    titleBarStyle: isMac ? 'hidden' : 'default',
+    // macOS hides it for the traffic lights; Windows for the same frameless header, with its
+    // controls drawn over the page (titleBarOverlay).
+    titleBarStyle: isMac || isWindows ? 'hidden' : 'default',
+    ...(isWindows ? { titleBarOverlay: windowControls() } : {}),
     webPreferences: webPreferences(join(__dirname, '../preload/index.js')),
   })
+  // The menu keeps its accelerators (⌘/Ctrl+N, R, ±, 0, I, F, …) but no bar on Windows: the
+  // hidden title bar leaves none to click anyway.
+  if (isWindows) {
+    chat.setMenuBarVisibility(false)
+    registerAccelerators(chat)
+  }
+  const window = chat
+  // A window minimum is frame-sized while the page floor is the page's own: measure the chrome once
+  // the window is shown. A reload of an already visible window measures again, and one that reloads
+  // in fullscreen measures when it leaves it.
+  window.once('show', () => void holdPageMinimum(window))
+  window.webContents.on('did-finish-load', () => {
+    if (window.isVisible()) void holdPageMinimum(window)
+  })
+  window.on('leave-full-screen', () => void holdPageMinimum(window))
   // CODYNC_SHOW_INACTIVE: development and UI checks open the window without taking focus.
   chat.on('ready-to-show', () => chat && present(chat, Boolean(process.env.CODYNC_SHOW_INACTIVE)))
   // Closing hides: the window keeps the stores (and the menu bar's data) alive.
@@ -132,6 +195,46 @@ export function send(command: WindowCommand, show = true) {
   const window = show ? openChat() : chat
   if (show) activate()
   window?.webContents.send('app:command', command)
+}
+
+/**
+ * The window has no menu bar on Windows, so the system never walks the menu for a key: the same
+ * accelerators are read here instead, and each one sends the command the menu item would.
+ */
+function registerAccelerators(win: BrowserWindow) {
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown' || !(input.control || input.meta)) return
+    const key = input.key.toLowerCase()
+    // Zoom, on the same keys the View menu uses.
+    const zoom = { '=': true, '+': true, '-': false, '0': null } as const
+    if (key in zoom) {
+      send({ kind: 'stepTextSize', up: zoom[key as keyof typeof zoom] }, false)
+      event.preventDefault()
+      return
+    }
+    if (input.alt && key === 'i') {
+      send({ kind: 'toggleDetails' }, false)
+      event.preventDefault()
+      return
+    }
+    if (input.shift) {
+      if (app.isPackaged) return
+      // The dev page reload sits on ⇧⌘R, leaving ⌘R to Refresh.
+      if (key === 'i') win.webContents.toggleDevTools()
+      else if (key === 'r') win.webContents.reloadIgnoringCache()
+      else return
+      event.preventDefault()
+      return
+    }
+    switch (key) {
+      case 'n': send({ kind: 'newBot' }); break
+      case 'f': send({ kind: 'search' }); break
+      case 'r': send({ kind: 'refresh' }, false); break
+      case 'w': win.close(); break
+      default: return
+    }
+    event.preventDefault()
+  })
 }
 
 function registerIPC(tray: Tray) {
@@ -265,8 +368,11 @@ if (yieldsToInstall()) {
     nativeTheme.on('updated', () => {
       // Only the opaque windows: a color on the transparent notch island paints its whole panel.
       for (const w of [chat, pairing]) w?.setBackgroundColor(background())
+      // The Windows controls are drawn by the system: hand them the new colours.
+      if (isWindows && chat) chat.setTitleBarOverlay(windowControls())
     })
     host.start()
     openChat()
   })
 }
+

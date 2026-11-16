@@ -1,6 +1,7 @@
 import { isChat, unseen, type AccessRequest, type CloudStatus, type Entry, type Hello, type PairingRequest } from '@shared/models'
 import { isOutsideLoadedWindow, snapshotFloors } from '@shared/mirror-window'
 import { HostClient, HostError, type HostEvent } from '../client/host-client'
+import { setDeviceIcons } from '../lib/device-icons'
 import { undoOnFailure } from '../lib/undo-on-failure'
 import { BotMirror, type Connection } from './bot-mirror'
 import { Artifacts } from './artifacts'
@@ -247,6 +248,7 @@ export class BotSync extends BotMirror {
     this.hello = h
     this.applyIcons(h.icons ?? {}, h.iconsRevision)
     this.noteSyncStamp(syncStamp(h))
+    setDeviceIcons((h as { computerIcons?: Record<string, string> }).computerIcons)
     this.noteHostVersion({ version: h.version, minApp: h.minApp })
     if (this.isLoopback) this.updateComputer((c) => ({ ...c, name: h.name, device: h.device ?? c.device }))
     this.changed()
@@ -277,6 +279,7 @@ export class BotSync extends BotMirror {
         if (this.hostId && this.hostId !== event.hostId) this.resetMirror()
         this.hostId = event.hostId
         if (event.icons) this.applyIcons(event.icons)
+        if ((event as { computerIcons?: Record<string, string> }).computerIcons) setDeviceIcons((event as { computerIcons?: Record<string, string> }).computerIcons)
         this.usage = event.usage
         this.screen = event.screen
         this.network = event.network
@@ -517,3 +520,4 @@ export class BotSync extends BotMirror {
   }
 
 }
+

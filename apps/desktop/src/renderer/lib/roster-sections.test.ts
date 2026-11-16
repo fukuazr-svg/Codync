@@ -71,12 +71,24 @@ test('a bot moves past bots with the same pin state and section; pinned bots ign
   assert.equal(sameRosterGroup(bot('Work', true), bot('Work')), false)
 })
 
-test('every section once, sorted by name', () => {
+test('every section once, sorted by name', (t) => {
+  const compare = String.prototype.localeCompare
+  t.mock.method(String.prototype, 'localeCompare', function (this: string, other: string) {
+    return compare.call(this, other, 'en-US')
+  })
   assert.deepEqual(sectionNames([{ section: 'Work' }, {}, { section: 'apps' }, { section: 'Work' }, { section: '' }]), ['apps', 'Work'])
   // Names that differ only in case or accents keep one order, whatever order the bots come in.
   for (const names of [['Work', 'work', 'Café', 'Cafe'], ['Cafe', 'work', 'Café', 'Work']]) {
     assert.deepEqual(sectionNames(names.map((section) => ({ section }))), ['Cafe', 'Café', 'work', 'Work'])
   }
+})
+
+test('section ordering follows a Chinese locale as well', (t) => {
+  const compare = String.prototype.localeCompare
+  t.mock.method(String.prototype, 'localeCompare', function (this: string, other: string) {
+    return compare.call(this, other, 'zh-CN')
+  })
+  assert.deepEqual(sectionNames([{ section: 'Cafe' }, { section: 'Café' }]), ['Café', 'Cafe'])
 })
 
 test('a typed name is trimmed of whitespace and control characters, nothing left being none', () => {

@@ -44,6 +44,8 @@ pub enum BotStatus {
 pub struct Runtime {
     pub status: BotStatus,
     pub activity: String,
+    /// Internal identity of the running turn; never included in client snapshots.
+    pub turn_key: Option<uuid::Uuid>,
     pub started_at: Option<i64>,
     /// Where the running turn talks: its own chat or a group.
     pub lane: Option<Lane>,
@@ -227,6 +229,7 @@ impl Hub {
     /// Stops every bot actor (and so every agent process), waiting briefly for them to exit.
     pub async fn shutdown(&self) {
         self.routines.stop().await;
+        self.screen.shutdown_browsers().await;
         let handles: Vec<BotHandle> = self.bots.locked().drain().map(|(_, h)| h).collect();
         let tasks: Vec<_> = handles
             .into_iter()

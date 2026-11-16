@@ -15,6 +15,7 @@ import { RoutinesView } from '../routines/RoutinesView'
 import { LibraryView } from '../library/LibraryView'
 import { DevServersSection } from './DevServersSection'
 import { ComputerTab } from './ComputerTab'
+import { GoalSection } from './GoalSection'
 import { WorkTimeline } from './WorkTimeline'
 import { MacChatButton } from './MacChatButton'
 import '../bots/bots.css'
@@ -32,8 +33,8 @@ const TABS: { id: DetailsTab; label: string }[] = [
   { id: 'settings', label: 'Settings' },
 ]
 
-/** The inspector beside a conversation (Grok Bot's): who the bot is, then what it does (Details), its computer, library,
- * memory and how it is set up (Settings). */
+/** The inspector beside a conversation (Grok Bot's): who the bot is, then what it does (Details, with its goal), its
+ * computer, library, memory and how it is set up (Settings). */
 export function DetailsPanel({ botId, routineId, tab, setTab, editGroup, openArtifact, openCard, share, close }: {
   botId: string
   routineId: string | null
@@ -47,6 +48,7 @@ export function DetailsPanel({ botId, routineId, tab, setTab, editGroup, openArt
   close: () => void
 }) {
   const store = useStore()
+  const tr = useTr()
   const bot = store.bots.get(botId) ?? null
   const group = !!bot && isGroup(bot)
   useScreenViewed('bot_details')
@@ -54,10 +56,12 @@ export function DetailsPanel({ botId, routineId, tab, setTab, editGroup, openArt
     <div className="details-panel">
       <div className="details-drag" />
       <div className="details-actions">
-        {bot && !group ? <MacChatButton className="ringed" title="Create template" icon="square.and.arrow.up" onClick={share} /> : null}
-        <MacChatButton className="ringed" title="Close details" icon="xmark" onClick={close} />
+        {bot && !group ? <MacChatButton className="ringed" title={tr('Create template')} icon="square.and.arrow.up" onClick={share} /> : null}
+        <MacChatButton className="ringed" title={tr('Close details')} icon="xmark" onClick={close} />
       </div>
-      <div className="details-scroll">
+      {/* The column is the scroller, so it takes the focus when the details open: the panel around it
+          never scrolls, and a first PageDown aimed at the panel would move nothing. */}
+      <div className="details-scroll" tabIndex={-1} data-autofocus>
         {bot ? <Identity bot={bot} /> : null}
         {bot && group ? (
           <GroupMembersList group={bot} editGroup={editGroup} />
@@ -67,10 +71,13 @@ export function DetailsPanel({ botId, routineId, tab, setTab, editGroup, openArt
             <div key={tab} className="details-tab fade-in">
               {tab === 'details' ? (
                 bot ? (
-                  <WorkTimeline bot={bot} openCard={openCard}>
-                    <RoutinesView botId={botId} initialId={routineId} />
-                    <DevServersSection bot={bot} />
-                  </WorkTimeline>
+                  <>
+                    <GoalSection key={bot.id} bot={bot} />
+                    <WorkTimeline bot={bot} openCard={openCard}>
+                      <RoutinesView botId={botId} initialId={routineId} />
+                      <DevServersSection bot={bot} />
+                    </WorkTimeline>
+                  </>
                 ) : null
               ) : tab === 'computer' ? (
                 bot ? <ComputerTab bot={bot} /> : null

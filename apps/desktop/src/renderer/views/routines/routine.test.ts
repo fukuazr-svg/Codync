@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { testLanguage } from '../../lib/test-language.ts'
 import { compiledCron, durationText, followUpLine, repeatChoice, runLabel, type FollowUp, type RoutineRun, type RoutineSchedulePreview } from './routine.ts'
 import { matchZones, timeZoneOptions, zoneOffset } from './time-zones.ts'
 
@@ -56,7 +57,8 @@ test('Custom starts from the cron the host compiled', () => {
   assert.equal(compiledCron(null), null)
 })
 
-test('a queued run says when a waiting retry goes', () => {
+test('a queued run says when a waiting retry goes', (t) => {
+  testLanguage(t, 'en-US')
   const run = (notBefore: number | null): RoutineRun => ({ id: 'r', routineId: 'x', botId: 'b', status: 'pending', createdAt: 0, notBefore })
   assert.equal(runLabel(run(null)), 'Queued')
   assert.match(runLabel(run(120_000), 60_000), /^Retrying at \S/)
@@ -64,7 +66,8 @@ test('a queued run says when a waiting retry goes', () => {
   assert.equal(runLabel({ ...run(null), status: 'failed' }), 'Failed')
 })
 
-test('a waiting follow-up says when it happens: the time today, the date too on another day, or that it is due', () => {
+test('a waiting follow-up says when it happens: the time today, the date too on another day, or that it is due', (t) => {
+  testLanguage(t, 'en-US')
   const now = new Date(2026, 10, 14, 15, 0).getTime()
   const followUp = (at: number): FollowUp => ({ id: 'f', botId: 'b', at, note: 'Check the build', createdAt: now })
   // The app language's way of writing a time, whatever the computer's is.

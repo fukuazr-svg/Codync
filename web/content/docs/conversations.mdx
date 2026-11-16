@@ -4,6 +4,16 @@ Each bot has one chat that keeps going. You send it work, it replies, and everyt
 
 The chat shows your messages, the bot's messages, approval cards, choice cards and short notices. A bot's message arrives complete; nothing streams in word by word. A bot can send several messages in one turn.
 
+A fenced code block keeps the code as the bot wrote it. **Copy code** at its top right puts the code on the clipboard without the fences or the language tag, on the iPhone, Android and desktop apps; it reads **Copied** for a moment. The terminal UI shows code blocks without the button.
+
+## Task checklist
+
+When a bot works through several steps, it can keep a checklist. On **Desktop**, it appears above the message box with how many steps are done, and moves on as the bot works. Click it to fold it down to the step under way. It disappears once every step is done and the bot is idle; **Full conversation** keeps it.
+
+## Plan limits
+
+On **Desktop**, a line above the message box shows the plan limits of the login the bot runs on: the 5-hour session and the week, each with how much is used, a bar, and the time left before it resets. The week also shows its day (1/7 to 7/7) and a mark on the bar where a steady pace would be, so you can tell whether you are ahead of it. A bar turns amber from 70% and red from 90%; the week turns amber when it nears the pace and red when it passes it. Nothing shows while the login has no reading yet. The same limits are in **Settings > Usage**.
+
 ## Choice cards
 
 When your bot needs you to pick a way forward, it can show a question with two to twelve numbered options. On **iPhone**, **Android** and **Desktop**, tap the option you want, or type your own answer in the last row, **Something else**. **Suggested** marks its recommendation; nothing is selected for you. In the **Terminal UI**, use F1–F12, or 1–9 for the first nine options, or type your own answer in the message box. Your choice appears as your message and the bot continues its current work.
@@ -19,6 +29,25 @@ Everything else the agent did (its narration, thinking, tool calls, diffs and pl
 - **iPhone:** touch and hold a bot message, then **Show what it did**.
 - **Desktop:** hover a bot message and choose **More message actions**, then **Show what it did**, or right-click the message.
 - **Terminal UI:** `t` opens the trace pane, `T` opens it full screen, and `o` shows the last turn's steps.
+
+## Conversation goals on desktop
+
+Open the conversation details and enter a **Goal**, **Maximum turns** and
+**Maximum minutes**, then choose **Start goal**. The bot starts immediately and
+continues automatically until it reports completion, needs you, fails or reaches
+a limit. The goal above the composer shows progress and **Stop goal**.
+
+Sending a message from any client stops automatic continuation. Approval cards
+also stop it; answering a card does not silently restart the goal. Setting a new
+goal replaces the old one. The host checks reported subscription usage before
+each step; agents without usage readings still obey turn and time limits.
+An unfinished goal stops when the host restarts; start it explicitly again after
+checking the previous work. A connection error does not automatically repeat a
+goal action: reconnect and check its current state before starting another goal.
+
+Goal controls require a host with goal support. Phone and terminal clients show
+the notices and can stop the bot or send a message; dedicated goal controls are
+currently available on desktop.
 
 ## Sending messages
 
@@ -90,7 +119,7 @@ The answers come from the agent, usually:
 | Answer | Meaning |
 | --- | --- |
 | **Allow once** | Allow this request. |
-| **Always allow** | Allow it and requests like it, as the agent defines that. |
+| **Always allow** | Allow it and requests like it, as the agent defines that. Codync also answers the conversation's next requests of the same kind (run a command, change files, read…) itself, for agents that ask again anyway. |
 | **Deny** | Refuse this request. |
 | **Never** | Refuse it and requests like it, as the agent defines that. |
 

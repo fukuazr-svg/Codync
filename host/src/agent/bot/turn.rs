@@ -1,6 +1,6 @@
 //! Starting a turn and wrapping it up: final reply, notices, the reply to a requesting bot or room, alerts and memory.
 
-use super::{Actor, Conn, Done, HostTurn, Instructions, NoticeStyle, Queued, Reacted, Seg};
+use super::{Actor, Conn, Done, DoneTx, HostTurn, Instructions, NoticeStyle, Queued, Reacted, Seg, TurnAnswer};
 use crate::agent::acp::{self, Incoming};
 use crate::analytics::{self, TurnOutcome, TurnSource};
 use crate::chat::context::{self, Snapshot};
@@ -13,7 +13,6 @@ use crate::store::{EntryKind, Lane, now_ms};
 use anyhow::{Result, anyhow};
 use serde_json::json;
 use std::time::{Duration, Instant};
-use tokio::sync::mpsc;
 
 /// Leads a `<bot-profile>` sent again after a compaction, so the agent drops an older copy it may still hold.
 const PROFILE_AGAIN: &str = "Your context was summarized. This is your full, current profile and memory; it replaces any earlier bot profile in this conversation.";
@@ -99,7 +98,7 @@ impl Actor {
         entry_ids: &[String],
         text: &str,
         hidden: bool,
-        done_tx: &mpsc::UnboundedSender<Done>,
+        done_tx: &DoneTx,
     ) -> Result<()> {
         self.task_source = tasks::source_of(&self.hub.store, &self.cfg);
         if self.cfg.is_task() {
@@ -149,6 +148,7 @@ impl Actor {
         self.announce = None;
         self.first_prompt = None;
         self.stop_requested = false;
+        self.gone_turn = false;
         self.cancel_deadline = None;
         let team_turn = if self.in_request() {
             crate::chat::team::Turn::Request
@@ -173,15 +173,17 @@ impl Actor {
         }
         // A bot request or room turn isn't resumed after a host restart (the room that waited is gone): a request's
         // persisted notices are marked interrupted instead of silently repeating work. Nor is a call's opening (the
-        // call is over). A reply turn is resumed, and so is a follow-up, which is gone from the list by now. A turn
-        // under a network rule's ceiling isn't: the ceiling doesn't outlive the host, and the turn that resumed it
-        // would work on the sender's text as the bot is set.
+        // call is over), nor a goal step (a goal is never resumed without another explicit start). A reply turn is
+        // resumed, and so is a follow-up, which is gone from the list by now. A turn under a network rule's ceiling
+        // isn't: the ceiling doesn't outlive the host, and the turn that resumed it would work on the sender's text
+        // as the bot is set.
         self.set_inflight(
             self.active_request.is_none()
                 && !self.hub.ceilings.holds(&self.cfg.id)
                 && self.active_group.is_none()
                 && self.active_routine.is_none()
-                && self.host_turn.is_none_or(HostTurn::resumed),
+                && self.host_turn.is_none_or(HostTurn::resumed)
+                && self.goal_step.is_none(),
         );
         // A message the host wrote in the user's place (`from: host`) isn't the user asking.
         let typed = |id: &&String| self.hub.store.entry(id).is_some_and(|e| e.data["from"] != "host");
@@ -207,7 +209,7 @@ impl Actor {
         let slot = self.slot();
         self.ensure_turn_session(slot.as_deref()).await?;
         if !hidden {
-            self.carry_in();
+            let _ = self.carry_in().await;
         }
         let session = self.turn_session.clone();
         self.hub.set_runtime(&self.id(), |r| r.session.clone_from(&session));
@@ -281,6 +283,12 @@ impl Actor {
             self.hub.routines.mark_started(&self.hub.store, id)?;
             self.set_inflight(true);
         }
+        // A goal step that already ended (the user stopped it, or a failure did) sends nothing more.
+        if !self.goal_can_prompt() {
+            let result = Ok(json!({"stopReason": "cancelled"}));
+            let _ = done_tx.send(TurnAnswer { turn: self.turn, result });
+            return Ok(());
+        }
         // From here what changes in its memory folders is the bot's, however it changed them: a task's too, as
         // its own turn's, in its own session.
         memory::turns::begin_turn(&self.cfg, &sid, self.hub.runtime(&self.cfg.id).message);
@@ -293,8 +301,10 @@ impl Actor {
             tracing::warn!(%error, "could not acknowledge memory update notice");
         }
         let done_tx = done_tx.clone();
+        let turn = self.turn;
         tokio::spawn(async move {
-            let _ = done_tx.send(answer.response().await.and_then(acp::codebuddy::prompt_result));
+            let result = answer.response().await.and_then(acp::codebuddy::prompt_result);
+            let _ = done_tx.send(TurnAnswer { turn, result });
         });
         Ok(())
     }
@@ -332,8 +342,17 @@ impl Actor {
             *used = Instant::now();
         }
         let stopped = self.stop_requested || matches!(&done, Ok(v) if v["stopReason"] == "cancelled");
-        self.close_attempt(stopped || done.is_err());
+        // `stopReason: "error"` has no JSON-RPC error behind it, but the attempt failed all the same.
+        let errored = done.is_err() || matches!(&done, Ok(v) if v["stopReason"] == "error");
+        self.close_attempt(stopped || errored);
         let mut final_text = None;
+        // send_message can consume the public reply; the agent's closing marker still counts.
+        let goal_closing = self
+            .goal_step
+            .as_ref()
+            .and(self.last_text.as_ref())
+            .and_then(|id| self.hub.store.entry(id))
+            .and_then(|e| e.data["text"].as_str().map(str::to_owned));
         let routine = self.active_routine.is_some();
         let grouped = self.active_group.is_some() || routine;
         let delegated = self.active_request.is_some();
@@ -380,16 +399,19 @@ impl Actor {
             // A stopped turn says so even when its agent still ended it normally: its reply is withheld above.
             (_, "cancelled") | (Err(_), _) => self.stop_notice("Stopped.", "cancelled"),
             (Ok(_), _) if self.stop_requested => self.stop_notice("Stopped.", "cancelled"),
-            (_, "max_tokens") => self.stop_notice("The agent hit its output limit.", "max_tokens"),
-            (_, "max_turn_requests") => {
-                self.stop_notice("The agent hit its step limit for this turn.", "max_turn_requests");
-            }
-            (_, "refusal") => self.stop_notice("The agent declined to continue.", "refusal"),
             (Ok(_), "end_turn") if !stopped => crate::market::agent_sign_in::answered(&self.hub, &self.cfg),
+            (Ok(_), reason) if !stopped => match early_end_notice(reason) {
+                Some(EarlyEnd::Failure(text)) => {
+                    self.failure_notice(&anyhow!("the agent's turn ended with an error"), text, reason);
+                }
+                Some(EarlyEnd::Notice(text)) => self.stop_notice(text, reason),
+                None => {}
+            },
             _ => {}
         }
         let failure = done.as_ref().err().filter(|_| !self.stop_requested);
-        let failed = failure.is_some();
+        // `error` carries no error object, but it is still a failed turn for the routine, the group and the task.
+        let failed = failure.is_some() || (!self.stop_requested && done.is_ok() && stop_reason == "error");
         self.report_turn(stopped, failure, &stop_reason);
         if done.is_ok() && stop_reason == "end_turn" {
             self.agent_answered();
@@ -425,6 +447,9 @@ impl Actor {
             Outcome::Stopped
         } else if let Some(error) = done.as_ref().err() {
             Outcome::Failed(Failure::Agent, format!("its agent failed: {error}"))
+        } else if stop_reason == "error" {
+            // The same failure without an error object: an agent that ended its turn with `error`.
+            Outcome::Failed(Failure::Agent, "its agent failed: its turn ended with an error".to_owned())
         } else if stop_reason != "end_turn" {
             Outcome::Failed(Failure::EndedEarly, format!("it ended early ({stop_reason})"))
         } else {
@@ -460,6 +485,7 @@ impl Actor {
             r.session = None;
         });
         self.hub.team.end_turn(&self.cfg.id);
+        self.goal_ended(stopped, failed || stop_reason != "end_turn", final_text.as_deref(), goal_closing.as_deref());
         // A room turn's news comes from the group once the room is done (see `group`).
         let more = self.queue.iter().any(|q| matches!(q, Queued::User { .. }));
         // It held back its only answer, a reaction: it said nothing, so there is nothing to tell either.
@@ -526,7 +552,8 @@ impl Actor {
     pub(super) fn report_turn(&self, stopped: bool, failure: Option<&anyhow::Error>, stop_reason: &str) {
         let outcome = if stopped {
             TurnOutcome::Stopped
-        } else if failure.is_some() {
+        } else if failure.is_some() || stop_reason == "error" {
+            // `error` carries no error object, but it is still a failed turn in the metrics.
             TurnOutcome::Failed
         } else if stop_reason == "end_turn" {
             TurnOutcome::Done
@@ -554,7 +581,8 @@ impl Actor {
         self.active_group.is_none() && !self.in_routine() && !self.in_request()
     }
 
-    /// What started the turn that is starting or running. A task's turn is what its item came from.
+    /// What started the turn that is starting or running. A task's turn is what its item came from, and a goal's
+    /// step is the host's own turn: not the user's words.
     pub(super) fn source(&self) -> TurnSource {
         if self.in_routine() {
             TurnSource::Routine
@@ -562,10 +590,35 @@ impl Actor {
             TurnSource::Group
         } else if self.in_request() || self.reply_hops.is_some() {
             TurnSource::Bot
+        } else if self.goal_step.is_some() {
+            TurnSource::Host
         } else {
             self.host_turn.map_or(TurnSource::User, HostTurn::source)
         }
     }
+}
+
+/// What a stop reason that is not `end_turn` means: an explanation, or a failed turn. The two are
+/// different states, not a string with a boolean beside it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum EarlyEnd {
+    /// The turn ended early for a reason the user only needs explained.
+    Notice(&'static str),
+    /// The turn failed; the runtime, the alert and the session all treat it as a failure.
+    Failure(&'static str),
+}
+
+/// `None` for a normal end, a stop, or a reason the match in `finish_turn` already answered.
+fn early_end_notice(stop_reason: &str) -> Option<EarlyEnd> {
+    Some(match stop_reason {
+        "max_tokens" => EarlyEnd::Notice("The agent hit its output limit."),
+        "max_turn_requests" => EarlyEnd::Notice("The agent hit its step limit for this turn."),
+        "refusal" => EarlyEnd::Notice("The agent declined to continue."),
+        // pi-acp ends a turn whose provider call failed with `stopReason: "error"` and no JSON-RPC error, so
+        // this notice is the only sign of that failure the user gets (#470).
+        "error" => EarlyEnd::Failure("The agent failed: its turn ended with an error."),
+        _ => return None,
+    })
 }
 
 /// A finished turn alerts once the user's work is done: not when it's `quiet` (their next message
@@ -589,5 +642,23 @@ mod tests {
         assert_eq!(turn_alert(false, "cancelled", false), None);
         assert_eq!(turn_alert(false, "max_turn_requests", false), Some(AlertKind::Failed));
         assert_eq!(turn_alert(true, "error", true), Some(AlertKind::Failed));
+    }
+
+    #[test]
+    fn an_unfinished_turn_says_why_it_ended() {
+        assert_eq!(early_end_notice("max_tokens"), Some(EarlyEnd::Notice("The agent hit its output limit.")));
+        assert_eq!(
+            early_end_notice("max_turn_requests"),
+            Some(EarlyEnd::Notice("The agent hit its step limit for this turn."))
+        );
+        assert_eq!(early_end_notice("refusal"), Some(EarlyEnd::Notice("The agent declined to continue.")));
+        assert_eq!(
+            early_end_notice("error"),
+            Some(EarlyEnd::Failure("The agent failed: its turn ended with an error.")),
+            "pi-acp's own failure ends the turn with `error` and no JSON-RPC error to show"
+        );
+        assert_eq!(early_end_notice("end_turn"), None);
+        assert_eq!(early_end_notice("cancelled"), None, "a stopped turn already says so");
+        assert_eq!(early_end_notice("a future reason"), None, "an unknown reason keeps its old silence");
     }
 }

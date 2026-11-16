@@ -61,7 +61,7 @@ export function NewCloudComputerSheet({ model, openKey }: { model: CloudComputer
       </VStack>
       <HStack gap={8} className="cloud-new-footer">
         <Spacer />
-        <Button kind="secondary" onClick={dismiss}>Cancel</Button>
+        <Button kind="secondary" onClick={dismiss}>{tr('Cancel')}</Button>
         <Button onClick={() => void create()} disabled={!provider || !model.canCreate}>{model.busy === 'create' ? <Spinner /> : 'Create'}</Button>
       </HStack>
     </VStack>

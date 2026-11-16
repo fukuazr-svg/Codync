@@ -186,6 +186,15 @@ impl Actor {
                 self.hub.store.entry(eid)?.data["title"].as_str().map(str::to_owned)
             })
             .unwrap_or_else(|| "Use a tool".into());
+        // A kind the user already always allowed in this session answers itself (`always_allowed`): some agents ask
+        // again about the same kind of action anyway.
+        let asked = json!({"toolKind": tool["kind"].as_str().unwrap_or("other"), "title": title});
+        if let (Some(session), Some(conn)) = (self.session_id.as_deref(), &self.conn)
+            && let Some(option) = self.always_allowed.pick(session, &asked, &options)
+        {
+            let _ = conn.acp.respond(rpc_id, acp::permission_answer(Some(option))).await;
+            return;
+        }
         let mut detail = json!({"output": "", "diffs": []});
         merge_tool_content(&mut detail, &tool["content"]);
         let raw = &tool["rawInput"];
@@ -255,6 +264,11 @@ impl Actor {
 
     /// Posts an approval card where the user is and tells them it needs them.
     fn show_card(&mut self, title: &str, data: Value, answer: Answer) {
+        // Requiring approval ends automatic work even if persisting that end fails.
+        if let Some(step) = self.goal_step.as_mut() {
+            step.stopped = Some(crate::chat::goal::Stopped::NeedsUser);
+            crate::chat::goal::finish(&self.hub, &self.cfg.id, Some(&step.id), crate::chat::goal::Stopped::NeedsUser);
+        }
         self.close_seg();
         let card = self.add_for_user(EntryKind::Permission, data);
         let target = card.as_ref().map_or_else(|| self.cfg.clone(), |card| self.chat_of(card));
@@ -289,9 +303,11 @@ impl Actor {
         }
     }
 
-    pub(super) async fn answer_permission(&mut self, entry_id: &str, option_id: Option<String>) {
-        let Some(answer) = self.perms.remove(entry_id) else { return };
+    /// Answers the card; false when it was gone (or its tool stopped waiting), so a caller can say so.
+    pub(super) async fn answer_permission(&mut self, entry_id: &str, option_id: Option<String>) -> bool {
+        let Some(answer) = self.perms.remove(entry_id) else { return false };
         let mut status = if option_id.is_some() { "answered" } else { "cancelled" };
+        let mut applied = true;
         match answer {
             Answer::Agent(rpc_id) => {
                 if let Some(conn) = &self.conn {
@@ -302,10 +318,16 @@ impl Actor {
                 // The tool stopped waiting (see `expire_abandoned`): nothing acts on the answer.
                 if reply.send(option_id.as_deref() == Some("allow")).is_err() {
                     status = "expired";
+                    applied = false;
                 }
             }
         }
         if let Some(mut e) = self.hub.store.entry(entry_id) {
+            if let (Some(session), Some(option)) = (self.session_id.clone(), option_id.as_deref())
+                && status == "answered"
+            {
+                self.always_allowed.note(&session, &e.data, option);
+            }
             e.data["status"] = status.into();
             e.data["selected"] = option_id.into();
             self.hub.set_entry(entry_id, &e.data);
@@ -316,6 +338,7 @@ impl Actor {
                 r.activity = "Continuing…".into();
             });
         }
+        applied
     }
 
     /// A `send_message`: the user's next bubble, in the turn's lane, right away. Only in the

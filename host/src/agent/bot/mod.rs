@@ -16,6 +16,7 @@
 //! written to the group's transcript; see `group`). A routine run talks in its chat
 //! from a session of its own (see `session`).
 
+mod always_allowed;
 mod background_work;
 mod cmd;
 mod codex_names;
@@ -25,6 +26,7 @@ mod decisions;
 mod fallback;
 mod fast_mode;
 mod files;
+mod goal;
 mod inflight;
 mod launch;
 mod lifecycle;
@@ -76,6 +78,8 @@ pub struct BotHandle {
 }
 
 pub fn spawn(hub: Arc<Hub>, base: BotConfig) -> BotHandle {
+    // A goal is never resumed after a host restart without another explicit start.
+    crate::chat::goal::finish(&hub, &base.id, None, crate::chat::goal::Stopped::Failed);
     let (tx, rx) = mpsc::unbounded_channel();
     let session_id = hub.store.bot(&base.id).ok().flatten().and_then(|b| b.session_id);
     // The agent its main session runs on: one of its fallbacks, if it was on one when the host stopped.
@@ -135,8 +139,11 @@ pub fn spawn(hub: Arc<Hub>, base: BotConfig) -> BotHandle {
         joined: false,
         files: files::FileShares::default(),
         perms: HashMap::new(),
+        always_allowed: always_allowed::AlwaysAllowed::default(),
         asked: HashMap::new(),
+        goal_step: None,
         stop_requested: false,
+        gone_turn: false,
         cancel_deadline: None,
         exit_tail: None,
         tools_changed: false,
@@ -310,8 +317,9 @@ struct Actor {
     queue: VecDeque<Queued>,
     /// Queued messages handed to the agent to join the running turn, by entry id, until it answers (`steer`).
     steers_in_flight: HashMap<String, steer::InFlight>,
-    /// How the running turn ended, while the agent still owes an answer to a steer (`turn_ended`).
-    held_done: Option<Done>,
+    /// How the running turn ended, while the agent still owes an answer to a steer (`turn_ended`); with the turn that
+    /// asked, so a stale one cannot finish the turn after it.
+    held_done: Option<TurnAnswer>,
     active_request: Option<crate::chat::team::BotRequest>,
     /// A task's running turn works an item that came from here (`chat::tasks`): a routine's run and another bot's
     /// request keep the rules those turns have in a chat. Anything else: the bot's own.
@@ -340,9 +348,16 @@ struct Actor {
     files: files::FileShares,
     /// permission entry id -> who waits for the answer
     perms: HashMap<String, updates::Answer>,
+    /// What the user chose Always allow for, by session: answered by Codync when the agent asks again.
+    always_allowed: always_allowed::AlwaysAllowed,
     /// Decision card id -> the live tool call waiting for this turn's choice.
     asked: HashMap<String, decisions::Asked>,
+    /// The generation id of the goal whose step is running.
+    goal_step: Option<goal::Step>,
     stop_requested: bool,
+    /// A cancel found no agent left: the turn ends once the command that asked is done, so its own
+    /// bookkeeping (a new session, say) lands first.
+    gone_turn: bool,
     /// A cancelled turn still running past this stops its agent process.
     cancel_deadline: Option<Instant>,
     /// Last stderr lines of an agent process that just exited.
@@ -371,9 +386,19 @@ struct RoutineCompletion {
 
 type Done = Result<Value>;
 
+/// The channel an agent answers one prompt on, with the turn that asked (see `TurnAnswer`).
+type DoneTx = mpsc::UnboundedSender<TurnAnswer>;
+
+/// An agent's answer to one prompt, tagged with the turn that asked it. An answer can arrive after its turn ended (the
+/// agent closed while a Stop was being handled), and it must not end the turn running by then.
+struct TurnAnswer {
+    turn: Option<i64>,
+    result: Done,
+}
+
 impl Actor {
     /// The running turn is over, with every steer answered (`turn_ended`): it finishes or goes on with the next agent.
-    async fn on_turn_done(&mut self, done: Done, done_tx: &mpsc::UnboundedSender<Done>) {
+    async fn on_turn_done(&mut self, done: Done, done_tx: &DoneTx) {
         // Updates sent before the prompt response are already queued; apply them first.
         while let Some(inc) = self.conn.as_mut().and_then(|c| c.rx.try_recv().ok()) {
             match inc {
@@ -389,6 +414,7 @@ impl Actor {
         }
         let (session, routine) = (self.turn_session.clone(), self.active_routine.is_some());
         let failed = done.as_ref().is_err_and(acp::may_end_session);
+        self.hub.screen.cancel_browsers(&self.cfg.id).await;
         self.finish_turn(&done);
         match session {
             // A task's session is spent like a run's; an item that follows reopens it.
@@ -402,7 +428,7 @@ impl Actor {
 
     /// `interrupted`: the previous host process stopped a turn in the bot's chat; resume it first.
     async fn run(mut self, mut rx: mpsc::UnboundedReceiver<Cmd>, interrupted: Option<Lane>) {
-        let (done_tx, mut done_rx) = mpsc::unbounded_channel::<Done>();
+        let (done_tx, mut done_rx) = mpsc::unbounded_channel::<TurnAnswer>();
         let mut flush_tick = tokio::time::interval(Duration::from_millis(300));
         if let Some(run) = self.hub.routines.recovery(&self.cfg.id) {
             self.active_routine = Some(run.id.clone());
@@ -415,14 +441,20 @@ impl Actor {
             tokio::select! {
                 cmd = rx.recv() => {
                     let Some(cmd) = cmd else { break };
-                    if !self.on_cmd(cmd, &done_tx).await { break }
+                    let keep = self.on_cmd(cmd, &done_tx).await;
+                    // A cancel with no agent left ends its turn here, once the command's own bookkeeping is done.
+                    if std::mem::take(&mut self.gone_turn) {
+                        self.end_turn_without_agent(&done_tx).await;
+                    }
+                    if !keep { break }
                 }
                 Some(file) = self.files.rx.recv() => self.finish_file(file),
                 inc = recv_incoming(&mut self.conn) => self.on_incoming(inc).await,
-                Some(done) = done_rx.recv() => self.turn_ended(done, &done_tx).await,
+                Some(answer) = done_rx.recv() => self.answered(answer, &done_tx).await,
                 _ = flush_tick.tick() => {
                     self.flush(false);
                     self.expire_abandoned().await;
+                    self.check_goal_deadline().await;
                     if self.routine_completion.is_some() && self.retry_routine_completion() {
                         self.set_inflight(false);
                         self.next_in_queue(&done_tx).await;
@@ -432,10 +464,19 @@ impl Actor {
                         self.stop_requested = true;
                         if let Some(c) = self.conn.take() { c.acp.kill().await; }
                     }
-                    // The agent ignored the cancel: stop its process so the bot is free again.
+                    // The agent ignored the cancel: stop its process so the bot is free again. With no agent
+                    // left to stop, the turn ends here instead of staying Working with nothing to answer it.
                     if self.turn.is_some() && self.cancel_deadline.is_some_and(|deadline| Instant::now() >= deadline) {
                         self.cancel_deadline = None;
-                        if let Some(c) = self.conn.take() { c.acp.kill().await; }
+                        match queue::cancel_step(self.conn.is_some(), true) {
+                            queue::CancelStep::KillAgent => {
+                                if let Some(c) = self.conn.take() { c.acp.kill().await; }
+                            }
+                            queue::CancelStep::EndTurn => {
+                                self.end_turn_without_agent(&done_tx).await;
+                            }
+                            queue::CancelStep::AskAgent => {}
+                        }
                     }
                     self.release_idle().await;
                     // The idle check may have queued a compaction.

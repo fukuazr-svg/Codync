@@ -49,7 +49,7 @@ export function ComputerRosterSection({ store, compact, collapsed, previous, nex
           <ComputerHeadingLabel store={store} compact={compact} collapsed={collapsed} />
         </button>
         {openScreen && !compact ? <IconButton className="computer-roster-action" title="Screen" icon="display" size={24} onClick={openScreen} /> : null}
-        {openExtensions && !compact ? <IconButton className="computer-roster-action" title="Extensions" icon="square.grid.2x2" size={24} onClick={openExtensions} /> : null}
+        {openExtensions && !compact ? <IconButton className="computer-roster-extensions" title="Extensions" icon="square.grid.2x2" size={28} onClick={openExtensions} /> : null}
       </div>
       <div className={`computer-roster-content ${collapsed ? 'collapsed' : ''}`} inert={collapsed} aria-hidden={collapsed}>
         <div>{children}</div>
@@ -63,7 +63,7 @@ export function ComputerHeadingLabel({ store, compact, collapsed }: { store: Bot
   const tr = useTr()
   return (
     <>
-      <ComputerBadge computer={store.computer} size={20} />
+      <ComputerBadge computer={store.computer} size={28} iconSize={18} />
       {!compact ? (
         <span className="computer-roster-label">
           <strong>{store.hostName}</strong>
@@ -74,3 +74,4 @@ export function ComputerHeadingLabel({ store, compact, collapsed }: { store: Bot
     </>
   )
 }
+

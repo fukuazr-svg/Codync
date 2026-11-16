@@ -3,6 +3,7 @@ import ts from 'typescript'
 import { existsSync, readFileSync } from 'node:fs'
 import { registerHooks } from 'node:module'
 import { test } from 'node:test'
+import { testLanguage } from './test-language.ts'
 import type { BotStore } from '../store/bot-store'
 import type { HostTransport } from '../client/host-client'
 
@@ -97,6 +98,7 @@ test('a host failure and a removed computer both release the refresh waiter', as
 })
 
 test('an unresponsive host cannot leave manual refresh spinning forever', async (t) => {
+  testLanguage(t, 'en-US')
   t.mock.timers.enable({ apis: ['setTimeout'] })
   const store = sync({ call: () => new Promise(() => {}), stream: () => () => {} })
   const refresh = store.refreshStream()

@@ -1,5 +1,7 @@
 package com.codync.android
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -17,11 +19,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -38,6 +47,7 @@ import com.codync.android.core.MarkdownBlocks
 import com.codync.android.core.MarkdownBlocks.Block
 import com.codync.android.design.*
 import com.kyant.shapes.RoundedRectangle
+import kotlinx.coroutines.delay
 import org.commonmark.ext.gfm.strikethrough.Strikethrough
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension
 import org.commonmark.node.Code
@@ -83,9 +93,38 @@ val LocalNetworkImages = staticCompositionLocalOf<ImageLoader> { error("Missing 
             Box(Modifier.width(3.dp).fillMaxHeight().background(Palette.border))
             Text(inline(block.text, code), Modifier.padding(start = 10.dp), style = Type.body, color = Palette.secondary)
         }
-        is Block.Code -> Box(Modifier.fillMaxWidth().clip(RoundedRectangle(8.dp)).background(Palette.codeBackground)
+        is Block.Code -> CodeBlock(block.text)
+    }
+}
+
+/** A fenced code block: the code, and a button that copies it without the fences. */
+@Composable private fun CodeBlock(text: String) {
+    var copied by remember { mutableStateOf(false) }
+    // Counts copies: a second tap restarts the check mark's timer instead of keeping the first one.
+    var copies by remember { mutableIntStateOf(0) }
+    val clipboard = LocalContext.current.getSystemService(ClipboardManager::class.java)
+    LaunchedEffect(copies) {
+        if (copies > 0) {
+            delay(1500)
+            copied = false
+        }
+    }
+    Box(Modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().clip(RoundedRectangle(8.dp)).background(Palette.codeBackground)
             .horizontalScroll(rememberScrollState())) {
-            Text(block.text, Modifier.padding(10.dp), style = Type.footnote.monospaced, color = Palette.text, softWrap = false)
+            // The copy button always sits over the top-right corner on a phone; the extra top
+            // padding keeps the first line, and a long line scrolled fully right, clear of it.
+            Text(text, Modifier.padding(10.dp).padding(top = 34.dp), style = Type.footnote.monospaced, color = Palette.text, softWrap = false)
+        }
+        IconButton(
+            title = if (copied) "Copied" else "Copy code",
+            systemImage = if (copied) "checkmark" else "doc.on.doc",
+            modifier = Modifier.align(Alignment.TopEnd).padding(2.dp),
+        ) {
+            clipboard.setPrimaryClip(ClipData.newPlainText("Codync", text))
+            Analytics.capture(AnalyticsEvent.CodeBlockCopied)
+            copied = true
+            copies++
         }
     }
 }

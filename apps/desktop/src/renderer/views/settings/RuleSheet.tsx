@@ -77,7 +77,7 @@ export function RuleSheet({ store, net }: { store: BotStore; net: Network }) {
           <ValueRow label="To bot">
             <ChoicePicker selection={toAgent} options={[{ id: ANY, label: 'Any bot here' }, ...(me?.agents ?? []).map((a) => ({ id: a.id, label: a.name }))]} onChange={setToAgent} />
           </ValueRow>
-          <Switch on={first} onChange={setFirst}>Put it first</Switch>
+          <Switch on={first} onChange={setFirst}>{tr('Put it first')}</Switch>
         </CardSection>
         <Reveal show={problem !== null}>
           <Text size="caption" tone="danger">{problem}</Text>

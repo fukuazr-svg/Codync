@@ -107,6 +107,8 @@ pub(super) async fn call(hub: &Arc<Hub>, caller: &Caller, method: &str, b: Value
                 crate::chat::profile::call(hub, bot, name, &b["arguments"]).await?
             } else if name == crate::chat::decision::TOOL {
                 crate::chat::decision::ask(hub, bot, &b["arguments"]).await?
+            } else if name == crate::chat::plan::TOOL {
+                crate::chat::plan::call(hub, bot, &b["arguments"]).await?
             } else if name == crate::chat::skills::TOOL {
                 crate::chat::skills::call(hub, bot, &b["arguments"]).await?
             } else if crate::chat::fallbacks::TOOLS.contains(&name) {
@@ -128,6 +130,11 @@ pub(super) async fn call(hub: &Arc<Hub>, caller: &Caller, method: &str, b: Value
             let (caller, name) = (str_arg(&b, "botId")?, str_arg(&b, "name")?);
             let bot = tasks::acting_as(hub, caller, name)?;
             crate::chat::team::call_async(hub, &bot, caller, name, &b["arguments"]).await?
+        }
+        // The team server's instructions, worded by the bot's approvals (looped back by the MCP server as it starts).
+        "teamInstructions" => {
+            let cfg = hub.store.bot(str_arg(&b, "botId")?)?.ok_or_else(|| anyhow!("unknown bot"))?.config;
+            json!({"instructions": crate::chat::team::instructions(cfg.permission)})
         }
         "manageCall" => {
             let (bot, name) = (str_arg(&b, "botId")?, str_arg(&b, "name")?);
@@ -372,6 +379,9 @@ pub(super) async fn call(hub: &Arc<Hub>, caller: &Caller, method: &str, b: Value
         "respondDecision" => {
             crate::chat::decision::respond(hub, str_arg(&b, "entryId")?, str_arg(&b, "option")?).await?
         }
+        // Goal mode: the conversation's goal, its limits, and stopping it.
+        "setGoal" => crate::chat::goal::set(hub, str_arg(&b, "botId")?, &b)?,
+        "stopGoal" => crate::chat::goal::stop(hub, str_arg(&b, "botId")?)?,
         "respondPermission" => {
             let entry_id = str_arg(&b, "entryId")?;
             let e = hub.store.entry(entry_id).ok_or_else(|| anyhow!("unknown card"))?;

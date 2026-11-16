@@ -1,0 +1,70 @@
+{
+  "status": "MERGE_COMMITTED_GATES_PENDING",
+  "candidate": "ours 2.47.0 preview R (candidate Q2 plus official dev 9c79149d)",
+  "branch": "ours/candidate-2470r-9c7914",
+  "base": "f97a9ccbbcdba36a92a4f42c174b3233acb72591",
+  "baseline": "9c79149d613ffa0521e5bbe712b1a69ecbe4b76c",
+  "baselineKind": "official dev; official v2.47.0 is NOT released (latest stable tag and release: v2.46.1, 2026-11-13T11:25:05Z)",
+  "previousCandidate": {
+    "head": "f97a9ccbbcdba36a92a4f42c174b3233acb72591",
+    "state": "candidate Q2: gates green (fmt, strict clippy 1.99.1, follow_ups 6/6, fallback 18/18, carry::ledger 17/17, always_allow 3/3), packaged 146,812,594 B sha256 2621bb8c9975954eb7eb854d80b0da7225b8d09439c4e19e958c1f6e94405da3, isolated smoke ok at 127.0.0.1:19253 (2.47.0, automatic updates off)"
+  },
+  "newInput": {
+    "officialCommits": [
+      "dc9ecb76e8e68896c89c32ee18a6b2d9c461c005 ci: release the codync-accounts crate from main",
+      "9c79149d613ffa0521e5bbe712b1a69ecbe4b76c feat: usage limits per login profile"
+    ],
+    "merge": "clean, no conflicts; git merge-tree wrote tree 27dcd10969fc21a6ae358b53fb955a2fbd42e6bc, commit aa8ec2a3a71e94407b0991201d96a10812775a16",
+    "why": "official dev advanced at 2026-11-14T12:57:10Z, two commits past the Q2 baseline; the per-login usage change touches host usage/profiles plus every client"
+  },
+  "patchSet": [
+    {
+      "name": "Always allow (#403) with the fresh-conversation isolation follow-up",
+      "branch": "fix/remember-always-allow",
+      "upstreamPr": 403,
+      "head": "0f949de978713aea4ca4960cad011e7d908ea9ee"
+    },
+    {
+      "name": "ui/minimal",
+      "branch": "ui/minimal",
+      "head": "8b7681e36c178b8cc5c4b090e1abc4f6430282d4"
+    },
+    {
+      "name": "Bot inspection (#415)",
+      "branch": "feat/lead-bot-status",
+      "upstreamPr": 415,
+      "head": "54a75e32549244b0008ccc6c6523dbcb38b22237"
+    },
+    {
+      "name": "device icons",
+      "source": "fabangong/candidate-dev79d aeaa3cc97049cd42eb1f05925c8004f9b4feed75, base 9f1c3ad05228d94a552c416f138d2d8ab3bc0846"
+    },
+    {
+      "name": "bounded conversation goals (#418 line) and the goal-selected-agent fix",
+      "head": "0c00c49c05434f345a6d4c6325ed63b7621b8747 / 1849e1656b1cbd270ce4d90d81586a20c2677847"
+    },
+    {
+      "name": "handoff manifest disclosure (#449 b3faba66) with the feature owner's degrade fix and our budget repair",
+      "source": "host/src/agent/fallback/carry.rs"
+    },
+    {
+      "name": "Automatic updates off",
+      "source": "scripted patch: desktop update policy officialUpdates = false; host update on()/installable() = false"
+    }
+  ],
+  "gates": {
+    "state": "PENDING_AT_THIS_HEAD",
+    "runner": "F:/Codync/发版工/tools/gate-r.ps1 (waits for the shared heavy-task lock, releases only its own lock)",
+    "authoritative": "F:/Codync/发版工/work/gates-r/"
+  },
+  "notVerified": [
+    "every gate above at this head",
+    "no installer, no sha256, no isolated smoke at this head",
+    "no Electron window run, no desktop e2e (usage-logins.spec.ts)",
+    "official v2.47.0 tag tree",
+    "iOS / Android / macOS / Linux builds"
+  ],
+  "installable": false,
+  "desktopUpdate": "off",
+  "hostUpdate": "off"
+}

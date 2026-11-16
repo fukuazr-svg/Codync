@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events'
-import path from 'node:path'
+import { posix as path } from 'node:path'
 import type { UpdateState } from '../ipc.ts'
+import { officialUpdates } from '../../main/update-policy.ts'
 import { loadMainModule, settle } from './main-module.ts'
 
 interface UpdatesInstance extends EventEmitter {
@@ -13,7 +14,7 @@ interface UpdatesInstance extends EventEmitter {
 
 type ShipIt = { request: boolean; job: 'none' | 'idle' | 'running' }
 
-export function updaterFixture(options: { packaged?: boolean; main?: boolean; prefs?: Record<string, unknown>; shipIt?: ShipIt } = {}) {
+export function updaterFixture(options: { officialUpdates?: boolean; packaged?: boolean; main?: boolean; platform?: 'darwin' | 'win32' | 'linux'; prefs?: Record<string, unknown>; shipIt?: ShipIt; deferList?: boolean } = {}) {
   const calls = { check: 0, download: 0, install: 0, prepare: 0, resume: 0, quit: 0 }
   // macOS's installer job: whether its update request exists, and its launchd state.
   const shipIt = { ...(options.shipIt ?? { request: true, job: 'idle' }), removed: 0 }
@@ -21,17 +22,24 @@ export function updaterFixture(options: { packaged?: boolean; main?: boolean; pr
     if (shipIt.job === 'none') throw new Error('Could not find service')
     return shipIt.job === 'running' ? '{\n\t"PID" = 42;\n};' : '{\n\t"LastExitStatus" = 256;\n};'
   }
-  const launchctl = (_bin: string, args: string[], done: (error: Error | null, stdout: string) => void) => {
+  const launchctlCalls: { bin: string; args: string[] }[] = []
+  const pendingLists: (() => void)[] = []
+  const launchctl = (bin: string, args: string[], done: (error: Error | null, stdout: string) => void) => {
+    launchctlCalls.push({ bin, args: [...args] })
     if (args[0] === 'remove') {
       shipIt.removed++
       return done(null, '')
     }
-    try { done(null, list()) } catch (error) { done(error as Error, '') }
+    let result: string
+    try { result = list() } catch (error) { return done(error as Error, '') }
+    const complete = () => done(null, result)
+    if (options.deferList) pendingLists.push(complete)
+    else complete()
   }
   const spawned: string[][] = []
   const opened: string[] = []
   const preferences = new Map(Object.entries(options.prefs ?? {}))
-  const timers = new Map<number, { callback: () => unknown; ms: number }>()
+  const timers = new Map<number, { callback: () => unknown; ms: number; kind: 'timeout' | 'interval' }>()
   let nextTimer = 0
   let now = Date.UTC(2026, 9, 9)
   const behavior = {
@@ -55,7 +63,8 @@ export function updaterFixture(options: { packaged?: boolean; main?: boolean; pr
   })
   const updater = Object.assign(new EventEmitter(), {
     autoDownload: true,
-    autoInstallOnAppQuit: false,
+    // electron-updater defaults to installing an update downloaded by this process on quit.
+    autoInstallOnAppQuit: true,
     checkForUpdates: async () => { calls.check++; updater.emit('checking-for-update'); await behavior.check() },
     downloadUpdate: async () => { calls.download++; await behavior.download() },
     quitAndInstall: () => { calls.install++; behavior.install() },
@@ -65,9 +74,9 @@ export function updaterFixture(options: { packaged?: boolean; main?: boolean; pr
     resumeAfterCancelledUpdate: () => { calls.resume++ },
     isIdleForUpdate: async () => behavior.hostIdle,
   })
-  const timer = (callback: () => unknown, ms: number) => {
+  const timer = (kind: 'timeout' | 'interval') => (callback: () => unknown, ms: number) => {
     const id = ++nextTimer
-    timers.set(id, { callback, ms })
+    timers.set(id, { callback, ms, kind })
     return id
   }
   const { Updates, yieldsToInstall } = loadMainModule<{ Updates: new (host: unknown) => UpdatesInstance; yieldsToInstall: () => boolean }>('updates', {
@@ -83,12 +92,13 @@ export function updaterFixture(options: { packaged?: boolean; main?: boolean; pr
     electron: { app, ipcMain: ipc, shell: { openPath: async (target: string) => { opened.push(target); return '' } }, BrowserWindow: { getFocusedWindow: () => behavior.focused }, powerMonitor: { getSystemIdleTime: () => behavior.idleSeconds } },
     'electron-updater': { autoUpdater: updater },
     './account': { isMainEnvironment: () => options.main ?? true },
+    './update-policy': { officialUpdates: options.officialUpdates ?? officialUpdates },
     './environment': { identity: { appId: 'com.pokai.Codync' } },
     './host-controller': { prefs: { get: (key: string) => preferences.get(key), set: (key: string, value: unknown) => preferences.set(key, value) } },
   }, {
     Date: class extends Date { static override now() { return now } },
-    process: { platform: 'darwin' },
-    setTimeout: timer, setInterval: timer, clearInterval: (id: number) => timers.delete(id),
+    process: { platform: options.platform ?? 'darwin' },
+    setTimeout: timer('timeout'), setInterval: timer('interval'), clearInterval: (id: number) => timers.delete(id),
   })
   const updates = new Updates(host)
   const sent: { window: number; channel: string; state: UpdateState }[] = []
@@ -100,5 +110,5 @@ export function updaterFixture(options: { packaged?: boolean; main?: boolean; pr
     }
     await settle()
   }
-  return { updates, yieldsToInstall, app, host, ipc, handlers, updater, calls, opened, spawned, behavior, preferences, sent, timers, shipIt, emit, tick, now: () => now, advance: (ms: number) => { now += ms } }
+  return { updates, yieldsToInstall, app, host, ipc, handlers, updater, calls, opened, spawned, behavior, preferences, sent, timers, shipIt, launchctlCalls, pendingLists, emit, tick, now: () => now, advance: (ms: number) => { now += ms } }
 }

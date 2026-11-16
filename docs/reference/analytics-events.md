@@ -92,6 +92,7 @@ host answers and sends it once the host is up.
 | `screen_viewed` | host `track` (desktop, TUI), iOS, Android | A screen, sheet or tab is shown | `screen` (see *Screens*) |
 | `image_preview_opened` | host `track` (desktop), iOS, Android | A picture in a chat or the Library opens full size | — |
 | `image_preview_action` | host `track` (desktop), iOS, Android | Something is done to a picture: zoomed in the full-size viewer (at most one `zoom` per opening), copied, or downloaded in the viewer (`download` is reported when it ends; a cancel reports nothing; a `copy_image` overtaken by a newer one before it finished reports nothing) | `action` (`zoom`/`copy_image`/`copy_name`/`download`), `from` (`viewer`: done inside the full-size viewer; `menu`: Copy image or Copy name from a picture's menu in a chat or the Library), `outcome` (`done`/`failed`), when failed `error` (`unavailable`: the picture's bytes weren't there; `convert`: it couldn't be turned into an image for the clipboard; `clipboard`: the clipboard refused it; `transfer`: a download broke); never the picture or its name |
+| `code_block_copied` | host `track` (desktop), iOS, Android | A fenced code block's copy button put its code on the clipboard, without its fences or language tag (the terminal UI shows code blocks without one) | — (never the code) |
 | `conversation_find_opened` | host `track` (desktop, TUI), iOS, Android | The find bar opens in a conversation (desktop ⌘F, the phones' magnifying glass, the terminal's `/` or ^f) | — |
 | `conversation_find_searched` | host `track` (desktop, TUI), iOS, Android | A search in the find bar settles, at most once per searched text: typing paused (desktop and phones), a step to another match, or the bar closing (phones and terminal) | `found` (whether anything matched; never the text searched for) |
 | `quote_opened` | host `track` (desktop, TUI), iOS, Android | A quote at the top of a message (a reply's, or a bot's `reply_to`) is tapped, clicked or (terminal) opened with `q` to bring the quoted message into view | `found` (whether that message was among the loaded ones; never its id or text) |
@@ -108,6 +109,7 @@ host answers and sends it once the host is up.
 | `turn_stopped` | host | `stop` | — |
 | `turn_finished` | host | An agent's turn ends: once per agent it ran on, so a turn that fell back once and then answered sends a `failed` and a `done` | `agent`, `outcome` (`done`/`stopped`/`failed`/`needs_setup`/`incomplete`; `needs_setup` is a failure whose `error` is `sign_in` or `not_installed`: the user has a step to take, nothing broke), `stop_reason`, `source` (`user`/`routine`/`group`/`bot`/`host`: the lead opening a call/`follow_up`: a [follow-up](../features/follow-ups.md) came due), `seconds`, `ceiling` (`auto`/`ask`) when a [network rule](../features/codync-network.md#ceilings-auto-and-ask) held the turn to one; when failed or needs_setup, `error` (`not_installed`/`timeout`/`exited`/`no_model`/`mode_missing`/`sign_in`/`agent_error`/`io`/`other`) and, for `agent_error`, `rpc_code` and `agent_reason` (the adapter's own category, else one the host reads from the message, which is never sent: `session_ended`/`rate_limit`/`quota`/`overloaded`/`context`/`model`/`network`/`provider`/`unknown`) |
 | `agent_fell_back` | host | A turn moves on to the bot's next agent ([agent fallbacks](../features/agent-fallback.md)) | `agent` (the one that couldn't answer), `reason` (`usageLimit`/`outOfCredits`/`rateLimited`/`overloaded`/`signedOut`/`notStarting`/`modelMissing`/`modeMissing`), `loginProfile: true` when the step it left or the one taking over runs on a [login profile](../features/login-profiles.md) (never which) |
+| `handoff_ledger_built` | host | A new fallback session collected its Context Manifest, or reported why it could not ([agent fallbacks](../features/agent-fallback.md#the-handover-ledger)) | `outcome` (`collected`/`time_limit`/`worker_failed`/`history_failed`), `collection_omitted` and `files_unavailable` counts; no text, paths, hashes or identifiers |
 | `handoff_carried` | host | An agent taking over a bot's chat is told what came before ([the handover ledger](../features/agent-fallback.md#the-handover-ledger)) | `agent` (the one taking over), `loginProfile: true` when it runs on a login profile (never which), `kind` (`recap`: a new session / `catch_up`: a session it had), `bytes` (the size of what it was told, never the text), `window_known` (whether a recap was sized to the agent's window; always `false` for a catch-up) |
 | `agent_retired` | host | A bot's agent stops between turns to give back its processes (`agent/bot/lifecycle.rs`); the next message starts it again | `agent`, `reason` (`idle`: every session unused for 30 minutes; `routine_finished`: a routine run ended with no other session open; `session_not_closed`: a routine run ended and the agent couldn't close its session) |
 | `context_compacted` | host | Codync starts summarizing a bot's chat ([context and memory](../features/context-and-memory.md)) | `agent`, `when` (`turn_end`/`idle`), `threshold` (the bot's Summarize long chats: `early`/`nearLimit`/`tokens`) |
@@ -117,6 +119,8 @@ host answers and sends it once the host is up.
 | `reaction_added` | host | `react` | — |
 | `handoff_answered` | host | `editHandoff`, `keepConversation` | `action` (`edit`/`keep`) |
 | `routine_saved` | host | `saveRoutine` | — |
+| `goal_started` | host | `setGoal` starts a conversation goal | No goal text |
+| `goal_stopped` | host | A conversation goal stops | `reason`: `done`, `needsUser`, `failed`, `user`, `limit`, `usage`, `stopped`; no goal text |
 | `routine_toggled` | host | `setRoutineEnabled` | `enabled` |
 | `routine_deleted` | host | `deleteRoutine` | — |
 | `routine_run` | host | `runRoutine` | — |
@@ -167,6 +171,8 @@ host answers and sends it once the host is up.
 | `decision_answered` | host | The actor delivered a choice to its live waiter, once | `via`: `button`, `text` (a typed option or its number) or `custom` (the user's own words); never which option or the words |
 | `decision_expired` | host | A choice card stopped waiting unanswered, once per card | `reason`: `timeout`, `cancelled` (the agent cancelled its call), `stopped`, `turn_ended`, `other_message` (the user sent files, a quote, a `/` command or call speech instead) or `restart`; never the question or its options |
 | `decision_failed` | host | The user's choice was saved but its call had already stopped waiting, so the bot never got it | none |
+| `bot_inspected` | host | A bot's team tool about another bot (`teamCall`): `bot_status` or `recent_messages` read one; the target accepted `answer_approval`, or accepted a `stop_bot` cancellation request. Declined or stale actions are not counted | `tool` (`bot_status`/`recent_messages`/`answer_approval`/`stop_bot`); on the last two, `by` (`user`: the card in the sender's chat; `auto`: the sender approves automatically); never what it read or which bots |
+| `browser_action` | host | One `browser_*` computer tool call finishes | `action` (`start`/`navigate`/`click`/`type`/`screenshot`/`stop`/`other`), `outcome` (`success`/`failed`), `duration_ms`; on failure `error` (`extension_offline`/`extension_disconnected`/`extension_timeout`/`stale_target`/`operation`), never a URL, selector, page text or typed value |
 
 ## Screens
 
@@ -211,6 +217,28 @@ The *Onboarding & conversion* dashboard in PostHog reads these steps, each per `
 - **Star**: `star_prompt_answered` with `starred` ÷ all `star_prompt_answered`, per `ask`.
 - **Website**: `$pageview` → `download_clicked` (per `platform`) → the first `app_opened` that day
   (counts only, no link between a visitor and an install).
+
+## Phone performance
+
+The phones send performance measurements to their connected host with `recordPhonePerformance`. The host appends
+JSON Lines to `phone-performance.jsonl` in its data directory (`~/.codync/phone-performance.jsonl`, or under
+`CODYNC_HOME`; development hosts use `~/.codync-dev`). Nothing is sent to PostHog or another service. Simulators and
+emulators report nothing.
+
+Each line has the host's RFC 3339 `at` timestamp, `platform` (`ios`/`android`) and `type`:
+
+- `chat_open`: `durationMs`, from the chat-opening action until its messages reach their first laid-out frame. With
+  cached messages this measures opening and drawing them, not waiting for newer messages to arrive.
+- `scroll`: one reader drag until 300 ms after the list rests. `list` is `bots`/`chat`; `rows`, `frames`, `hitches`,
+  `longestMs`, `hitchMsPerS` (late frame time per second) and `fps` describe the scroll. A chat also has `stop`
+  (`top`/`end`/`middle`) and `jump` (post-stop movement in points/dp). A window with no drawn frames writes nothing.
+
+The log holds no message text, names or ids. It is an unbounded diagnostic log, so read or prune it as needed; a bot
+can read recent measurements with:
+
+```sh
+tail -n 100 ~/.codync/phone-performance.jsonl | jq -c .
+```
 
 ## Website
 

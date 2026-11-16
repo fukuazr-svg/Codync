@@ -18,6 +18,7 @@ use std::sync::Arc;
 pub mod assistant;
 mod ceilings;
 mod directory;
+mod inspect;
 pub mod remote;
 mod requests;
 pub use ceilings::Ceilings;
@@ -46,7 +47,7 @@ asking for edits in a shared project. Native subagents are managed by your own h
 collaborating with the user's existing bots.";
 
 pub fn tools() -> Value {
-    json!([
+    let mut all = json!([
         {
             "name": "list_bots",
             "description": "List the Codync bots you can message, with their IDs, kinds, specialties and status: this computer's first, then those on the user's other computers (where Claude Code sessions and Codex threads can be offered too). Narrow it with query (words in a bot's name or description), computer, kind, or online; it returns at most limit at a time, with next for the rest.",
@@ -76,7 +77,11 @@ pub fn tools() -> Value {
             },
             "annotations": {"readOnlyHint": false, "idempotentHint": false},
         }
-    ])
+    ]);
+    if let Some(list) = all.as_array_mut() {
+        list.extend(inspect::declarations().as_array().into_iter().flatten().cloned());
+    }
+    all
 }
 
 /// Why a request got no reply, as the asking bot reads it: the same from a turn in the recipient's chat and from an
@@ -374,6 +379,19 @@ impl Exchange<'_> {
     }
 }
 
+/// The team tools that look at another bot: their answers are the user's to decide.
+pub(crate) const INSPECTING: [&str; 4] = ["bot_status", "recent_messages", "answer_approval", "stop_bot"];
+
+/// Of those, the ones the user answers: their outcome is reported as the user decides (`inspect::asked`).
+pub(crate) const ASKING: [&str; 2] = ["answer_approval", "stop_bot"];
+
+/// The team server's words, with what looking at another bot allows under `permission`.
+pub fn instructions(permission: crate::store::Permission) -> String {
+    let inspect =
+        if permission == crate::store::Permission::Auto { inspect::AUTO_INSTRUCTIONS } else { inspect::INSTRUCTIONS };
+    format!("{INSTRUCTIONS}\n\n{inspect}")
+}
+
 /// The prompt that starts the recipient's turn: `who` opens it ("Another Codync bot, Ada,") and
 /// its reply goes back to `to`.
 fn request_prompt(who: &str, to: &str, access: Access, message: &str) -> String {
@@ -427,6 +445,7 @@ pub async fn call_async(hub: &Arc<Hub>, from: &str, turn: &str, name: &str, args
                 Recipient::Here(_) => call(hub, from, turn, name, args),
             }
         }
+        _ if INSPECTING.contains(&name) => Ok(inspect::call(hub, &visible_bot(hub, from)?, name, args).await?),
         _ => call(hub, from, turn, name, args),
     }
 }

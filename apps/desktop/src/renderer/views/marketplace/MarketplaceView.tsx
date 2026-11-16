@@ -20,6 +20,7 @@ import { AgentsPanel, ConnectorsPanel, MarketPanel, SkillsPanel } from './Market
 import { AppLogo, ExtensionTabs, FormSheet, ItemGrid, ItemRow, MarketSection, ScreenHeader, ServiceLogo, SkillGlyph, SlideStack } from './pieces'
 import { usePlugins } from './plugins'
 import { useTr } from '../../lib/use-language'
+import { fill } from '@shared/fill'
 
 /**
  * Extensions for the bots on one computer (the store in context): Agents, Connectors
@@ -278,7 +279,7 @@ function InstalledView({ back }: { back: () => void }) {
                       icon={c.kind === 'composio' ? <AppLogo url={c.logo} name={c.name} /> : <ServiceLogo name={c.name} registryName={c.registryName} />}
                       trailing={(
                         <>
-                          {signingIn === c.id ? <Spinner /> : needsSignIn(c) || c.canSignIn ? <Button onClick={() => void signIn(c.id)}>Sign in</Button> : null}
+                          {signingIn === c.id ? <Spinner /> : needsSignIn(c) || c.canSignIn ? <Button onClick={() => void signIn(c.id)}>{tr('Sign in')}</Button> : null}
                           <RemoveButton title={c.name} onClick={() => setRemoving({ id: c.id, name: c.name, isSkill: false })} />
                         </>
                       )}
@@ -333,10 +334,11 @@ function EmptyState({ icon, title, detail }: { icon: string; title: string; deta
 }
 
 function RemoveButton({ title, onClick }: { title: string; onClick: () => void }) {
+  const tr = useTr()
   return (
     <button
-      title="Remove"
-      aria-label={`Remove ${title}`}
+      title={tr('Remove')}
+      aria-label={fill(tr('Remove {name}'), { name: title })}
       className="market-remove"
       onClick={(e) => {
         e.stopPropagation()

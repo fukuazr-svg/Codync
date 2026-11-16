@@ -70,8 +70,8 @@ export function CredentialsView({ onBack }: { onBack: () => void }) {
         <CardSection title="1Password" footer="Use a service account with read access only to a dedicated shared vault. The 1Password CLI must be installed on the computer.">
           <span>{tr(status?.onePasswordConnected ? 'Connected' : 'Connect a shared vault')}</span>
           <CredentialField label="Service account token" value={token} onChange={setToken} placeholder="Paste your token" secret />
-          <div><Button disabled={busy || !token} onClick={() => void save(token)}>Connect</Button></div>
-          {status?.onePasswordConnected ? <div><Button kind="secondary" disabled={busy} onClick={() => void save('')}>Disconnect</Button></div> : null}
+          <div><Button disabled={busy || !token} onClick={() => void save(token)}>{tr('Connect')}</Button></div>
+          {status?.onePasswordConnected ? <div><Button kind="secondary" disabled={busy} onClick={() => void save('')}>{tr('Disconnect')}</Button></div> : null}
           <Text size="footnote" tone="secondary">{tr(`Use op://vault/item/field in a connector's credential field. Codync retrieves the value when the connector runs.`)}</Text>
         </CardSection>
         {busy ? <Spinner /> : null}
@@ -86,6 +86,7 @@ export function CredentialsView({ onBack }: { onBack: () => void }) {
 
 /** Website and app logins bots type through the computer tool; passwords stay hidden. */
 function LoginsSection() {
+  const tr = useTr()
   const store = useStore()
   const [logins, setLogins] = useState<SavedLogin[]>([])
   const [site, setSite] = useState('')
@@ -149,7 +150,7 @@ function LoginsSection() {
       <CredentialField label="Website or app" value={site} onChange={setSite} placeholder="github.com" />
       <CredentialField label="Username or email" value={username} onChange={setUsername} placeholder="name@example.com" />
       <CredentialField label="Password" value={password} onChange={setPassword} placeholder="Password or op:// reference" secret />
-      <div><Button disabled={busy || !site || !password} onClick={() => void save()}>Save sign-in</Button></div>
+      <div><Button disabled={busy || !site || !password} onClick={() => void save()}>{tr('Save sign-in')}</Button></div>
       {error ? <Text size="footnote" tone="danger">{error}</Text> : null}
     </CardSection>
   )

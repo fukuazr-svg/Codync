@@ -115,10 +115,10 @@ export function Empty({ model }: { model: IslandModel }) {
     <div className="island-card island-empty">
       {focus ? <BigCharacter bot={focus} size={62} mood="idle" badge={null} /> : null}
       <span className="island-empty-text">
-        <span className="island-title">Nothing running right now.</span>
+        <span className="island-title">{tr('Nothing running right now.')}</span>
         <span className="island-subtitle">{focus ? tr('Your bots are idle. Message one from here, or open Codync.') : tr('Create a bot in Codync to get started.')}</span>
       </span>
-      {focus ? <Button onClick={() => model.setTab('message')}>Message a bot</Button> : <Button onClick={() => model.newBot()}>New bot</Button>}
+      {focus ? <Button onClick={() => model.setTab('message')}>{tr('Message a bot')}</Button> : <Button onClick={() => model.newBot()}>{tr('New bot')}</Button>}
     </div>
   )
 }
@@ -174,8 +174,8 @@ export function Notice({ model, bot, failed }: { model: IslandModel; bot: Island
               <div className="island-title truncate">{bot.detail}</div>
             )}
             <div className="island-buttons start">
-              <Button onClick={() => model.openBot(bot.ref)}>Open conversation</Button>
-              <Button kind="secondary" onClick={() => model.dismissNotice()}>OK</Button>
+              <Button onClick={() => model.openBot(bot.ref)}>{tr('Open conversation')}</Button>
+              <Button kind="secondary" onClick={() => model.dismissNotice()}>{tr('OK')}</Button>
             </div>
           </div>
         </div>

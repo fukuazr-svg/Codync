@@ -39,7 +39,7 @@ export function AgentStepBanner({ bot }: { bot: Bot }) {
     <HStack gap={8} className="fade-in">
       <AgentIcon registry={store.agentRegistry(runningAgent(bot))} size={14} />
       <Text tone="text" grow>{banner === null ? null : fill(tr(banner.key), banner.values)}</Text>
-      <Button kind="secondary" className="fallback-switch-back" onClick={() => store.switchBack(bot.id)}>Switch back</Button>
+      <Button kind="secondary" className="fallback-switch-back" onClick={() => store.switchBack(bot.id)}>{tr('Switch back')}</Button>
     </HStack>
   )
 }

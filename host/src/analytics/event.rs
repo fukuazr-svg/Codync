@@ -27,10 +27,15 @@ pub enum Event {
     RemoteScreenPaused,
     ImagePreviewOpened,
     ImagePreviewAction,
+    /// A fenced code block's copy button put its code on the clipboard (desktop and phones, each sending
+    /// its own; the terminal UI has no code blocks).
+    CodeBlockCopied,
     ConversationFindOpened,
     ConversationFindSearched,
     QuoteOpened,
     BotCreated,
+    GoalStarted,
+    GoalStopped,
     BotUpdated,
     BotsReordered,
     SectionRenamed,
@@ -45,6 +50,8 @@ pub enum Event {
     TurnFinished,
     /// A turn moved on to the bot's next agent (`agent::fallback`).
     AgentFellBack,
+    /// The host gathered or timed out on the mechanical context manifest (`agent::fallback::carry::ledger`).
+    HandoffLedgerBuilt,
     /// An agent taking over a bot's chat was told what came before (`agent::fallback::carry`).
     HandoffCarried,
     /// A bot's agent stopped to give back what it held (`agent::bot::lifecycle`).
@@ -60,6 +67,8 @@ pub enum Event {
     DecisionExpired,
     /// The user's choice was saved but its tool call had already stopped waiting.
     DecisionFailed,
+    /// One computer-use browser tool call, with its fixed action and outcome.
+    BrowserAction,
     ReactionAdded,
     HandoffAnswered,
     RoutineSaved,
@@ -164,6 +173,8 @@ pub enum Event {
     NetworkChanged,
     /// A network step failed (`NetworkStage`): starting a node, a letter, or a `network*` call.
     NetworkFailed,
+    /// A bot reads another bot, or an explicitly approved action is applied to it.
+    BotInspected,
     /// Error tracking (`errors`): a panic or an uncaught error.
     Exception,
 }
@@ -191,10 +202,13 @@ impl Event {
             Self::RemoteScreenPaused => "remote_screen_paused",
             Self::ImagePreviewOpened => "image_preview_opened",
             Self::ImagePreviewAction => "image_preview_action",
+            Self::CodeBlockCopied => "code_block_copied",
             Self::ConversationFindOpened => "conversation_find_opened",
             Self::ConversationFindSearched => "conversation_find_searched",
             Self::QuoteOpened => "quote_opened",
             Self::BotCreated => "bot_created",
+            Self::GoalStarted => "goal_started",
+            Self::GoalStopped => "goal_stopped",
             Self::BotUpdated => "bot_updated",
             Self::BotsReordered => "bots_reordered",
             Self::SectionRenamed => "section_renamed",
@@ -206,6 +220,7 @@ impl Event {
             Self::TurnStopped => "turn_stopped",
             Self::TurnFinished => "turn_finished",
             Self::AgentFellBack => "agent_fell_back",
+            Self::HandoffLedgerBuilt => "handoff_ledger_built",
             Self::HandoffCarried => "handoff_carried",
             Self::AgentRetired => "agent_retired",
             Self::ContextCompacted => "context_compacted",
@@ -216,6 +231,7 @@ impl Event {
             Self::DecisionAnswered => "decision_answered",
             Self::DecisionExpired => "decision_expired",
             Self::DecisionFailed => "decision_failed",
+            Self::BrowserAction => "browser_action",
             Self::ReactionAdded => "reaction_added",
             Self::HandoffAnswered => "handoff_answered",
             Self::RoutineSaved => "routine_saved",
@@ -281,6 +297,7 @@ impl Event {
             Self::NetworkJoined => "network_joined",
             Self::NetworkChanged => "network_changed",
             Self::NetworkFailed => "network_failed",
+            Self::BotInspected => "bot_inspected",
             Self::Exception => "$exception",
         }
     }

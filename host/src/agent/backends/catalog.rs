@@ -310,6 +310,20 @@ pub const HARNESSES: &[Harness] = &[
         signed_in: Some(SignInCheck { args: "status -o json", ok: qoder_signed_in }),
     },
     Harness {
+        id: "muse",
+        name: "Muse Code",
+        bins: &["muse"],
+        // `muse acp` serves ACP v1 on stdio; it answered an `initialize` with
+        // protocolVersion 1 and agentInfo {"name":"muse","version":"1.4.20"}.
+        local: Some("{bin} acp"),
+        registry: None,
+        setup: "Install Muse Code and run `muse login` to approve a device code in your browser.",
+        // No published installer to point at, and no status command: the sign-in card comes from the agent's own ACP auth method.
+        install: None,
+        login: Some("{bin} login"),
+        signed_in: None,
+    },
+    Harness {
         id: "codebuddy",
         name: "CodeBuddy Code",
         bins: &["codebuddy", "cbc"],
@@ -342,6 +356,29 @@ pub const HARNESSES: &[Harness] = &[
         setup: "Install MiniMax Code (npm install -g @minimax-ai/code) and run `mcode login`.",
         install: Some(Install::Npm("@minimax-ai/code")),
         login: Some("{bin} login"),
+        signed_in: None,
+    },
+    Harness {
+        id: "mimo",
+        name: "MiMo Code",
+        bins: &["mimo"],
+        local: Some("{bin} acp"),
+        registry: None,
+        setup: "Install MiMo Code (npm install -g @mimo-ai/cli) and run `mimo providers` to choose a provider and sign in.",
+        install: Some(Install::Npm("@mimo-ai/cli")),
+        login: Some("{bin} providers"),
+        signed_in: None,
+    },
+    Harness {
+        id: "trae",
+        name: "TraeCode CLI",
+        bins: &["traecli"],
+        // Its own ACP mode: `traecli acp serve` (the `--acp` flag is the other spelling of it).
+        local: Some("{bin} acp serve"),
+        registry: None,
+        setup: "Install TraeCode CLI (traecli) and sign in with it once.",
+        install: None,
+        login: Some("{bin}"),
         signed_in: None,
     },
     Harness {
