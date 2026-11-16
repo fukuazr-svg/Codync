@@ -77,6 +77,8 @@ private struct CodeBlock: View {
     let text: String
 
     @State private var copied = false
+    /// Counts copies: a second tap restarts the check mark's timer instead of keeping the first one.
+    @State private var copies = 0
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -94,11 +96,12 @@ private struct CodeBlock: View {
                 Pasteboard.copy(text)
                 Analytics.shared.capture(.codeBlockCopied)
                 copied = true
+                copies += 1
             }
             .padding(2)
         }
-        .task(id: copied) {
-            guard copied else { return }
+        .task(id: copies) {
+            guard copies > 0 else { return }
             try? await Task.sleep(for: .seconds(1.5))
             copied = false
         }
