@@ -25,19 +25,21 @@ else a generic "Bug fixes and improvements" line. Delete old sections.
 - 可以選用的智慧體多了 MiMo Code 和 TraeCode CLI：在電腦上裝好、登入一次，bot 就能用它工作。
 - TRAE 的標誌用回它自己的綠色，在智慧體清單裡一眼就認得出來。
 - 等待核准的卡片會算在 Bot 的未讀數字裡（琥珀色），直到你回覆為止。
+- 長按 Bot 選「新會話」，讓智慧體從新的上下文開始，聊天記錄會保留。
 
 ### en-US
-- Bots, routines and other bots' requests work in the background.
+- Bots, routines and bot requests work in the background.
 - The Work button lists background work.
 - Approval cards stay in the badge, amber, until answered.
 - Background work can ask or send files.
-- Details: Threads, Event box (First, Cut in, Drop).
+- Details: Threads, Event box.
 - Settings: Agents at once, Worktree per agent.
 - On a fallback, the Agent card says why.
-- Fallbacks: ⋯ has Edit.
-- `/` also lists the agent's own commands.
-- Network rules gain Auto and Ask levels.
+- Fallbacks have Edit.
+- `/` lists the agent's commands.
+- Network rules gain Auto and Ask.
 - A code block now has a copy button in its corner: one click copies the code without its fences or language tag.
 - Send while dictating keeps your words.
 - MiMo Code and TraeCode CLI are new agent choices.
 - TRAE's mark keeps its green.
+- Hold a bot for New session: a fresh context.
