@@ -153,17 +153,31 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
   // A width change is not the user opening the details: docked becomes the aside for what is already
   // open, and that must not take the caret out of the message box someone is typing in.
   const wasOpen = useRef(false)
+  // The aside is mounted one commit after the details open (its presence keeps it for the exit),
+  // so this effect's first run cannot see the scroll box; the focus waits for the mount instead of
+  // landing nowhere and leaving the keys with the title pill that opened it.
+  const focusPending = useRef(false)
   useEffect(() => {
     const justOpened = detailsOpen && !wasOpen.current
     wasOpen.current = detailsOpen
-    if (wide || !detailsOpen) return
+    if (!detailsOpen) {
+      focusPending.current = false
+      return
+    }
+    if (wide) return
     giveFocusBack.current = true
     // The aside itself scrolls nothing (its overflow is hidden); PageDown and the arrow keys act on
     // the scroll box inside it, so that is what takes the focus the aside would otherwise hold.
-    if (justOpened) {
+    if (justOpened) focusPending.current = true
+    if (focusPending.current && asideMounted) {
       const scroller = aside.current?.querySelector<HTMLElement>('.details-scroll')
-      if (scroller) scroller.focus({ preventScroll: true })
-      else aside.current?.focus()
+      if (scroller) {
+        scroller.focus({ preventScroll: true })
+        focusPending.current = false
+      } else if (aside.current) {
+        aside.current.focus()
+        focusPending.current = false
+      }
     }
     return () => {
       // The button that opened the aside is unmounted while it is open, so closing would leave the
@@ -175,7 +189,7 @@ export const ThreadView = memo(function ThreadView({ botId, request = null }: { 
       const active = document.activeElement
       if (!active || active === document.body || aside.current?.contains(active)) pill.current?.focus()
     }
-  }, [detailsOpen, wide])
+  }, [asideMounted, detailsOpen, wide])
   const toggleDetails = useCallback(() => setDetailsOpen((open) => !open), [])
   const devServers = devServerSummary(bot?.devServers ?? [])
   // The title's port leads to its row, whichever page the inspector was left on.
