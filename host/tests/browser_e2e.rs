@@ -201,6 +201,8 @@ async fn fake_extension(
     let ready = socket.next().await.unwrap().unwrap();
     assert!(ready.to_text().unwrap().contains("\"ready\""));
     tokio::spawn(async move {
+        let mut closed_stop = false;
+        let mut tab_sequence = 0;
         while let Some(Ok(message)) = socket.next().await {
             let request: Value = match message {
                 Message::Text(text) => serde_json::from_str(text.as_str()).unwrap(),
@@ -217,12 +219,34 @@ async fn fake_extension(
                 "title": "Codync extension fixture",
                 "text": if request["method"] == "click" { "Count: 1" } else { "name=Codync" }
             });
+            if request["method"] == "start" {
+                tab_sequence += 1;
+                closed_stop = tab_sequence == 1
+                    && request["params"]["url"].as_str().is_some_and(|url| url.contains("closed-stop"));
+            }
             if request["method"] == "start" && !start_delay.is_zero() {
                 tokio::time::sleep(start_delay).await;
             }
+            if request["method"] == "stop" && closed_stop {
+                closed_stop = false;
+                socket
+                    .send(Message::Text(
+                        json!({
+                            "id": id,
+                            "ok": false,
+                            "code": "browser_session_closed",
+                            "error": "Browser operation is no longer running in Codync Browser"
+                        })
+                        .to_string()
+                        .into(),
+                    ))
+                    .await
+                    .unwrap();
+                continue;
+            }
             let result = match request["method"].as_str().unwrap() {
                 "start" => json!({
-                    "tabId": "123",
+                    "tabId": if tab_sequence == 1 { "123".to_owned() } else { tab_sequence.to_string() },
                     "browserVersion": "Chrome test",
                     "browserExecutable": "chrome-extension://fixture",
                     "extensionVersion": "0.1.0",
@@ -603,6 +627,77 @@ async fn stopping_during_a_delayed_start_closes_the_late_tab() {
     host.call("stop", json!({"botId": bot})).await;
     let result = wait_json(&host.home, &results_path(&host, &bot), Duration::from_secs(45)).await;
     assert!(result["startError"].as_str().unwrap().contains("cancelled"), "{result}");
+
+    extension.await.unwrap();
+    let methods = requests
+        .lock()
+        .unwrap()
+        .iter()
+        .filter_map(|request| request["method"].as_str().map(str::to_owned))
+        .collect::<Vec<_>>();
+    assert_eq!(methods.iter().filter(|method| method.as_str() == "start").count(), 1, "{methods:?}");
+    assert_eq!(methods.iter().filter(|method| method.as_str() == "stop").count(), 1, "{methods:?}");
+}
+
+#[tokio::test]
+#[cfg(windows)]
+async fn closed_extension_tabs_do_not_block_new_starts() {
+    if common::python_missing() {
+        return;
+    }
+    let host = Host::start().await;
+    let mut png = Vec::new();
+    image::DynamicImage::new_rgba8(2, 2)
+        .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+        .unwrap();
+    let requests = Arc::new(StdMutex::new(Vec::new()));
+    let extension = fake_extension(&host, png, Duration::ZERO, requests.clone()).await;
+    let bot = browser_bot(&host).await;
+    let url = format!("{}?closed-stop=1", page_url().await);
+
+    let _ = send(&host, &bot, &format!("browser-closed-stop {url}")).await;
+    let result = wait_json(&host.home, &results_path(&host, &bot), Duration::from_secs(45)).await;
+    assert_eq!(result["closedStop"]["alreadyClosed"], true, "{result}");
+    assert_eq!(result["restarted"]["reused"], false, "{result}");
+    assert_ne!(result["restarted"]["target"]["browserId"], result["start"]["target"]["browserId"], "{result}");
+    assert_eq!(result["finalStop"]["alreadyClosed"], false, "{result}");
+
+    extension.await.unwrap();
+    let methods = requests
+        .lock()
+        .unwrap()
+        .iter()
+        .filter_map(|request| request["method"].as_str().map(str::to_owned))
+        .collect::<Vec<_>>();
+    assert_eq!(methods.iter().filter(|method| method.as_str() == "start").count(), 2, "{methods:?}");
+    assert_eq!(methods.iter().filter(|method| method.as_str() == "stop").count(), 2, "{methods:?}");
+}
+
+#[tokio::test]
+#[cfg(windows)]
+async fn browser_directory_failure_closes_the_started_tab() {
+    if common::python_missing() {
+        return;
+    }
+    let host = Host::start().await;
+    let mut png = Vec::new();
+    image::DynamicImage::new_rgba8(2, 2)
+        .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+        .unwrap();
+    let requests = Arc::new(StdMutex::new(Vec::new()));
+    let extension = fake_extension(&host, png, Duration::ZERO, requests.clone()).await;
+    let bot = browser_bot(&host).await;
+    let browsers = host.home.join("browsers");
+    std::fs::create_dir_all(&browsers).unwrap();
+    std::fs::write(browsers.join(&bot), b"blocked").unwrap();
+    let url = format!("{}?setup-fail=1", page_url().await);
+
+    let _ = send(&host, &bot, &format!("browser-setup-fail {url}")).await;
+    let result = wait_json(&host.home, &results_path(&host, &bot), Duration::from_secs(45)).await;
+    assert!(
+        result["startError"].as_str().unwrap().contains("creating the extension browser evidence directory"),
+        "{result}"
+    );
 
     extension.await.unwrap();
     let methods = requests

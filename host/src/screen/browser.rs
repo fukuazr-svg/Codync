@@ -34,6 +34,7 @@ const MAX_URL: usize = 8 * 1024;
 const MAX_SELECTOR: usize = 512;
 const MAX_TYPE: usize = 16 * 1024;
 const MAX_SCREENSHOT: usize = 20 * 1024 * 1024;
+const EXTENSION_SESSION_CLOSED: &str = "browser_session_closed:";
 
 /// Whether `name` belongs to this module's tools.
 pub(super) fn offered(name: &str) -> bool {
@@ -431,10 +432,18 @@ impl Browsers {
         };
         let profile = crate::service::data_dir().join("browsers").join(bot).join(&browser_id).join("extension");
         let profile_for_io = profile.clone();
-        tokio::task::spawn_blocking(move || std::fs::create_dir_all(&profile_for_io))
+        let profile_result = tokio::task::spawn_blocking(move || std::fs::create_dir_all(&profile_for_io))
             .await
-            .context("the extension browser directory task failed")?
-            .context("creating the extension browser evidence directory")?;
+            .context("the extension browser directory task failed")?;
+        if let Err(error) = profile_result {
+            fail_extension_start(
+                &self.extension,
+                &binding,
+                "the extension browser evidence directory could not be created",
+            )
+            .await;
+            return Err(error).context("creating the extension browser evidence directory");
+        }
         let extension_version = started["extensionVersion"].as_str().unwrap_or("unknown").to_owned();
         let session = Session {
             child: None,
@@ -666,14 +675,19 @@ impl Browsers {
         };
         let Some(session) = session else { return Ok(json!({"closed": true, "alreadyClosed": true})) };
         let binding = session.binding.clone();
-        if session.engine == Engine::Extension
-            && let Err(error) = self.extension.call("stop", json!({"target": binding})).await
-        {
-            self.state.lock().await.sessions.insert(bound.browser_id, session);
-            return Err(error);
+        let mut already_closed = false;
+        if session.engine == Engine::Extension {
+            match self.extension.call("stop", json!({"target": binding})).await {
+                Ok(_) => {}
+                Err(error) if extension_session_closed(&error) => already_closed = true,
+                Err(error) => {
+                    self.state.lock().await.sessions.insert(bound.browser_id, session);
+                    return Err(error);
+                }
+            }
         }
         close(session).await;
-        Ok(json!({"closed": true, "target": binding}))
+        Ok(json!({"closed": true, "alreadyClosed": already_closed, "target": binding}))
     }
 
     pub(super) async fn cancel_bot(&self, bot: &str) {
@@ -686,15 +700,22 @@ impl Browsers {
             ids.into_iter().filter_map(|id| state.sessions.remove(&id)).collect::<Vec<_>>()
         };
         for session in sessions {
-            if session.engine == Engine::Extension
-                && let Err(error) = self
+            if session.engine == Engine::Extension {
+                match self
                     .extension
                     .call_with_timeout("stop", json!({"target": session.binding}), Duration::from_secs(2))
                     .await
-            {
-                tracing::warn!(%error, browser_id = %session.binding.browser_id, "could not close a browser tab after stopping its bot");
-                self.state.lock().await.sessions.insert(session.binding.browser_id.clone(), session);
-                continue;
+                {
+                    Ok(_) => {}
+                    Err(error) if extension_session_closed(&error) => {
+                        tracing::debug!(browser_id = %session.binding.browser_id, "the browser tab was already closed");
+                    }
+                    Err(error) => {
+                        tracing::warn!(%error, browser_id = %session.binding.browser_id, "could not close a browser tab after stopping its bot");
+                        self.state.lock().await.sessions.insert(session.binding.browser_id.clone(), session);
+                        continue;
+                    }
+                }
             }
             close(session).await;
         }
@@ -734,6 +755,10 @@ async fn fail_extension_start(bridge: &ExtensionBridge, binding: &Binding, reaso
     if let Err(error) = bridge.call_with_timeout("stop", json!({"target": binding}), Duration::from_secs(2)).await {
         tracing::warn!(%error, %reason, browser_id = %binding.browser_id, "could not close a browser tab after start failed");
     }
+}
+
+fn extension_session_closed(error: &anyhow::Error) -> bool {
+    format!("{error:#}").contains(EXTENSION_SESSION_CLOSED)
 }
 
 fn bound_session<'a>(
@@ -892,6 +917,14 @@ mod tests {
 
         assert!(!path.exists(), "the abandoned screenshot remained on disk");
         assert!(!root.exists(), "the empty screenshot directory remained on disk");
+    }
+
+    #[test]
+    fn only_the_explicit_closed_session_error_removes_the_host_binding() {
+        assert!(extension_session_closed(&anyhow!(
+            "browser_session_closed: Browser operation is no longer running in Codync Browser"
+        )));
+        assert!(!extension_session_closed(&anyhow!("The Codync Browser extension disconnected before it answered")));
     }
 
     #[test]

@@ -46,6 +46,8 @@ def prompt(message):
     results = {
         'mode': 'concurrent' if 'browser-concurrent' in text
         else 'start-stop' if 'browser-start-stop' in text
+        else 'setup-fail' if 'browser-setup-fail' in text
+        else 'closed-stop' if 'browser-closed-stop' in text
         else 'happy' if 'browser-happy' in text
         else 'takeover' if 'browser-takeover' in text
         else 'stop'
@@ -149,6 +151,21 @@ def prompt(message):
             return {'stopReason': 'end_turn'}
 
         ok, start = tool('browser_start', {'url': url})
+        if results['mode'] == 'setup-fail':
+            assert not ok and 'creating the extension browser evidence directory' in start, (ok, start)
+            results['startError'] = start
+            (cwd / 'browser-results.json').write_text(json.dumps(results, indent=2))
+            checkpoint('results-written')
+            mcp.stdin.close()
+            send({
+                'jsonrpc': '2.0',
+                'method': 'session/update',
+                'params': {
+                    'sessionId': params['sessionId'],
+                    'update': {'sessionUpdate': 'agent_message_chunk', 'content': {'type': 'text', 'text': 'Browser setup failure observed.'}},
+                },
+            })
+            return {'stopReason': 'end_turn'}
         if results['mode'] == 'start-stop':
             assert not ok and ('cancelled' in start or 'no longer running' in start), (ok, start)
             results['startError'] = start
@@ -169,6 +186,31 @@ def prompt(message):
         bound = binding(start)
         results['start'] = start
         checkpoint('start-complete', {'mode': results['mode']})
+
+        if results['mode'] == 'closed-stop':
+            ok, closed = tool('browser_stop', bound)
+            assert ok and closed['alreadyClosed'] is True, (ok, closed)
+            ok, restarted = tool('browser_start', {'url': url})
+            assert ok and restarted['reused'] is False, (ok, restarted)
+            restarted_bound = binding(restarted)
+            assert restarted_bound['browserId'] != bound['browserId'], (restarted, start)
+            ok, final_closed = tool('browser_stop', restarted_bound)
+            assert ok and final_closed['alreadyClosed'] is False, (ok, final_closed)
+            results['closedStop'] = closed
+            results['restarted'] = restarted
+            results['finalStop'] = final_closed
+            (cwd / 'browser-results.json').write_text(json.dumps(results, indent=2))
+            checkpoint('results-written')
+            mcp.stdin.close()
+            send({
+                'jsonrpc': '2.0',
+                'method': 'session/update',
+                'params': {
+                    'sessionId': params['sessionId'],
+                    'update': {'sessionUpdate': 'agent_message_chunk', 'content': {'type': 'text', 'text': 'Closed browser session replaced.'}},
+                },
+            })
+            return {'stopReason': 'end_turn'}
 
         if results['mode'] == 'happy':
             ok, reused = tool('browser_start', {'url': url})

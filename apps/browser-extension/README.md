@@ -18,16 +18,19 @@ The extension requests no web-origin host permission. It opens only `http` and `
 
 ## Local installation
 
-For a development build, install the native helper first:
+For a development (`codync.browser.dev`) build, or a main (`codync.browser`, set `$env:CODYNC_ENV = 'main'` before `cargo build`) build, install the native helper first:
 
 ```powershell
 $repo = (Resolve-Path .).Path # Run this from the repository root.
 Push-Location "$repo\host"
+# Omit CODYNC_ENV for dev (codync.browser.dev / port 19223), or set $env:CODYNC_ENV = 'main' before building for release (codync.browser / port 19222).
 cargo build --release --bin codync-browser-native-host
 Pop-Location
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$repo\apps\browser-extension\install-native-host.ps1" `
   -Executable "$repo\host\target\release\codync-browser-native-host.exe"
 ```
+
+The helper built at `host\target\release\codync-browser-native-host.exe` finds `apps\browser-extension` through its relative fallback. For a different layout, set `CODYNC_BROWSER_EXTENSION_DIR` in Chrome's environment before starting Chrome; setting it only while registering the helper does not save the override.
 
 Then open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select this
 folder once. The manifest's fixed public key gives the extension ID

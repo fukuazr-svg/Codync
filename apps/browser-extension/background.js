@@ -15,6 +15,7 @@ const reconnects = new Map()
 const reconnectSuppressed = new Set()
 const activeRequests = new Map()
 const completedStarts = new Map()
+const tabOperationQueues = new Map()
 const attachedTabs = new Set()
 const sessions = new Map()
 let storageUpdateQueue = Promise.resolve()
@@ -67,7 +68,11 @@ function targetFrom(params, connection, requireTab = true) {
 
 function sessionFor(target) {
   const session = sessions.get(target.browserId)
-  if (!session) throw new Error('Browser operation is no longer running in Codync Browser')
+  if (!session) {
+    const error = new Error('Browser operation is no longer running in Codync Browser')
+    error.code = 'browser_session_closed'
+    throw error
+  }
   for (const key of ['hostId', 'botId', 'messageId', 'operationId']) {
     if (session[key] !== target[key]) throw new Error('Browser target changed')
   }
@@ -175,6 +180,9 @@ function connectNative(hostName) {
     for (const request of activeRequests.values()) {
       if (request.connection?.port === port) request.cancelled = true
     }
+    void closeSessionsForHost(hostName).catch((error) =>
+      setBridgeStatus(hostName, 'error', `Could not close browser tabs: ${describeError(error)}`)
+    )
     if (stopReconnect) {
       void setConnectionStatus(hostName, 'error', disconnectDetail)
     } else {
@@ -209,43 +217,102 @@ function reply(connection, message, result) {
 
 function fail(connection, message, error) {
   if (connections.get(connection.name)?.port !== connection.port) return
-  connection.port.postMessage({
+  const reply = {
     id: message.id,
     ok: false,
     error: String(error?.message ?? error ?? 'Codync Browser request failed')
-  })
+  }
+  if (typeof error?.code === 'string') reply.code = error.code
+  connection.port.postMessage(reply)
 }
 
 async function runRequest(message, connection) {
   const state = { cancelled: false, connection }
   activeRequests.set(message.id, state)
+  let completedTarget = null
   try {
     const result = await handle(message.method, message.params ?? {}, connection, state)
+    const startTarget =
+      message.method === 'start' && message.params?.target && result?.tabId
+        ? {
+            ...message.params.target,
+            tabId: String(result.tabId)
+          }
+        : null
     if (state.cancelled) {
-      if (message.method === 'start' && message.params?.target) {
-        await stop({ target: message.params.target }, connection)
+      if (startTarget?.tabId) {
+        try {
+          await stop({ target: startTarget }, connection)
+        } catch (stopError) {
+          if (!/no longer running/i.test(String(stopError?.message ?? stopError))) throw stopError
+        }
       }
       throw new Error('Codync Browser request was cancelled')
     }
+    if (startTarget?.tabId) completedTarget = startTarget
     reply(connection, message, result)
   } catch (error) {
     fail(connection, message, error)
   } finally {
     activeRequests.delete(message.id)
-    if (message.method === 'start' && message.params?.target) {
-      completedStarts.set(message.id, { target: message.params.target, connection })
+    if (completedTarget) {
+      completedStarts.set(message.id, { target: completedTarget, connection })
       setTimeout(() => completedStarts.delete(message.id), 60_000)
     }
   }
 }
 
 function ensureRequestActive(state) {
-  if (state.cancelled) throw new Error('Codync Browser request was cancelled')
+  if (state?.cancelled) throw new Error('Codync Browser request was cancelled')
 }
 
-async function waitForTab(tabId, predicate, timeoutMs) {
+async function runInTabOrder(tabId, requestState, operation) {
+  const previous = tabOperationQueues.get(tabId) ?? Promise.resolve()
+  let release
+  const current = new Promise((resolve) => {
+    release = resolve
+  })
+  tabOperationQueues.set(tabId, current)
+  try {
+    await previous
+    ensureRequestActive(requestState)
+    return await operation()
+  } finally {
+    release()
+    if (tabOperationQueues.get(tabId) === current) tabOperationQueues.delete(tabId)
+  }
+}
+
+async function closeSessionsForHost(hostName) {
+  const stale = []
+  for (const [browserId, session] of sessions) {
+    if (session.hostName === hostName || !session.hostName) {
+      stale.push(session)
+      sessions.delete(browserId)
+    }
+  }
+  if (stale.length === 0) return
+
+  await persistSessions()
+  const errors = []
+  for (const session of stale) {
+    const tabId = Number(session.tabId)
+    try {
+      await detach(tabId)
+      await removeTab(tabId)
+    } catch (error) {
+      errors.push(`${session.browserId}: ${describeError(error)}`)
+    }
+  }
+  if (errors.length > 0) {
+    await setBridgeStatus('error', `Could not close browser tabs after Codync disconnected: ${errors.join('; ')}`)
+  }
+}
+
+async function waitForTab(tabId, predicate, timeoutMs, requestState = null) {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
+    if (requestState) ensureRequestActive(requestState)
     let tab
     try {
       tab = await chrome.tabs.get(tabId)
@@ -316,6 +383,14 @@ async function pageState(tabId) {
   }
 }
 
+async function syncSessionUrl(session, nextState) {
+  if (nextState?.url && nextState.url !== session.currentUrl) {
+    session.currentUrl = nextState.url
+    await persistSessions()
+  }
+  return nextState
+}
+
 async function start(params, connection, state) {
   const target = targetFrom(params, connection, false)
   const url = checkedUrl(params.url)
@@ -323,15 +398,26 @@ async function start(params, connection, state) {
   try {
     ensureRequestActive(state)
     const tab = await chrome.tabs.create({ url, active: true })
-    ensureRequestActive(state)
     if (!Number.isInteger(tab.id)) throw new Error('Chrome did not return a tab id')
     tabId = tab.id
-    await waitForTab(tabId, (current) => current.status === 'complete', navigateTimeout)
+    ensureRequestActive(state)
+    await waitForTab(
+      tabId,
+      (current) => current.status === 'complete' && /^https?:/i.test(current.url ?? ''),
+      navigateTimeout,
+      state
+    )
     ensureRequestActive(state)
     await attach(tabId)
     ensureRequestActive(state)
+    const initialState = await pageState(tabId)
+    ensureRequestActive(state)
+    if (!/^https?:/i.test(initialState.url)) {
+      throw new Error('The browser did not open an HTTP or HTTPS page')
+    }
     const session = {
       hostId: target.hostId,
+      hostName: connection.name,
       botId: target.botId,
       messageId: target.messageId,
       operationId: target.operationId,
@@ -339,7 +425,7 @@ async function start(params, connection, state) {
       tabId: String(tabId),
       generation: target.generation,
       initialUrl: url,
-      currentUrl: url
+      currentUrl: initialState.url || url
     }
     sessions.set(target.browserId, session)
     await persistSessions()
@@ -350,7 +436,7 @@ async function start(params, connection, state) {
       browserExecutable: 'unknown',
       extensionId: EXTENSION_ID,
       extensionVersion: chrome.runtime.getManifest().version,
-      state: await pageState(tabId)
+      state: initialState
     }
   } catch (error) {
     if (tabId != null) {
@@ -365,86 +451,103 @@ async function start(params, connection, state) {
   }
 }
 
-async function navigate(params, connection) {
+async function navigate(params, connection, state) {
   const target = targetFrom(params, connection)
   const session = sessionFor(target)
   const url = checkedUrl(params.url)
   const tabId = Number(session.tabId)
-  const previousUrl = session.currentUrl
-  const updated = await chrome.tabs.update(tabId, { url })
-  if (updated.status !== 'loading' && updated.url === previousUrl) {
-    await waitForTab(
+  return runInTabOrder(tabId, state, async () => {
+    ensureRequestActive(state)
+    sessionFor(target)
+    const beforeTab = await chrome.tabs.get(tabId)
+    const previousUrl = beforeTab.url || session.currentUrl
+    const updated = await chrome.tabs.update(tabId, { url })
+    ensureRequestActive(state)
+    if (updated.status !== 'loading' && updated.url === previousUrl) {
+      await waitForTab(
+        tabId,
+        (current) => current.status === 'loading' || current.url !== previousUrl,
+        navigateTimeout,
+        state
+      )
+      ensureRequestActive(state)
+    }
+    const tab = await waitForTab(
       tabId,
-      (current) => current.status === 'loading' || current.url !== previousUrl,
-      navigateTimeout
+      (current) => current.status === 'complete' && /^https?:/i.test(current.url ?? ''),
+      navigateTimeout,
+      state
     )
-  }
-  const tab = await waitForTab(
-    tabId,
-    (current) => current.status === 'complete' && /^https?:/i.test(current.url ?? ''),
-    navigateTimeout
-  )
-  session.currentUrl = tab.url ?? url
-  await persistSessions()
-  return pageState(tabId)
+    ensureRequestActive(state)
+    session.currentUrl = tab.url ?? url
+    await persistSessions()
+    return syncSessionUrl(session, await pageState(tabId))
+  })
 }
 
-async function click(params, connection) {
+async function click(params, connection, state) {
   const target = targetFrom(params, connection)
   const session = sessionFor(target)
   if (typeof params.selector !== 'string' || params.selector.length === 0 || params.selector.length > 512) {
     throw new Error('Selector must be 1-512 bytes')
   }
   const tabId = Number(session.tabId)
-  await attach(tabId)
-  const selector = JSON.stringify(params.selector)
-  const hit = await evaluate(tabId, `(() => {
-    const matches = document.querySelectorAll(${selector});
-    if (matches.length === 0) return { found: false, reason: 'selector did not match an element' };
-    if (matches.length > 1) return { found: false, reason: 'selector matched more than one element' };
-    const el = matches[0];
-    el.scrollIntoView({ block: 'center', inline: 'center' });
-    const rect = el.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) {
-      return { found: false, reason: 'element has a 0x0 hit box' };
-    }
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    const hit = document.elementFromPoint(x, y);
-    if (!hit || !(hit === el || el.contains(hit))) {
-      return { found: false, reason: 'element is covered or cannot receive the click' };
-    }
-    return {
-      found: true,
-      x,
-      y
-    };
-  })()`)
-  if (!hit?.found) throw new Error(hit?.reason ?? 'Element is not clickable')
-  const point = { x: hit.x, y: hit.y }
-  await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
-    type: 'mouseMoved',
-    ...point
+  return runInTabOrder(tabId, state, async () => {
+    ensureRequestActive(state)
+    sessionFor(target)
+    await attach(tabId)
+    ensureRequestActive(state)
+    const selector = JSON.stringify(params.selector)
+    const hit = await evaluate(tabId, `(() => {
+      const matches = document.querySelectorAll(${selector});
+      if (matches.length === 0) return { found: false, reason: 'selector did not match an element' };
+      if (matches.length > 1) return { found: false, reason: 'selector matched more than one element' };
+      const el = matches[0];
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) {
+        return { found: false, reason: 'element has a 0x0 hit box' };
+      }
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const hit = document.elementFromPoint(x, y);
+      if (!hit || !(hit === el || el.contains(hit))) {
+        return { found: false, reason: 'element is covered or cannot receive the click' };
+      }
+      return {
+        found: true,
+        x,
+        y
+      };
+    })()`)
+    ensureRequestActive(state)
+    if (!hit?.found) throw new Error(hit?.reason ?? 'Element is not clickable')
+    const point = { x: hit.x, y: hit.y }
+    await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
+      type: 'mouseMoved',
+      ...point
+    })
+    ensureRequestActive(state)
+    await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      ...point,
+      button: 'left',
+      buttons: 1,
+      clickCount: 1
+    })
+    await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      ...point,
+      button: 'left',
+      buttons: 0,
+      clickCount: 1
+    })
+    await sleep(settleTimeout)
+    return syncSessionUrl(session, await pageState(tabId))
   })
-  await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
-    type: 'mousePressed',
-    ...point,
-    button: 'left',
-    buttons: 1,
-    clickCount: 1
-  })
-  await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
-    type: 'mouseReleased',
-    ...point,
-    button: 'left',
-    buttons: 0,
-    clickCount: 1
-  })
-  await sleep(settleTimeout)
-  return pageState(tabId)
 }
 
-async function type(params, connection) {
+async function type(params, connection, state) {
   const target = targetFrom(params, connection)
   const session = sessionFor(target)
   if (typeof params.selector !== 'string' || params.selector.length === 0 || params.selector.length > 512) {
@@ -454,75 +557,94 @@ async function type(params, connection) {
     throw new Error(`Text must be at most ${MAX_TEXT} bytes`)
   }
   const tabId = Number(session.tabId)
-  await attach(tabId)
-  const selector = JSON.stringify(params.selector)
-  const editable = await evaluate(tabId, `(() => {
-    const matches = document.querySelectorAll(${selector});
-    if (matches.length === 0) return { error: 'selector did not match an element' };
-    if (matches.length > 1) return { error: 'selector matched more than one element' };
-    const el = matches[0];
-    if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el.isContentEditable)) return false;
-    el.focus();
-    el.scrollIntoView({ block: 'center', inline: 'center' });
-    return document.activeElement === el || el.contains(document.activeElement)
-      ? true
-      : { error: 'selector did not match a focusable editable element' };
-  })()`)
-  if (editable !== true) throw new Error(editable?.error ?? 'Selector did not match a focusable editable element')
-  await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchKeyEvent', {
-    type: 'rawKeyDown',
-    modifiers: selectAllModifier(),
-    windowsVirtualKeyCode: 65,
-    nativeVirtualKeyCode: 65,
-    code: 'KeyA',
-    key: 'a'
+  return runInTabOrder(tabId, state, async () => {
+    ensureRequestActive(state)
+    sessionFor(target)
+    await attach(tabId)
+    ensureRequestActive(state)
+    const selector = JSON.stringify(params.selector)
+    const editable = await evaluate(tabId, `(() => {
+      const matches = document.querySelectorAll(${selector});
+      if (matches.length === 0) return { error: 'selector did not match an element' };
+      if (matches.length > 1) return { error: 'selector matched more than one element' };
+      const el = matches[0];
+      if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el.isContentEditable)) return false;
+      el.focus();
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      return document.activeElement === el || el.contains(document.activeElement)
+        ? true
+        : { error: 'selector did not match a focusable editable element' };
+    })()`)
+    ensureRequestActive(state)
+    if (editable !== true) throw new Error(editable?.error ?? 'Selector did not match a focusable editable element')
+    await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchKeyEvent', {
+      type: 'rawKeyDown',
+      modifiers: selectAllModifier(),
+      windowsVirtualKeyCode: 65,
+      nativeVirtualKeyCode: 65,
+      code: 'KeyA',
+      key: 'a'
+    })
+    await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchKeyEvent', {
+      type: 'keyUp',
+      modifiers: selectAllModifier(),
+      windowsVirtualKeyCode: 65,
+      nativeVirtualKeyCode: 65,
+      code: 'KeyA',
+      key: 'a'
+    })
+    ensureRequestActive(state)
+    await chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text: params.text })
+    await sleep(settleTimeout)
+    return pageState(tabId)
   })
-  await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchKeyEvent', {
-    type: 'keyUp',
-    modifiers: selectAllModifier(),
-    windowsVirtualKeyCode: 65,
-    nativeVirtualKeyCode: 65,
-    code: 'KeyA',
-    key: 'a'
-  })
-  await chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text: params.text })
-  await sleep(settleTimeout)
-  return pageState(tabId)
 }
 
 function selectAllModifier() {
   return /Mac/i.test(navigator.platform) ? 4 : 2
 }
 
-async function screenshot(params, connection) {
+async function screenshot(params, connection, state) {
   const target = targetFrom(params, connection)
   const session = sessionFor(target)
   const tabId = Number(session.tabId)
-  await attach(tabId)
-  const capture = await chrome.debugger.sendCommand({ tabId }, 'Page.captureScreenshot', {
-    format: 'png',
-    fromSurface: true,
-    captureBeyondViewport: false
+  return runInTabOrder(tabId, state, async () => {
+    ensureRequestActive(state)
+    sessionFor(target)
+    await attach(tabId)
+    ensureRequestActive(state)
+    const capture = await chrome.debugger.sendCommand({ tabId }, 'Page.captureScreenshot', {
+      format: 'png',
+      fromSurface: true,
+      captureBeyondViewport: false
+    })
+    ensureRequestActive(state)
+    if (!capture?.data) throw new Error('Chrome returned no screenshot data')
+    return { data: capture.data, state: await pageState(tabId) }
   })
-  if (!capture?.data) throw new Error('Chrome returned no screenshot data')
-  return { data: capture.data, state: await pageState(tabId) }
 }
 
-async function stop(params, connection) {
+async function stop(params, connection, state) {
   const target = targetFrom(params, connection)
   const session = sessionFor(target)
   const tabId = Number(session.tabId)
-  await detach(tabId)
-  await removeTab(tabId)
-  sessions.delete(target.browserId)
-  await persistSessions()
-  return { closed: true, tabId: session.tabId }
+  return runInTabOrder(tabId, state, async () => {
+    await detach(tabId)
+    await removeTab(tabId)
+    sessions.delete(target.browserId)
+    await persistSessions()
+    return { closed: true, tabId: session.tabId }
+  })
 }
 
-async function state(params, connection) {
+async function state(params, connection, requestState) {
   const target = targetFrom(params, connection)
   const session = sessionFor(target)
-  return pageState(Number(session.tabId))
+  const tabId = Number(session.tabId)
+  return runInTabOrder(tabId, requestState, async () => {
+    sessionFor(target)
+    return syncSessionUrl(session, await pageState(tabId))
+  })
 }
 
 async function handle(method, params, connection, requestState) {
@@ -530,17 +652,17 @@ async function handle(method, params, connection, requestState) {
     case 'start':
       return start(params, connection, requestState)
     case 'navigate':
-      return navigate(params, connection)
+      return navigate(params, connection, requestState)
     case 'click':
-      return click(params, connection)
+      return click(params, connection, requestState)
     case 'type':
-      return type(params, connection)
+      return type(params, connection, requestState)
     case 'screenshot':
-      return screenshot(params, connection)
+      return screenshot(params, connection, requestState)
     case 'stop':
-      return stop(params, connection)
+      return stop(params, connection, requestState)
     case 'state':
-      return state(params, connection)
+      return state(params, connection, requestState)
     case 'cancel': {
       const request = activeRequests.get(params.requestId)
       if (request) {
