@@ -1,4 +1,0 @@
-
-> codync-desktop@2.49.0 typecheck
-> tsc --noEmit -p tsconfig.json
-
