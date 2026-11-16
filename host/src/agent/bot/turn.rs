@@ -173,15 +173,17 @@ impl Actor {
         }
         // A bot request or room turn isn't resumed after a host restart (the room that waited is gone): a request's
         // persisted notices are marked interrupted instead of silently repeating work. Nor is a call's opening (the
-        // call is over). A reply turn is resumed, and so is a follow-up, which is gone from the list by now. A turn
-        // under a network rule's ceiling isn't: the ceiling doesn't outlive the host, and the turn that resumed it
-        // would work on the sender's text as the bot is set.
+        // call is over), nor a goal step (a goal is never resumed without another explicit start). A reply turn is
+        // resumed, and so is a follow-up, which is gone from the list by now. A turn under a network rule's ceiling
+        // isn't: the ceiling doesn't outlive the host, and the turn that resumed it would work on the sender's text
+        // as the bot is set.
         self.set_inflight(
             self.active_request.is_none()
                 && !self.hub.ceilings.holds(&self.cfg.id)
                 && self.active_group.is_none()
                 && self.active_routine.is_none()
-                && self.host_turn.is_none_or(HostTurn::resumed),
+                && self.host_turn.is_none_or(HostTurn::resumed)
+                && self.goal_step.is_none(),
         );
         // A message the host wrote in the user's place (`from: host`) isn't the user asking.
         let typed = |id: &&String| self.hub.store.entry(id).is_some_and(|e| e.data["from"] != "host");
@@ -339,6 +341,13 @@ impl Actor {
         let stopped = self.stop_requested || matches!(&done, Ok(v) if v["stopReason"] == "cancelled");
         self.close_attempt(stopped || done.is_err());
         let mut final_text = None;
+        // send_message can consume the public reply; the agent's closing marker still counts.
+        let goal_closing = self
+            .goal_step
+            .as_ref()
+            .and(self.last_text.as_ref())
+            .and_then(|id| self.hub.store.entry(id))
+            .and_then(|e| e.data["text"].as_str().map(str::to_owned));
         let routine = self.active_routine.is_some();
         let grouped = self.active_group.is_some() || routine;
         let delegated = self.active_request.is_some();
@@ -465,7 +474,7 @@ impl Actor {
             r.session = None;
         });
         self.hub.team.end_turn(&self.cfg.id);
-        self.goal_ended(stopped, failed || stop_reason != "end_turn", final_text.as_deref(), None);
+        self.goal_ended(stopped, failed || stop_reason != "end_turn", final_text.as_deref(), goal_closing.as_deref());
         // A room turn's news comes from the group once the room is done (see `group`).
         let more = self.queue.iter().any(|q| matches!(q, Queued::User { .. }));
         // It held back its only answer, a reaction: it said nothing, so there is nothing to tell either.
@@ -554,7 +563,8 @@ impl Actor {
         self.active_group.is_none() && !self.in_routine() && !self.in_request()
     }
 
-    /// What started the turn that is starting or running. A task's turn is what its item came from.
+    /// What started the turn that is starting or running. A task's turn is what its item came from, and a goal's
+    /// step is the host's own turn: not the user's words.
     pub(super) fn source(&self) -> TurnSource {
         if self.in_routine() {
             TurnSource::Routine
@@ -562,6 +572,8 @@ impl Actor {
             TurnSource::Group
         } else if self.in_request() || self.reply_hops.is_some() {
             TurnSource::Bot
+        } else if self.goal_step.is_some() {
+            TurnSource::Host
         } else {
             self.host_turn.map_or(TurnSource::User, HostTurn::source)
         }
