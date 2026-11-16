@@ -1,6 +1,6 @@
 //! Starting a turn and wrapping it up: final reply, notices, the reply to a requesting bot or room, alerts and memory.
 
-use super::{Actor, Conn, Done, HostTurn, Instructions, NoticeStyle, Queued, Reacted, Seg};
+use super::{Actor, Conn, Done, DoneTx, HostTurn, Instructions, NoticeStyle, Queued, Reacted, Seg, TurnAnswer};
 use crate::agent::acp::{self, Incoming};
 use crate::analytics::{self, TurnOutcome, TurnSource};
 use crate::chat::context::{self, Snapshot};
@@ -13,7 +13,6 @@ use crate::store::{EntryKind, Lane, now_ms};
 use anyhow::{Result, anyhow};
 use serde_json::json;
 use std::time::{Duration, Instant};
-use tokio::sync::mpsc;
 
 /// Leads a `<bot-profile>` sent again after a compaction, so the agent drops an older copy it may still hold.
 const PROFILE_AGAIN: &str = "Your context was summarized. This is your full, current profile and memory; it replaces any earlier bot profile in this conversation.";
@@ -99,7 +98,7 @@ impl Actor {
         entry_ids: &[String],
         text: &str,
         hidden: bool,
-        done_tx: &mpsc::UnboundedSender<Done>,
+        done_tx: &DoneTx,
     ) -> Result<()> {
         self.task_source = tasks::source_of(&self.hub.store, &self.cfg);
         if self.cfg.is_task() {
@@ -149,6 +148,7 @@ impl Actor {
         self.announce = None;
         self.first_prompt = None;
         self.stop_requested = false;
+        self.gone_turn = false;
         self.cancel_deadline = None;
         let team_turn = if self.in_request() {
             crate::chat::team::Turn::Request
@@ -285,7 +285,8 @@ impl Actor {
         }
         // A goal step that already ended (the user stopped it, or a failure did) sends nothing more.
         if !self.goal_can_prompt() {
-            let _ = done_tx.send(Ok(json!({"stopReason": "cancelled"})));
+            let result = Ok(json!({"stopReason": "cancelled"}));
+            let _ = done_tx.send(TurnAnswer { turn: self.turn, result });
             return Ok(());
         }
         // From here what changes in its memory folders is the bot's, however it changed them: a task's too, as
@@ -300,8 +301,10 @@ impl Actor {
             tracing::warn!(%error, "could not acknowledge memory update notice");
         }
         let done_tx = done_tx.clone();
+        let turn = self.turn;
         tokio::spawn(async move {
-            let _ = done_tx.send(answer.response().await.and_then(acp::codebuddy::prompt_result));
+            let result = answer.response().await.and_then(acp::codebuddy::prompt_result);
+            let _ = done_tx.send(TurnAnswer { turn, result });
         });
         Ok(())
     }

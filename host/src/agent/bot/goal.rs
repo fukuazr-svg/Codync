@@ -1,5 +1,5 @@
 //! Cancellation of the current goal step. Ordinary user turns are never cancelled here.
-use super::{Actor, Done};
+use super::{Actor, DoneTx};
 use crate::chat::goal::{self, Stopped};
 use crate::store::now_ms;
 
@@ -40,7 +40,7 @@ impl Actor {
         }
     }
 
-    pub(super) async fn dequeue_goal(&mut self, id: String, done_tx: &tokio::sync::mpsc::UnboundedSender<Done>) {
+    pub(super) async fn dequeue_goal(&mut self, id: String, done_tx: &DoneTx) {
         let backend = self.next_agent_backend();
         match goal::begin(&self.hub, &self.cfg, &id, &backend) {
             Ok(Some(text)) => self.start_goal(id, text, done_tx).await,
@@ -73,12 +73,7 @@ impl Actor {
         true
     }
 
-    pub(super) async fn start_goal(
-        &mut self,
-        id: String,
-        text: String,
-        done_tx: &tokio::sync::mpsc::UnboundedSender<Done>,
-    ) {
+    pub(super) async fn start_goal(&mut self, id: String, text: String, done_tx: &DoneTx) {
         let Some(g) = goal::get(&self.hub, &self.cfg.id).filter(|g| g.id == id && g.stopped.is_none()) else { return };
         let deadline = g.started_at + i64::from(g.max_minutes) * 60_000;
         let remaining = deadline.saturating_sub(now_ms()).max(0);

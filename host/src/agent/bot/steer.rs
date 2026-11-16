@@ -1,6 +1,6 @@
 //! The user's queued messages before their turn comes: handled now (`steer`) or taken back (`unqueue`).
 
-use super::{Actor, Cmd, Done, Queued};
+use super::{Actor, Cmd, DoneTx, Queued, TurnAnswer};
 use crate::analytics::{self, Steer, TurnSource};
 use crate::chat::team::RequestStatus;
 use crate::chat::uploads;
@@ -8,7 +8,6 @@ use crate::store::Lane;
 use anyhow::{Result, anyhow};
 use serde_json::{Value, json};
 use std::time::Duration;
-use tokio::sync::mpsc;
 
 /// How long the agent may take to say whether a steered message joined its turn.
 const STEER_ANSWER: Duration = Duration::from_secs(15);
@@ -121,28 +120,28 @@ impl Actor {
         }
     }
 
-    /// The agent ended the running turn. Its answer to a steer travels apart from this, and a message it took belongs
-    /// to this turn, so the end waits for every answer (at most `STEER_ANSWER`).
-    pub(super) async fn turn_ended(&mut self, done: Done, done_tx: &mpsc::UnboundedSender<Done>) {
+    /// The agent's answer to the turn it was asked about. One that arrives after its turn ended is dropped: it would
+    /// otherwise finish the turn running by then, whose own agent is still working. While a steered message waits for
+    /// the agent's word, the answer waits with it (see `steer_answered`).
+    pub(super) async fn answered(&mut self, answer: TurnAnswer, done_tx: &DoneTx) {
+        if !answers_running_turn(answer.turn, self.turn) {
+            tracing::debug!(bot = %self.cfg.id, "dropped an answer to a turn that already ended");
+            return;
+        }
         if self.steers_in_flight.is_empty() {
-            self.on_turn_done(done, done_tx).await;
+            self.on_turn_done(answer.result, done_tx).await;
         } else {
-            self.held_done = Some(done);
+            self.held_done = Some(answer);
         }
     }
 
-    /// The agent's answer to a steer; the last one lets a held turn end (`turn_ended`).
-    pub(super) async fn steer_answered(
-        &mut self,
-        entry_id: &str,
-        outcome: &Result<Value>,
-        done_tx: &mpsc::UnboundedSender<Done>,
-    ) {
+    /// The agent's answer to a steer; the last one lets a held turn end (`answered`).
+    pub(super) async fn steer_answered(&mut self, entry_id: &str, outcome: &Result<Value>, done_tx: &DoneTx) {
         self.steered(entry_id, outcome);
         if self.steers_in_flight.is_empty()
-            && let Some(done) = self.held_done.take()
+            && let Some(held) = self.held_done.take()
         {
-            self.on_turn_done(done, done_tx).await;
+            self.answered(held, done_tx).await;
         }
     }
 
@@ -229,6 +228,12 @@ impl Actor {
     }
 }
 
+/// Whether an agent's answer belongs to the turn running now. One whose turn already ended (a Stop with no agent left,
+/// then the next message) must not finish the turn that runs by then.
+fn answers_running_turn(asked: Option<i64>, running: Option<i64>) -> bool {
+    asked.is_some() && asked == running
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -240,5 +245,15 @@ mod tests {
         assert_eq!(steer_outcome(&Ok(json!({"outcome": "somethingNew"}))), Steer::Failed);
         assert_eq!(steer_outcome(&Err(anyhow!("gone"))), Steer::Failed);
         assert_eq!(json!(Steer::MovedUp), "moved_up", "as the event reports it");
+    }
+
+    /// A Stop with no agent ends its turn and starts the next one; the old agent's answer may still be on its way
+    /// and must not end that next turn.
+    #[test]
+    fn a_late_answer_cannot_end_the_next_turn() {
+        assert!(answers_running_turn(Some(7), Some(7)), "the turn that asked is the one running");
+        assert!(!answers_running_turn(Some(6), Some(7)), "the answer of a turn already ended");
+        assert!(!answers_running_turn(Some(6), None), "an answer after every turn ended");
+        assert!(!answers_running_turn(None, None), "no turn asked for it");
     }
 }
