@@ -237,6 +237,9 @@ impl Actor {
             self.set_session(Some(&slot), None);
         }
         self.forget_session();
+        // Every conversation starts over on a restarted agent, so none of the old approvals may answer a new one:
+        // an agent that numbers sessions per process hands out the same ids again.
+        self.always_allowed.forget_all();
     }
 
     pub(super) async fn next_in_queue(&mut self, done_tx: &mpsc::UnboundedSender<Done>) {
@@ -249,6 +252,11 @@ impl Actor {
             // bot replies carry another computer's text.
             self.hub.ceilings.set(&self.cfg.id, Access::Allow);
             match self.queue.front() {
+                Some(Queued::Goal(_)) => {
+                    let Some(Queued::Goal(id)) = self.queue.pop_front() else { unreachable!("front is a goal") };
+                    self.dequeue_goal(id, done_tx).await;
+                    continue;
+                }
                 Some(Queued::Routine(_)) => {
                     let Some(Queued::Routine(id)) = self.queue.pop_front() else { unreachable!("front is a routine") };
                     self.active_routine = Some(id.clone());

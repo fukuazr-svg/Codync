@@ -313,6 +313,12 @@ impl Actor {
         self.instruct(&mut params, instructions, &system);
         let res = self.session_request("session/new", params).await?;
         let sid = self.adopt_opened(&res, slot, renamed).await?;
+        // A fresh conversation inherits no approvals: an agent numbers its sessions from the start in each process,
+        // so the id it returns here can be the one an earlier conversation was always allowed under.
+        if let Some(stale) = self.session_for(slot).filter(|stale| stale != &sid) {
+            self.always_allowed.forget(&stale);
+        }
+        self.always_allowed.forget(&sid);
         context::adopt(&self.hub.store, &self.cfg.as_owner(), &sid, system.clone(), revision)?;
         if instructions == Instructions::ClaudeMeta {
             self.applied_system.insert(sid, system);

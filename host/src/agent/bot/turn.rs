@@ -465,6 +465,7 @@ impl Actor {
             r.session = None;
         });
         self.hub.team.end_turn(&self.cfg.id);
+        self.goal_ended(stopped, failed || stop_reason != "end_turn", final_text.as_deref(), None);
         // A room turn's news comes from the group once the room is done (see `group`).
         let more = self.queue.iter().any(|q| matches!(q, Queued::User { .. }));
         // It held back its only answer, a reaction: it said nothing, so there is nothing to tell either.

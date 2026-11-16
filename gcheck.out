@@ -1,26 +1,2 @@
     Checking codync-host v2.49.0 (F:\Codync\发版工\work\z15\host)
-error[E0308]: mismatched types
-   --> src\agent\bot\queue.rs:39:40
-    |
- 39 |                     let _ = reply.send(applied);
-    |                                   ---- ^^^^^^^ expected `bool`, found `()`
-    |                                   |
-    |                                   arguments to this method are incorrect
-    |
-help: the return type of this call is `()` due to the type of the argument passed
-   --> src\agent\bot\queue.rs:39:29
-    |
- 39 |                     let _ = reply.send(applied);
-    |                             ^^^^^^^^^^^-------^
-    |                                        |
-    |                                        this argument influences the return type of `send`
-note: method defined here
-   --> C:\Users\60546\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tokio-1.53.1\src\sync\oneshot.rs:622:12
-    |
-622 |     pub fn send(mut self, t: T) -> Result<(), T> {
-    |            ^^^^
-
-For more information about this error, try `rustc --explain E0308`.
-error: could not compile `codync-host` (bin "codync-host") due to 1 previous error
-warning: build failed, waiting for other jobs to finish...
-error: could not compile `codync-host` (bin "codync-host" test) due to 1 previous error
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 28.70s

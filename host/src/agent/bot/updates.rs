@@ -186,6 +186,15 @@ impl Actor {
                 self.hub.store.entry(eid)?.data["title"].as_str().map(str::to_owned)
             })
             .unwrap_or_else(|| "Use a tool".into());
+        // A kind the user already always allowed in this session answers itself (`always_allowed`): some agents ask
+        // again about the same kind of action anyway.
+        let asked = json!({"toolKind": tool["kind"].as_str().unwrap_or("other"), "title": title});
+        if let (Some(session), Some(conn)) = (self.session_id.as_deref(), &self.conn)
+            && let Some(option) = self.always_allowed.pick(session, &asked, &options)
+        {
+            let _ = conn.acp.respond(rpc_id, acp::permission_answer(Some(option))).await;
+            return;
+        }
         let mut detail = json!({"output": "", "diffs": []});
         merge_tool_content(&mut detail, &tool["content"]);
         let raw = &tool["rawInput"];
@@ -314,6 +323,11 @@ impl Actor {
             }
         }
         if let Some(mut e) = self.hub.store.entry(entry_id) {
+            if let (Some(session), Some(option)) = (self.session_id.clone(), option_id.as_deref())
+                && status == "answered"
+            {
+                self.always_allowed.note(&session, &e.data, option);
+            }
             e.data["status"] = status.into();
             e.data["selected"] = option_id.into();
             self.hub.set_entry(entry_id, &e.data);
