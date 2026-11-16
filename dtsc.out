@@ -1,0 +1,6 @@
+
+> codync-desktop@2.49.0 typecheck
+> tsc --noEmit -p tsconfig.json
+
+'tsc' is not recognized as an internal or external command,
+operable program or batch file.

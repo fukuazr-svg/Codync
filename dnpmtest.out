@@ -1,0 +1,1726 @@
+
+> codync-desktop@2.49.0 test
+> node --test --experimental-strip-types src/main/channel/*.test.ts src/shared/*.test.ts src/renderer/lib/*.test.ts src/renderer/store/*.test.ts src/renderer/views/*.test.ts src/renderer/views/thread/*.test.ts src/renderer/views/routines/*.test.ts src/renderer/views/call/*.test.ts src/renderer/views/marketplace/*.test.ts
+
+(node:68260) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/main/channel/crypto.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@noble/ciphers' imported from F:\Codync\发版工\work\z15\apps\desktop\src\main\channel\crypto.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\main\channel\crypto.test.ts (1849.677ms)
+(node:86608) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/main/channel/relay-channel.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@noble/ciphers' imported from F:\Codync\发版工\work\z15\apps\desktop\src\main\channel\crypto.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\main\channel\relay-channel.test.ts (1918.7011ms)
+(node:92064) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/access-onboarding.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+<anonymous_script>:2153
+  "Work": "作業",
+  ^
+
+SyntaxError: F:\Codync\发版工\work\z15\apps\ios\Kit\Sources\CodyncKit\Resources\Languages\ja.json: Expected ',' or '}' after property value in JSON at position 142961 (line 2153 column 3)
+    at parse (<anonymous>)
+    at ModuleLoader.jsonStrategy (node:internal/modules/esm/translators:482:21)
+    at #translate (node:internal/modules/esm/loader:451:20)
+    at afterLoad (node:internal/modules/esm/loader:507:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:512:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:555:36)
+    at afterResolve (node:internal/modules/esm/loader:603:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:609:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:252:17)
+
+Node.js v24.15.0
+✖ src\renderer\lib\access-onboarding.test.ts (1794.2586ms)
+(node:25244) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/account-copy.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a signed-in phone is asked about the account, and told what staying out means (1.2252ms)
+✔ a phone that has to join is only asked about joining (0.1364ms)
+✔ a signed-out phone is let in or not, with no account in the question (0.094ms)
+✔ a join names the phones it removes (0.8238ms)
+✔ a host before these answers says plainly that letting the phone in joins its account (0.1889ms)
+✔ the answers offered follow what the host says the phone may get (0.1501ms)
+✔ the phones a join removes follow what it says (0.086ms)
+✔ a phone without an email is a Codync account, and names keep their braces (0.0867ms)
+✔ changing account drops every device of the old one (0.1359ms)
+✔ leaving an account names the devices it drops, when the computer could list them (0.1682ms)
+✔ codes other than 6 digits stay as they are (0.0838ms)
+(node:70384) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/analytics-queue.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ events from before the host answers go out once it does, in order (2.7778ms)
+✔ an unreachable host keeps the event for the next try; a gone host holds them again (0.7138ms)
+✔ only the newest events wait past the limit (0.3922ms)
+✔ track sends the event name and its properties, from the desktop app (0.1828ms)
+(node:50200) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/app-language-preference.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ Additional languages persist their identifiers and reach the tray language contract (6.6091ms)
+(node:16932) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/bot-template.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a template keeps the setup, not the bot identity, fallbacks, who reaches it or its login profile (0.6801ms)
+(node:91468) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/catalogs.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ no catalog spells a key twice, so a translation is never dropped (39.9358ms)
+✖ all shipped catalogs have the same keys and preserve interpolation tokens (1.9061ms)
+✖ every What's new phrase is translated in every catalog, and the clips beside the file are the ones it names, each under 300 KB (1.8694ms)
+(node:79284) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/cloud-computer.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a cloud computer names its provider and region (0.6101ms)
+✔ an offline cloud computer that sleeps is not offline, and one that failed is an error (0.5182ms)
+✔ a cloud computer's menu renames it, opens its provider's key and deletes it; Delete snapshots only where its provider keeps some (older clouds do not say, and all kept some) (0.2313ms)
+✔ a new cloud computer is preparing until it joins the account (0.1555ms)
+✔ a claimed cloud computer shows its state (0.0979ms)
+✔ a refused Boat key is told apart from a save that failed (0.0995ms)
+✔ a cloud computer on a key its provider turns down says what to fix instead of its state (0.092ms)
+✔ a cloud computer that was preparing and now has its computer has just joined the account (0.1059ms)
+✔ a new cloud computer is suggested the first free name (0.1679ms)
+✔ a computer action is busy on its computer only; errors show where the action was (0.3018ms)
+✔ a create the cloud answered with what to fix is refused, anything else failed (0.125ms)
+✔ a deletion or key removal the cloud turned down is refused, anything else failed (0.0893ms)
+✔ New cloud computer lists every provider and starts on the first with a usable key (0.205ms)
+✔ Create is on while the account may have another and nothing else runs; at the limit it says why (0.0633ms)
+✔ a name is cut to what the cloud keeps (0.0437ms)
+✔ a key stays while any cloud computer runs on its provider (0.1066ms)
+(node:48036) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/compaction-options.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a typed size goes to the nearest 10K the window takes (0.9354ms)
+✔ a size is typed in thousands of tokens (0.1915ms)
+✔ the menu lists the presets, then the sizes and a custom one (0.3306ms)
+✔ before the window is known the sizes wait for the next reply (0.1158ms)
+✔ the pill shows a preset translated and a size as it is (0.137ms)
+(node:67160) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/computer-access.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ permission setup uses the local host identity even when a remote computer is selected (23.6437ms)
+✖ repeated checks never request permissions; explicit actions and failures stay reviewable (3.0178ms)
+(node:17184) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/computer-order.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ computer ordering stays on each device, survives restart, and isolates accounts (7.1434ms)
+(node:81088) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/computer-roster.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ saved computer order survives reconnect order and appends new computers (1.138ms)
+✔ moving a section works in either direction without losing hidden computers (0.224ms)
+✔ each computer keeps its own bots in activity order, including duplicate bot ids (0.2167ms)
+✔ pinned bots sort first; the lead is placed like any bot (0.173ms)
+(node:69296) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/dot-grid.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ below 2x dots sit on pixel centers (even pitch) or corners (odd) and the grid stays in its box (1.9152ms)
+✔ below 2x no dot leaves its box, and an edge dot is cut by at most a pixel (1.9247ms)
+✔ a 1x screen gets a sparser grid that still fills a menu bar icon (0.185ms)
+✔ large avatars keep the 9 × 9 grid of large dots (0.1157ms)
+✔ Retina keeps the exact design grid (0.7412ms)
+(node:15612) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/fill.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ what fill puts in stays as written (0.5884ms)
+(node:55176) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/find-label.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the count reads active over total once something matched (0.523ms)
+✔ no match says so, and nothing searched says nothing (0.1336ms)
+(node:93096) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/find-position.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the current match stays current when matches are added above it (0.5807ms)
+✔ a current match that went away hands over to the next one after it, or the last (0.1086ms)
+✔ a match is scrolled to the middle of the box (0.102ms)
+✔ sideways, a match in sight stays put and one out of sight comes to the middle (0.0941ms)
+(node:71784) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/host-update.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+<anonymous_script>:2153
+  "Work": "作業",
+  ^
+
+SyntaxError: F:\Codync\发版工\work\z15\apps\ios\Kit\Sources\CodyncKit\Resources\Languages\ja.json: Expected ',' or '}' after property value in JSON at position 142961 (line 2153 column 3)
+    at parse (<anonymous>)
+    at ModuleLoader.jsonStrategy (node:internal/modules/esm/translators:482:21)
+    at #translate (node:internal/modules/esm/loader:451:20)
+    at afterLoad (node:internal/modules/esm/loader:507:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:512:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:555:36)
+    at afterResolve (node:internal/modules/esm/loader:603:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:609:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:252:17)
+
+Node.js v24.15.0
+✖ src\renderer\lib\host-update.test.ts (2151.1842ms)
+(node:95264) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/icon-cache.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ disk cache keeps the newest replacement and removal, isolated by account/computer (239.0416ms)
+(node:57032) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/image-analytics.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a finished action reports done with where it was done, and no error (0.8548ms)
+✔ a failed action reports its category (0.0993ms)
+✔ a copy that threw reports the step that failed, else the clipboard (0.1539ms)
+(node:73280) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/image-clipboard.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a PNG is known by its signature (0.6888ms)
+✔ other bytes are not a PNG, whatever the file is called (0.1226ms)
+✔ a picture within the cap keeps its size; a bigger one shrinks to fit, in the same shape (0.7092ms)
+✔ a copy overtaken by a newer one is no longer the one to land (0.1204ms)
+✔ a huge picture is decoded straight to its capped size, a small one at its own (0.1238ms)
+✔ Copy name started while a picture is still converting keeps the clipboard: the picture never lands (0.8798ms)
+✔ Copy name clicked while a picture is still being written lands after it, not under it (11.0081ms)
+(node:43584) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/image-zoom.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a picture smaller than the box stays centered at fit, and zooming in cannot push it out of the box (1.0747ms)
+✔ zoom is kept between fit and the maximum (0.164ms)
+✔ zooming keeps the spot under the pointer where it was (0.1732ms)
+✔ panning stops at the picture edge (0.0942ms)
+✔ double-click zooms in on the spot, then back to fit (0.1009ms)
+✔ a pinch out zooms in and a pinch in zooms out (0.0995ms)
+✔ two fingers spreading zoom by their distance, and moving together pan (0.2569ms)
+(node:9492) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/join-offer.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a new identity with the cloud on is asked about (0.5908ms)
+✔ an identity seen in the account and removed since stays out (0.0901ms)
+✔ nothing is asked when kept out, owned, offline, or the cloud is off or unknown (0.0879ms)
+✔ a computer on a private relay is never asked about: it has no accounts (0.0776ms)
+✔ a computer in another account offers to move into the signed-in one (0.1231ms)
+✔ an SSH computer installed from here is asked about unless it is in an account or on a private relay (0.0825ms)
+✔ the sidebar line says when this computer and the signed-in account differ (0.4965ms)
+(node:89948) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/kofi-invite.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the Ko-fi invitation sits under the first finished reply after the first prompt, in that chat only (0.5041ms)
+✔ the Ko-fi invitation never shows before it is due or once it is done (0.1295ms)
+(node:36080) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/l10n-live.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+<anonymous_script>:2153
+  "Work": "作業",
+  ^
+
+SyntaxError: F:\Codync\发版工\work\z15\apps\ios\Kit\Sources\CodyncKit\Resources\Languages\ja.json: Expected ',' or '}' after property value in JSON at position 142961 (line 2153 column 3)
+    at parse (<anonymous>)
+    at ModuleLoader.jsonStrategy (node:internal/modules/esm/translators:482:21)
+    at #translate (node:internal/modules/esm/loader:451:20)
+    at afterLoad (node:internal/modules/esm/loader:507:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:512:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:555:36)
+    at afterResolve (node:internal/modules/esm/loader:603:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:609:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:252:17)
+
+Node.js v24.15.0
+✖ src\renderer\lib\l10n-live.test.ts (1557.3393ms)
+(node:47196) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/l10n.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+<anonymous_script>:2153
+  "Work": "作業",
+  ^
+
+SyntaxError: F:\Codync\发版工\work\z15\apps\ios\Kit\Sources\CodyncKit\Resources\Languages\ja.json: Expected ',' or '}' after property value in JSON at position 142961 (line 2153 column 3)
+    at parse (<anonymous>)
+    at ModuleLoader.jsonStrategy (node:internal/modules/esm/translators:482:21)
+    at #translate (node:internal/modules/esm/loader:451:20)
+    at afterLoad (node:internal/modules/esm/loader:507:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:512:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:555:36)
+    at afterResolve (node:internal/modules/esm/loader:603:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:609:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:252:17)
+
+Node.js v24.15.0
+✖ src\renderer\lib\l10n.test.ts (1509.4711ms)
+(node:6832) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/latest-only.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sends one at a time and skips to the latest (2.6226ms)
+✔ starts again after it finished (0.164ms)
+✔ a failure reaches every caller and drops what was waiting (0.4074ms)
+(node:39888) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/library-groups.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the library groups by the day things were published or sent (1.1635ms)
+(node:20576) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/login-profile-keys.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the key form opens on the saved variables, else the agent's usual names, else one empty row (1.031ms)
+✔ save sends typed values under their names and removed variables as empty (0.3143ms)
+✔ an API key row lists its variable names (0.1674ms)
+(node:93492) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/menu-placement.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ hovered submenu opens beside the parent aligned with its row (0.9254ms)
+✔ submenu flips left at the right edge and stays above the bottom edge (0.1134ms)
+✔ small windows keep both menus inside the viewport (0.1248ms)
+(node:18296) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/message-preview.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ roster previews read formatted replies without markdown markers (0.6562ms)
+(node:90820) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/modal-stack.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a dialog stays on top of a sheet whichever opened first on the render (1.0521ms)
+✔ the later of two modals at the same z-index is on top (0.1141ms)
+✔ closing the top modal hands clicks to the next one down (0.1064ms)
+✔ a menu opened from the top modal comes back when a modal over it closes (0.112ms)
+✔ a menu open before the modal goes inert under it (0.0985ms)
+✔ the last close restores only the layers modals made inert (0.0886ms)
+(node:57008) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/network-copy.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a relay connector needs an address; an empty one would quietly mean public (1.0854ms)
+✔ rows say where each computer is and how many bots it offers (0.2439ms)
+✔ rules read with the bots by name, and move within the list (0.567ms)
+(node:83496) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/older-copy.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ an offline same-named computer is an older copy only if last seen before the current one joined (0.6629ms)
+(node:54464) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/pointer-drag.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a press only becomes a drag past a few points, then reports moves and the drop (1.492ms)
+✔ a click without travel is not a drag (0.18ms)
+✔ Escape or a cancelled pointer ends the drag without a drop (0.3262ms)
+✔ the click that ends a drag is swallowed, later clicks are not (2.8775ms)
+✔ after Escape, the release that ends the gesture does not click (0.5389ms)
+✔ a plain click is never swallowed (0.1659ms)
+(node:44516) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/prefs.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ A stored preference of another kind reads as the fallback (5.8501ms)
+(node:21592) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/refresh.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\refresh.test.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\renderer\lib\refresh.test.ts (750.122ms)
+(node:59800) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/relay-address.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a typed relay address is stored only when it changes (0.7135ms)
+(node:65504) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/relay-copy.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ official clouds stay Cloudflare and any other host is named (0.6242ms)
+(node:66176) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/roster-section-order.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ whole sections move both ways across Bots while pinned rows stay first and navigation follows (1.1665ms)
+✔ saved order ignores absent groups and appends new groups once (0.109ms)
+✔ renaming keeps position and merging keeps the destination position (0.2033ms)
+✔ merge into a newly created group keeps the destination in its displayed position (6.83ms)
+(node:94920) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/roster-sections.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ pinned rows first, then sections by name, then rows without a section under the label (8.1396ms)
+✔ every bot in on-screen order: pinned first, then section by section in the user's order, folded or not (0.3374ms)
+✔ a folded section keeps its rows for the fold, but only its header is on screen (0.1645ms)
+✔ a section only its pinned bots are in has no header, and no header means no label (0.0891ms)
+✔ the label shows only with a section header and a bot in none (0.1133ms)
+✔ a bot moves past bots with the same pin state and section; pinned bots ignore sections (0.1814ms)
+✔ every section once, sorted by name (0.5069ms)
+✔ section ordering follows a Chinese locale as well (0.1709ms)
+✔ a typed name is trimmed of whitespace and control characters, nothing left being none (0.2864ms)
+✔ removing a section sends `to` as null, which JSON keeps (0.2132ms)
+✔ a name field stops at 40 characters as the host counts them, never inside an emoji (0.1133ms)
+✔ a folded section renamed or removed here takes its fold along; an unfolded one changes nothing (0.1306ms)
+✔ a refused section change for one bot puts back only its section (0.2008ms)
+✔ a refused rename puts back exactly the bots it moved, not those already in the target (0.1909ms)
+✔ a refused move leaves a bot moved again since where it is now (0.1351ms)
+✔ a bot deleted before the move shows or the refusal comes back stays deleted (0.0713ms)
+✔ a refused move chains only the later moves of its bot that started where it put it (0.0987ms)
+✔ sections show only on hosts from 2.32.0, dev builds included (0.2043ms)
+(node:76000) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/screen-input.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ named keys go as key events with their modifiers (1.2669ms)
+✔ plain characters and input methods are left to the text field (0.2042ms)
+✔ shortcuts send the key under them, ⌘ as Ctrl off a Mac (0.5725ms)
+✔ characters typed with Option or AltGr go as text (0.1752ms)
+✔ ⌘ and Ctrl together name Ctrl once (0.0923ms)
+✔ paste is ⌘V on a Mac and Ctrl+V elsewhere (0.1084ms)
+✔ a letterboxed picture maps to display points (0.1807ms)
+✔ buttons and wheel units (0.177ms)
+(node:28412) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/screen-state.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a screen is available once it is on, running and allowed to record (0.561ms)
+✔ bots can use the computer once control is allowed too, or when Windows says so (0.1228ms)
+✔ guidance names what is missing, in the phrases the apps already translate (0.3577ms)
+✔ the picture says what keeps it away, a sleeping cloud computer first (1.1693ms)
+✔ a screen pauses once nobody has touched the app for the idle time (0.1381ms)
+(node:83160) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/star-ask.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ asks right away, then once more at the fifth prompt, then never (1.0718ms)
+✔ starring ends the asks (0.1095ms)
+✔ reopening setup keeps the second ask waiting (0.0913ms)
+✔ starring from reopened setup stays final (0.0813ms)
+(node:83748) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/submenu-hover.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ resting over a submenu row opens it without clicking (1.2231ms)
+✔ crossing into the child cancels closing across the gap (0.1864ms)
+✔ passing another row or dismissing the menu cancels a pending open (0.1483ms)
+(node:83880) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/text-find.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ matching ignores case and counts each place once (1.0742ms)
+✔ a match can cross from one run into the next in the same block (0.2541ms)
+✔ a match stays inside its run and ends where it ends (0.1302ms)
+✔ different blocks are kept apart (0.145ms)
+✔ a character that lowercases to more than one does not disable the search (0.9312ms)
+✔ Greek matches whichever way its sigma is written (0.1672ms)
+✔ nothing to find, nothing found (0.1042ms)
+(node:14212) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/undo-on-failure.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a refused action is taken back before its error shows (1.2314ms)
+✔ an accepted action keeps what it showed (0.1362ms)
+✔ an action with nothing to take back still shows its error (0.1289ms)
+(node:75724) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/usage-order.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a move on its way holds the order and agents it does not name follow (1.0786ms)
+✔ only an agent that is on can lack a reading (0.1997ms)
+✔ a dragged row takes a place only past its middle (0.1414ms)
+(node:78164) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/welcome-gate.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ with accounts, the welcome covers the window whenever no one is signed in (0.5182ms)
+✔ without accounts, the first choice is the only welcome (0.1098ms)
+(node:64280) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/whats-new.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a new install records its version and shows nothing (1.159ms)
+✔ a device set up before the feature counts from 0.0.0 (0.2051ms)
+✔ only versions after seen and up to current are due (0.1501ms)
+✔ versions compare as numbers, not text (0.6375ms)
+✔ the phrases of an announcement are its features' titles and bodies, then its notes (0.1642ms)
+(node:77016) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/store/bot-import.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\renderer\store\bot-import.test.ts (814.8921ms)
+(node:78932) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/store/bot-sections.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a move sends only the section and shows at once; a refusal puts it back (1.6896ms)
+✔ chained moves refused in order end where the host still has the bot (0.2437ms)
+✔ chained moves refused out of order end where the host still has the bot (0.1644ms)
+✔ a refused rename followed by a refused move of one of its bots puts both bots back (0.2306ms)
+✔ a refused rename runs its callback while its bots are still moved, then puts them back; an accepted one never does (0.2086ms)
+✔ an accepted move stays, and later refusals no longer chain to it (0.137ms)
+(node:85860) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/store/outgoing-files.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Resend takes the files still kept for its message (0.9788ms)
+✔ Resend refuses a message whose files went with the app, so its text never goes alone (0.1545ms)
+✔ a message without files resends with none (0.0962ms)
+(node:28372) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/store/screen-session.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\renderer\store\screen-session.test.ts (698.8085ms)
+(node:74168) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/call/call-recovery.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at resolve (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/call/call-recovery.test.ts:16:12)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\renderer\views\call\call-recovery.test.ts (720.8814ms)
+(node:82456) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/call/on-device-engine.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at resolve (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/call/on-device-engine.test.ts:16:12)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\renderer\views\call\on-device-engine.test.ts (720.983ms)
+(node:20908) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/call/search-result.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ grounding can precede transcription and never carries suggestions into a later plain answer (1.0095ms)
+✔ transcription that arrives after turnComplete stays with its turn and keeps the suggestions (0.131ms)
+✔ the user being heard starts the next turn, so its transcription before its audio stays with it (0.1513ms)
+✔ search links can only open explicit HTTP or HTTPS destinations (0.168ms)
+(node:66040) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/call/voice.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ a call takes another engine only when what its engine is built from changes (14.8366ms)
+✖ Windows and Linux retain automatic call fallback until a provider is explicitly picked (5.1727ms)
+(node:75616) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/lead-menus.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ any other bot can be made the lead, and the lead deleted (1.5215ms)
+✔ a host older than 2.33.0 keeps its lead (0.1332ms)
+✔ the voice shortcut talks to the lead, else the top bot (0.1563ms)
+(node:30832) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/marketplace/connector-catalog.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ more connectors read on past empty pages and stop at a failure (7.9325ms)
+(node:19224) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/marketplace/market-models.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ catalog pages keep every fetched row and drop duplicates (1.6416ms)
+(node:34832) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/marketplace/sign-in-code.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\renderer\views\marketplace\sign-in-code.test.ts (1268.35ms)
+(node:80836) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/routines/routine.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+<anonymous_script>:2153
+  "Work": "作業",
+  ^
+
+SyntaxError: F:\Codync\发版工\work\z15\apps\ios\Kit\Sources\CodyncKit\Resources\Languages\ja.json: Expected ',' or '}' after property value in JSON at position 142961 (line 2153 column 3)
+    at parse (<anonymous>)
+    at ModuleLoader.jsonStrategy (node:internal/modules/esm/translators:482:21)
+    at #translate (node:internal/modules/esm/loader:451:20)
+    at afterLoad (node:internal/modules/esm/loader:507:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:512:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:555:36)
+    at afterResolve (node:internal/modules/esm/loader:603:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:609:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:252:17)
+
+Node.js v24.15.0
+✖ src\renderer\views\routines\routine.test.ts (1244.2772ms)
+(node:58560) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/section-menus.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Move to section offers the other sections (hidden bots' too), a new one, and out of its own (8.1011ms)
+✔ a bot in no section has nothing to be removed from (0.2077ms)
+✔ a header renames its section from its name, or removes it (0.2043ms)
+✔ the lead moves to a section like any bot (0.1027ms)
+✔ a host without sections gets no section menus (0.1275ms)
+(node:30548) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/bot-exchange.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+<anonymous_script>:2153
+  "Work": "作業",
+  ^
+
+SyntaxError: F:\Codync\发版工\work\z15\apps\ios\Kit\Sources\CodyncKit\Resources\Languages\ja.json: Expected ',' or '}' after property value in JSON at position 142961 (line 2153 column 3)
+    at parse (<anonymous>)
+    at ModuleLoader.jsonStrategy (node:internal/modules/esm/translators:482:21)
+    at #translate (node:internal/modules/esm/loader:451:20)
+    at afterLoad (node:internal/modules/esm/loader:507:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:512:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:555:36)
+    at afterResolve (node:internal/modules/esm/loader:603:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:609:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:252:17)
+
+Node.js v24.15.0
+✖ src\renderer\views\thread\bot-exchange.test.ts (1160.545ms)
+(node:9576) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/code-block-copy.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a block copies exactly its code, reports once, and clears the copied state after 1.5 s (1.6743ms)
+(node:91324) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/composer-files.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a paste the computer reads keeps its own names and contents (0.7068ms)
+✔ a paste the computer finds nothing in, or fails to read, attaches the files the event held (0.6231ms)
+✔ an unreadable item (a folder) is left out and an unnamed image gets a name (0.3197ms)
+(node:61380) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/composer-keyboard.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Enter sends; Shift/Option-Enter preserve multiline input (0.5812ms)
+✔ CJK candidate confirmation and a held Enter never send (0.1191ms)
+(node:71008) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/dictation-pieces.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a recording is cut into 20 s pieces that keep every sample in order (169.5241ms)
+✔ a tail under half a second stays with the piece before (35.8648ms)
+✔ transcripts come back in order with a few requests at a time (27.5816ms)
+✔ the first failed piece stops the rest (0.626ms)
+✔ dictated words go after the box with one space (0.1961ms)
+(node:76928) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/dictation.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\renderer\views\thread\dictation.test.ts (789.2732ms)
+(node:42028) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/file-card.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+<anonymous_script>:2153
+  "Work": "作業",
+  ^
+
+SyntaxError: F:\Codync\发版工\work\z15\apps\ios\Kit\Sources\CodyncKit\Resources\Languages\ja.json: Expected ',' or '}' after property value in JSON at position 142961 (line 2153 column 3)
+    at parse (<anonymous>)
+    at ModuleLoader.jsonStrategy (node:internal/modules/esm/translators:482:21)
+    at #translate (node:internal/modules/esm/loader:451:20)
+    at afterLoad (node:internal/modules/esm/loader:507:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:512:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:555:36)
+    at afterResolve (node:internal/modules/esm/loader:603:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:609:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:252:17)
+
+Node.js v24.15.0
+✖ src\renderer\views\thread\file-card.test.ts (755.2666ms)
+(node:71052) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/markdown-blocks.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ blocks: headings, nested lists, rules, tables and code (1.9058ms)
+✔ a pipe line without its rule stays text (0.2142ms)
+(node:96200) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/mentions.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a mention starts after a space and stays short and on one line (3.1116ms)
+✔ an @ followed by a space is ordinary text (0.3966ms)
+✔ a full name and its space end the list, but a longer name can still be typed (0.3215ms)
+✔ picking replaces the @partial and leaves room for the message (0.2094ms)
+✔ Return picks a member, but sends a whole @all or @everyone (0.353ms)
+(node:74924) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/message-copy.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a message with no picture copies its text (0.8776ms)
+✔ a picture a bot shared on its own copies as the picture, even with a caption (0.7959ms)
+✔ with several files, each picture has its own menu and the message keeps copying its text (0.1158ms)
+✔ a sent picture with no text copies as the picture; with text the text stays the copy (0.1035ms)
+✔ in the viewer a menu item closes the viewer before it acts, and the reactions are untouched (0.2268ms)
+(node:20096) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/queued-messages.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ while the bot works, queued messages leave the chat for the queue, oldest first (1.1975ms)
+✔ an idle bot takes its next message at once: the chat keeps it and the queue stays empty (0.1641ms)
+✔ a message taken back is gone from what the views read, in one array per list (0.1452ms)
+✔ only a host that steers gets the queue’s buttons (0.2472ms)
+(node:19612) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/selected-part.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\views\thread\selected-part.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\renderer\views\thread\selected-part.test.ts (580.054ms)
+(node:52488) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/shared-audio.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a second tap while the sound loads plays it once (1.3804ms)
+✔ a card that goes while its sound loads plays nothing (0.1619ms)
+✔ a sound that fails to load fails the card, and the next tap loads it again (0.165ms)
+✔ a sound whose play() starts then rejects ends failed, not playing (0.9031ms)
+✔ a pause before play() settles keeps the loaded sound where it was (0.2627ms)
+✔ a loaded sound shows its clock and resets at the end (0.1599ms)
+✔ a sound that fails mid-play drops its progress with the player (0.1355ms)
+✔ seeking holds the playhead to the sound and keeps it playing or paused (0.1607ms)
+(node:29252) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/slash-commands.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a leading slash opens the list until the name ends (0.7624ms)
+✔ built-in commands come first, then only the bot's own skills, by name or title (1.78ms)
+✔ a bot's agent commands follow its skills, matched by name, and fill in like a skill (0.6443ms)
+✔ a group lists its bots' commands: Fast mode for all of them, then every skill one of them has (0.5466ms)
+✔ sending just a built-in command runs it; anything else is a message (0.1466ms)
+✔ Return runs the highlighted command, but sends a skill already typed out (0.1306ms)
+(node:24432) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/speech-segments.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ revised words replace the last ones; a transcript that starts over after a pause goes after them (1.1738ms)
+✔ a revision that shrinks the words is still a revision (0.1524ms)
+✔ a short segment before a pause stays (0.0887ms)
+✔ after a closed segment, new words are a new segment and the same words again are not (0.0933ms)
+✔ a final result closes the segment like the end marker (0.0883ms)
+(node:38848) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/trace-turns.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the working steps are the running turn’s work, without what the chat or memory already show (1.2996ms)
+✔ turns group in turn order and keep their entries in order (0.1991ms)
+✔ the running turn is the newest one, not a queued message waiting for the next (0.1177ms)
+✔ the trace follows new steps only while scrolled to the end (0.0887ms)
+(node:43284) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/thread/working-transition.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ finished activity keeps its last working bot for 420 ms, then leaves (1.0155ms)
+✔ restarting during exit cancels removal and retains the new activity on its next exit (0.2237ms)
+(node:67192) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/usage-logins.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ an agent on one login is one unnamed login (0.9811ms)
+✔ the login nearest its limit stands for the agent (0.2455ms)
+(node:94284) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/account-sign-in.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from F:\Codync\发版工\work\z15\apps\desktop\src\shared\test-support\main-module.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\shared\account-sign-in.test.ts (1346.852ms)
+(node:56316) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/analytics.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a host setup failure is sent only when the owner can’t have turned analytics off (0.501ms)
+(node:79468) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/approvals.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ approvals list the agent's modes, Auto first, then approve automatically (1.6119ms)
+✔ a bot never shows as more careful than it is (0.2709ms)
+✔ an agent without Auto asks, and one still loading offers Auto (0.2921ms)
+✔ another agent's mode ids mean nothing: a picked mode becomes its Auto mode (0.1542ms)
+(node:85656) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/artifacts.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ an artifact republished while it is read is read again from its start (63.8449ms)
+✔ HTML that fails its digest is refused (0.9012ms)
+✔ the Library needs a host that has it, and only a card takes messages about its artifact (0.3363ms)
+✔ an artifact opens only what the user just followed in its viewer (0.2083ms)
+(node:31848) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/browser-authentication.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a stale same-scheme callback leaves the current browser login waiting (2.8376ms)
+✔ browser-open and callback-validation failures end their waits (0.3666ms)
+✔ replacing a wait clears its timeout and a later open failure cannot reject the replacement (17.412ms)
+(node:6944) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/calls.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a call hides what it carries, while it lasts too (1.011ms)
+✔ a call's conversation merges its transcript with what it carried (0.3189ms)
+✔ a call's own entries fill in what the loaded chat doesn't hold (0.2253ms)
+✔ the computer's cues for a call's voice parse by kind; a new kind is passed over (0.1483ms)
+(node:45020) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/chat-layout.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the chat window fits a 1080 × 1920 portrait display scaled to 720 points wide (#359) (0.5056ms)
+(node:22252) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/cloud-device.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from F:\Codync\发版工\work\z15\apps\desktop\src\shared\test-support\main-module.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), file src\win\async.c, line 76
+✖ src\shared\cloud-device.test.ts (1984.1989ms)
+(node:77488) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/compat.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ versions parse like the host and the iPhone app (1.2358ms)
+✔ the side that must update (0.1652ms)
+✔ the cloud learns this app version and the host it needs (0.0975ms)
+(node:41712) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/composer-drafts.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ drafts survive reopening with whitespace and isolate bots and accounts (0.7336ms)
+✔ drafts saved before quote replies stay with their chat (0.1283ms)
+✔ deleting a bot removes its draft, but preserves other bots (0.1452ms)
+✔ malformed or unavailable persistence does not destroy editable in-memory text (0.2565ms)
+✔ late edits from a retired store cannot overwrite a reopened conversation (0.1585ms)
+(node:54480) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/computer-access.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ startup never registers a fresh helper, but an app update restores an existing choice (0.5202ms)
+✔ macOS setup advances only with observed permissions, and recovers after revocation (0.1508ms)
+✔ Linux requests a portal session and Windows never asks for macOS grants (0.1116ms)
+(node:92352) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/custom-icons.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ custom icons accept only bounded PNG data, never remote or active content (0.6694ms)
+(node:42928) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/dev-sandbox.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sandbox ports skip the ones other sandboxes hold and never reach Codync or Codync Dev (0.9417ms)
+✔ a sandbox is named after its worktree folder (0.2458ms)
+✔ a sandbox only ever takes a Clerk development key, from the environment first (0.4352ms)
+✔ a sandbox uses the dev cloud only when asked, and its own on a branch that changes cloud/ (0.1341ms)
+(node:57632) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/dev-servers.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the title shows nothing without a live server (1.2038ms)
+✔ the title shows the port, and how many more run (0.1682ms)
+✔ the title names a server without a port (0.0826ms)
+✔ a running server outranks one starting, which outranks one failed (0.1054ms)
+✔ a server opens at its local address on its own computer (0.1389ms)
+✔ elsewhere, an SSH store included, a server opens only at what other devices can reach (0.0983ms)
+✔ elsewhere, a click opens the first address, and several are each a row of the menu (0.2531ms)
+✔ on its own computer a server opens at local, with no rows for its addresses (0.1319ms)
+✔ a row names an address without its scheme (0.1288ms)
+✔ only a running server with a port opens (0.1346ms)
+✔ a row says its ports or its state (0.1409ms)
+✔ a click opens what can be reached from here, and reads the log of what has no port (0.1206ms)
+✔ the menu offers only what applies (0.1212ms)
+✔ a status from a newer host reads as stopped (0.3144ms)
+(node:6348) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/draft-rebase.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a settings form takes changes made elsewhere and keeps its own edits (0.9656ms)
+(node:40096) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/environment.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ development installations cannot share production resources or update feed (0.589ms)
+✔ a development app rejects production and old unidentified hosts (0.1454ms)
+(node:72480) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/error-report.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a report keeps the error class and its frames, never the message (1.1713ms)
+✔ a thrown non-error has a type but nothing else (0.2116ms)
+(node:86360) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/fallbacks.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a time today is just the time; another day names the weekday (13.1415ms)
+✔ a usage limit says when it resets; other rests say until when (0.4394ms)
+✔ a rest that ended no longer counts (0.3536ms)
+✔ an agent comes again in the chain only on another of its login profiles (0.6434ms)
+✔ the banner names the fallback, and when the own agent is back if it says (0.5592ms)
+✔ only a usage limit gives the banner a reset time; other rests name their reason (#444) (0.9115ms)
+✔ fallbacks move within the list (0.2684ms)
+✔ making a fallback the bot's own agent drops it from the list (0.2509ms)
+✔ an older host has no fallbacks to show or send (0.2814ms)
+✔ switching harness clears its model and effort, selecting the same harness preserves them (0.2622ms)
+✔ bots mix agents when they run more than one, counting a fallback and leaving groups out (0.1836ms)
+(node:79416) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/files.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ verified downloads preserve binary and empty files and replace only on success (18.2729ms)
+✔ cancelled and corrupt downloads preserve existing destinations and remove partial files (5.7724ms)
+✔ rejects changed, truncated and oversized chunks and provides portable save suggestions (0.4378ms)
+✖ retiring a computer while Save is pending cancels its handle without fetching bytes (7.4753ms)
+✖ cancelling an outstanding chunk cannot write or commit a late response (6.0412ms)
+✔ a shared file read whole is checked against its digest (53.1496ms)
+(node:78456) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/host-update.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from F:\Codync\发版工\work\z15\apps\desktop\src\shared\test-support\main-module.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\shared\host-update.test.ts (697.0575ms)
+(node:48448) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/island.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ closed, the island hides, peeks under the pointer and stays thin while bots work (1.3037ms)
+✔ open, it shows what needs you first, then the bots (0.1776ms)
+✔ an approval opens the island until it is put off, and opening shows it again (0.1179ms)
+✔ a bot that stops working is done, or failed when it ended in an error (0.5335ms)
+✔ a bot whose chat is idle while an item works counts as working, and its item ending is not a done (0.1475ms)
+✔ the big slot goes to the bot that needs you, the rest to the side (0.13ms)
+✔ the notch is the screen width minus the menu bar on both sides (0.1146ms)
+✔ shapes follow the notch, and a plain top edge keeps a thin strip that wakes it (0.2505ms)
+✔ leaving the message tab while dictating stops it there; other tab changes leave it be (0.1099ms)
+(node:92228) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/mirror-window.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ earlier history stays available after a catch-up dominated by trace entries (0.6872ms)
+✔ empty chats and unsent optimistic messages do not offer server history (0.1176ms)
+✔ a rewritten old entry below the floor is dropped, even with turn 0 (0.6884ms)
+✔ an update to a held entry applies (0.0953ms)
+✔ a new entry at or above the floor applies (0.083ms)
+✔ no floor accepts everything, including lower seqs after higher ones (rev-ordered catch-up) (0.1062ms)
+✔ since 0 snapshots nothing even when the mirror is loaded (0.0694ms)
+✔ floor ignores optimistic and unsequenced entries (0.1337ms)
+✔ a floor taken at hello is not moved by later inserts (RPC upsert before catch-up) (0.1066ms)
+✔ a send's RPC response newer than since doesn't set the floor (0.1343ms)
+(node:68248) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/models.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a bot keeps its login profile through the settings draft, and picks among the signed-in ones (1.6787ms)
+✔ a bot keeps its Fast mode through the settings draft (0.159ms)
+✔ a bot without a section, or with a cleared one, has none (0.1284ms)
+✔ a host without Fast mode reads as off (0.088ms)
+✔ the composer offers Fast mode until the agent says it has none, and while it is on (1.7497ms)
+✔ memory lines and summaries stay out of the chat (0.141ms)
+✔ a kept handoff leaves no line; a fresh conversation does (0.1079ms)
+✔ the user and final bot replies can be quoted, once the computer has them (0.1653ms)
+✔ a quote names who wrote it and falls back to file names (0.3113ms)
+✔ a message's voice note plays in its bubble only when the computer marks its sound playable (0.2017ms)
+(node:83632) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/packaging.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/cjs/loader:1476
+  const err = new Error(message);
+              ^
+
+Error: Cannot find module 'yaml'
+Require stack:
+- F:\Codync\发版工\work\z15\apps\desktop\tools\dev-builder.cjs
+- F:\Codync\发版工\work\z15\apps\desktop\src\shared\packaging.test.ts
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1476:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1576:12)
+    at require (node:internal/modules/helpers:153:16)
+    at Object.<anonymous> (F:\Codync\发版工\work\z15\apps\desktop\tools\dev-builder.cjs:5:19)
+    at Module._compile (node:internal/modules/cjs/loader:1830:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'F:\\Codync\\发版工\\work\\z15\\apps\\desktop\\tools\\dev-builder.cjs',
+    'F:\\Codync\\发版工\\work\\z15\\apps\\desktop\\src\\shared\\packaging.test.ts'
+  ]
+}
+
+Node.js v24.15.0
+✖ src\shared\packaging.test.ts (504.6165ms)
+(node:44344) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/quit-lifecycle.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ closing a window keeps the app running in the background (0.951ms)
+✔ ordinary Quit lets the chat window close (0.1964ms)
+✔ a native update can close windows before app before-quit fires (0.1886ms)
+✔ checking and staging an update do not change ordinary close behavior (0.1388ms)
+✔ explicit shutdown allows a previously hidden window to close (0.1126ms)
+(node:94328) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/renderer-recovery.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a page ended on purpose stays gone without counting as a failure (0.5448ms)
+✔ a crashed page reloads twice in a row, then stays down (0.595ms)
+✔ a page that stayed up a minute starts the count again (0.1092ms)
+✔ a recovery reports once, when its page has loaded, however often the reload crashed (0.2345ms)
+✔ a page that keeps crashing stays down and says so (0.1162ms)
+✔ a page ended on purpose is neither reloaded nor reported (0.0768ms)
+(node:65988) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/ssh-command.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+﹣ SSH finds a host installed in /custom/bin (0.6407ms) # SKIP
+﹣ SSH finds a host installed in /opt/homebrew/bin (0.0922ms) # SKIP
+﹣ SSH finds a host installed in /usr/local/bin (0.0703ms) # SKIP
+﹣ SSH finds a host installed in /home/linuxbrew/.linuxbrew/bin (0.0482ms) # SKIP
+﹣ SSH finds a host installed in /user home/.local/bin (0.0548ms) # SKIP
+﹣ SSH finds a host installed in /Applications/Codync.app/Contents/Resources (0.0613ms) # SKIP
+﹣ SSH preserves the host selected by the remote PATH (0.0684ms) # SKIP
+﹣ SSH reports command not found when no installation is reachable (0.0666ms) # SKIP
+﹣ development SSH uses only its own host with mac installed (0.0589ms) # SKIP
+﹣ development SSH uses only its own host with linux installed (0.0953ms) # SKIP
+﹣ development SSH uses only its own host with production-only installed (0.064ms) # SKIP
+﹣ managed tunnels own their connection with ControlMaster no (0.0429ms) # SKIP
+﹣ managed tunnels own their connection with ControlMaster auto (0.0562ms) # SKIP
+﹣ managed tunnels own their connection with ControlMaster yes (0.0375ms) # SKIP
+﹣ managed tunnels own their connection with ControlMaster autoask (0.0511ms) # SKIP
+﹣ info honors explicit user and port overrides (0.0659ms) # SKIP
+﹣ tunnel honors explicit user and port overrides (0.0383ms) # SKIP
+﹣ resolve honors explicit user and port overrides (0.0607ms) # SKIP
+﹣ SSH prefers /opt/homebrew/bin over /Applications/Codync.app/Contents/Resources (0.0428ms) # SKIP
+✔ each copy of the app clears only its own leftover tunnels (0.4925ms)
+(node:32624) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/ssh-config.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ ssh config hosts: named hosts with their first HostName and User, includes kept (1.576ms)
+(node:81720) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/ssh-install.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+﹣ the download step runs install.sh for the host only, into ~/.local/bin (0.6358ms) # SKIP
+﹣ a failed download fails the step instead of running an empty script (0.6561ms) # SKIP
+﹣ the service step installs the service on the profile port (0.0626ms) # SKIP
+﹣ Linux without linger asks for the sudo command only when enabling it is refused (0.0513ms) # SKIP
+﹣ a failed service install fails the step without a linger hint (0.0667ms) # SKIP
+✔ install steps run in order over the same hardened ssh options as the info command (0.7152ms)
+✔ the card shows the last lines of errors, without colors or progress redraws (0.3014ms)
+(node:94640) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/ssh-platform.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Windows uses native OpenSSH and normalizes quoted known_hosts paths (462.7907ms)
+✔ Windows host key scan files the presented key in a scratch known_hosts and never signs in (298.5814ms)
+✔ key selection accepts native absolute paths and rejects drive-relative paths (2.5915ms)
+✔ Windows orphan cleanup recognizes only this variant and its native ssh executable (0.5393ms)
+✔ listener ownership accepts the listening process and rejects another process (7706.6309ms)
+✔ listener ownership rejects an outgoing socket and a closed port (6232.23ms)
+(node:26180) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/ssh-startup.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ saved profiles keep connection status and management visible in every state (0.6309ms)
+✔ connecting or retrying SSH profiles open the workspace without a local host (0.2082ms)
+✔ an available computer or running local host keeps the workspace open (0.1174ms)
+✔ pending SSH rows distinguish idle, connected, retrying and terminal failures (0.1353ms)
+✔ summary separates active connection attempts from profiles needing attention (0.2451ms)
+✔ an install in progress counts as connecting and shows its step (0.1064ms)
+(node:96064) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/tasks.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a taskEntry event names its task and carries one entry (0.9769ms)
+✔ a task's transcript holds each entry once, the higher rev, oldest first (0.2728ms)
+✔ what the host told a task is not the user's own message (0.1115ms)
+(node:30236) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/tray-usage.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ one computer lists its agents in the menu, and an agent with several logins opens them (1.0888ms)
+✔ several computers each open their own agents, under a title (0.2088ms)
+(node:48056) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/updates-ours.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from F:\Codync\发版工\work\z15\apps\desktop\src\shared\test-support\main-module.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\shared\updates-ours.test.ts (712.3126ms)
+(node:70460) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/updates.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from F:\Codync\发版工\work\z15\apps\desktop\src\shared\test-support\main-module.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\shared\updates.test.ts (590.3427ms)
+(node:91036) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/verify-build.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/cjs/loader:1476
+  const err = new Error(message);
+              ^
+
+Error: Cannot find module 'electron-builder'
+Require stack:
+- F:\Codync\发版工\work\z15\apps\desktop\tools\verify-build.cjs
+- F:\Codync\发版工\work\z15\apps\desktop\src\shared\verify-build.test.ts
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1476:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1576:12)
+    at require (node:internal/modules/helpers:153:16)
+    at Object.<anonymous> (F:\Codync\发版工\work\z15\apps\desktop\tools\verify-build.cjs:5:18)
+    at Module._compile (node:internal/modules/cjs/loader:1830:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'F:\\Codync\\发版工\\work\\z15\\apps\\desktop\\tools\\verify-build.cjs',
+    'F:\\Codync\\发版工\\work\\z15\\apps\\desktop\\src\\shared\\verify-build.test.ts'
+  ]
+}
+
+Node.js v24.15.0
+✖ src\shared\verify-build.test.ts (476.9797ms)
+(node:57544) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/voice-engine.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Windows and Linux never offer or restore the unsupported on-device engine (1.1461ms)
+✔ macOS keeps on-device dictation and provider choices (0.1362ms)
+(node:40176) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/voice-shortcut.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a quick tap is a tap, and a second one right after is a double tap (1.0659ms)
+✔ slow taps are two taps, and a long press is none (0.138ms)
+✔ a key pressed with the command, or between the taps, is a shortcut (0.1597ms)
+✔ the other command and other modifiers break a tap (0.0959ms)
+✔ the left command works the same way, and the right one then does nothing (0.7112ms)
+✔ a double tap starts dictation, the next tap sends, and the double tap that ends on it starts nothing (0.1559ms)
+(node:63032) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/windows-update-feed.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/package_json_reader:301
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'yaml' imported from F:\Codync\发版工\work\z15\apps\desktop\src\shared\windows-update-feed.test.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.15.0
+✖ src\shared\windows-update-feed.test.ts (225.6607ms)
+(node:32396) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/shared/work.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to F:\Codync\发版工\work\z15\apps\desktop\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ a bot from a host before the box has no work and no ceiling, and one with a box keeps the items it can read (1.7609ms)
+✔ the most agents at once is a whole number from 1 to 6 (0.2325ms)
+✔ the capsule shows only while an item is live or waiting (0.208ms)
+✔ one working item and nothing waiting reads as what it does, with its time and Stop (0.2222ms)
+✔ several items read as how many work and wait (0.2403ms)
+✔ an item that needs the user leads the capsule, with the counts after it (0.2346ms)
+✔ the counts leave out a part at none (0.1039ms)
+✔ a roster row says the most pressing thing first (0.2134ms)
+✔ the tray menu and the notch island say a bot's line in the roster row's order (0.2285ms)
+✔ a waiting item says why it waits (0.247ms)
+✔ an item's second line is why it waits, what its task does, or how it ended (0.1494ms)
+✔ the timeline groups items into Threads, the Event box and Recent, each in its order (0.2494ms)
+✔ the first in line can cut in only when every place is taken (0.1758ms)
+✔ the view of all bots lists the ones with live or waiting items, in roster order, and counts what is worked on (0.1612ms)
+✔ outside its chat a bot stands as the host says, and as its chat does on an older host (0.1533ms)
+✔ a bot says how it stands outside its chat, whether its tasks get worktrees, and an item its worktree (0.3734ms)
+✔ an item says where it came from when the bot did not add it (0.1383ms)
+✔ try again is not offered on another bot's request, and a routine's run or a request never gives way (0.1655ms)
+✔ an item that needs the user is asked what its card in the chat asks (0.2127ms)
+ℹ tests 464
+ℹ suites 0
+ℹ pass 403
+ℹ fail 37
+ℹ cancelled 0
+ℹ skipped 24
+ℹ todo 0
+ℹ duration_ms 24402.3542
+
+✖ failing tests:
+
+test at src\main\channel\crypto.test.ts:1:1
+✖ src\main\channel\crypto.test.ts (1849.677ms)
+  'test failed'
+
+test at src\main\channel\relay-channel.test.ts:1:1
+✖ src\main\channel\relay-channel.test.ts (1918.7011ms)
+  'test failed'
+
+test at src\renderer\lib\access-onboarding.test.ts:1:1
+✖ src\renderer\lib\access-onboarding.test.ts (1794.2586ms)
+  'test failed'
+
+test at src\renderer\lib\app-language-preference.test.ts:7:1
+✖ Additional languages persist their identifiers and reach the tray language contract (6.6091ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\prefs.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+      at packageResolve (node:internal/modules/esm/resolve:764:81)
+      at moduleResolve (node:internal/modules/esm/resolve:855:18)
+      at defaultResolve (node:internal/modules/esm/resolve:988:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+      at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+      at #resolve (node:internal/modules/esm/loader:679:17)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+      at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at src\renderer\lib\catalogs.test.ts:38:1
+✖ all shipped catalogs have the same keys and preserve interpolation tokens (1.9061ms)
+  SyntaxError: Expected ',' or '}' after property value in JSON at position 128260 (line 2153 column 3)
+      at JSON.parse (<anonymous>)
+      at read (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/catalogs.test.ts:7:65)
+      at TestContext.<anonymous> (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/catalogs.test.ts:39:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at src\renderer\lib\catalogs.test.ts:53:1
+✖ every What's new phrase is translated in every catalog, and the clips beside the file are the ones it names, each under 300 KB (1.8694ms)
+  SyntaxError: Expected ',' or '}' after property value in JSON at position 128260 (line 2153 column 3)
+      at JSON.parse (<anonymous>)
+      at read (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/catalogs.test.ts:7:65)
+      at TestContext.<anonymous> (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/catalogs.test.ts:60:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at src\renderer\lib\computer-access.test.ts:16:1
+✖ permission setup uses the local host identity even when a remote computer is selected (23.6437ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+      at packageResolve (node:internal/modules/esm/resolve:764:81)
+      at moduleResolve (node:internal/modules/esm/resolve:855:18)
+      at defaultResolve (node:internal/modules/esm/resolve:988:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/computer-access.test.ts:13:10)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at src\renderer\lib\computer-access.test.ts:31:1
+✖ repeated checks never request permissions; explicit actions and failures stay reviewable (3.0178ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+      at packageResolve (node:internal/modules/esm/resolve:764:81)
+      at moduleResolve (node:internal/modules/esm/resolve:855:18)
+      at defaultResolve (node:internal/modules/esm/resolve:988:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/computer-access.test.ts:13:10)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at src\renderer\lib\computer-order.test.ts:17:1
+✖ computer ordering stays on each device, survives restart, and isolates accounts (7.1434ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+      at packageResolve (node:internal/modules/esm/resolve:764:81)
+      at moduleResolve (node:internal/modules/esm/resolve:855:18)
+      at defaultResolve (node:internal/modules/esm/resolve:988:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/lib/computer-order.test.ts:13:12)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at src\renderer\lib\host-update.test.ts:1:1
+✖ src\renderer\lib\host-update.test.ts (2151.1842ms)
+  'test failed'
+
+test at src\renderer\lib\l10n-live.test.ts:1:1
+✖ src\renderer\lib\l10n-live.test.ts (1557.3393ms)
+  'test failed'
+
+test at src\renderer\lib\l10n.test.ts:1:1
+✖ src\renderer\lib\l10n.test.ts (1509.4711ms)
+  'test failed'
+
+test at src\renderer\lib\prefs.test.ts:5:1
+✖ A stored preference of another kind reads as the fallback (5.8501ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\prefs.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+      at packageResolve (node:internal/modules/esm/resolve:764:81)
+      at moduleResolve (node:internal/modules/esm/resolve:855:18)
+      at defaultResolve (node:internal/modules/esm/resolve:988:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+      at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+      at #resolve (node:internal/modules/esm/loader:679:17)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+      at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at src\renderer\lib\refresh.test.ts:1:1
+✖ src\renderer\lib\refresh.test.ts (750.122ms)
+  'test failed'
+
+test at src\renderer\store\bot-import.test.ts:1:1
+✖ src\renderer\store\bot-import.test.ts (814.8921ms)
+  'test failed'
+
+test at src\renderer\store\screen-session.test.ts:1:1
+✖ src\renderer\store\screen-session.test.ts (698.8085ms)
+  'test failed'
+
+test at src\renderer\views\call\call-recovery.test.ts:1:1
+✖ src\renderer\views\call\call-recovery.test.ts (720.8814ms)
+  'test failed'
+
+test at src\renderer\views\call\on-device-engine.test.ts:1:1
+✖ src\renderer\views\call\on-device-engine.test.ts (720.983ms)
+  'test failed'
+
+test at src\renderer\views\call\voice.test.ts:17:1
+✖ a call takes another engine only when what its engine is built from changes (14.8366ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+      at packageResolve (node:internal/modules/esm/resolve:764:81)
+      at moduleResolve (node:internal/modules/esm/resolve:855:18)
+      at defaultResolve (node:internal/modules/esm/resolve:988:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/call/voice.test.ts:13:12)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at src\renderer\views\call\voice.test.ts:61:1
+✖ Windows and Linux retain automatic call fallback until a provider is explicitly picked (5.1727ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+      at packageResolve (node:internal/modules/esm/resolve:764:81)
+      at moduleResolve (node:internal/modules/esm/resolve:855:18)
+      at defaultResolve (node:internal/modules/esm/resolve:988:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/call/voice.test.ts:13:12)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at src\renderer\views\marketplace\connector-catalog.test.ts:16:1
+✖ more connectors read on past empty pages and stop at a failure (7.9325ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'react' imported from F:\Codync\发版工\work\z15\apps\desktop\src\renderer\lib\observable.ts
+      at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+      at packageResolve (node:internal/modules/esm/resolve:764:81)
+      at moduleResolve (node:internal/modules/esm/resolve:855:18)
+      at defaultResolve (node:internal/modules/esm/resolve:988:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolve (file:///F:/Codync/%E5%8F%91%E7%89%88%E5%B7%A5/work/z15/apps/desktop/src/renderer/views/marketplace/connector-catalog.test.ts:11:10)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveWithHooks (node:internal/modules/customization_hooks:417:10) {
+    code: 'ERR_MODULE_NOT_FOUND'
+  }
+
+test at src\renderer\views\marketplace\sign-in-code.test.ts:1:1
+✖ src\renderer\views\marketplace\sign-in-code.test.ts (1268.35ms)
+  'test failed'
+
+test at src\renderer\views\routines\routine.test.ts:1:1
+✖ src\renderer\views\routines\routine.test.ts (1244.2772ms)
+  'test failed'
+
+test at src\renderer\views\thread\bot-exchange.test.ts:1:1
+✖ src\renderer\views\thread\bot-exchange.test.ts (1160.545ms)
+  'test failed'
+
+test at src\renderer\views\thread\dictation.test.ts:1:1
+✖ src\renderer\views\thread\dictation.test.ts (789.2732ms)
+  'test failed'
+
+test at src\renderer\views\thread\file-card.test.ts:1:1
+✖ src\renderer\views\thread\file-card.test.ts (755.2666ms)
+  'test failed'
+
+test at src\renderer\views\thread\selected-part.test.ts:1:1
+✖ src\renderer\views\thread\selected-part.test.ts (580.054ms)
+  'test failed'
+
+test at src\shared\account-sign-in.test.ts:1:1
+✖ src\shared\account-sign-in.test.ts (1346.852ms)
+  'test failed'
+
+test at src\shared\cloud-device.test.ts:1:1
+✖ src\shared\cloud-device.test.ts (1984.1989ms)
+  'test failed'
+
+test at src\shared\files.test.ts:56:1
+✖ retiring a computer while Save is pending cancels its handle without fetching bytes (7.4753ms)
+  SyntaxError: F:\Codync\发版工\work\z15\apps\ios\Kit\Sources\CodyncKit\Resources\Languages\ja.json: Expected ',' or '}' after property value in JSON at position 142961 (line 2153 column 3)
+      at parse (<anonymous>)
+      at ModuleLoader.jsonStrategy (node:internal/modules/esm/translators:482:21)
+      at #translate (node:internal/modules/esm/loader:451:20)
+      at afterLoad (node:internal/modules/esm/loader:507:29)
+      at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:512:12)
+      at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:555:36)
+      at afterResolve (node:internal/modules/esm/loader:603:52)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:609:12)
+      at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33)
+      at ModuleJob.link (node:internal/modules/esm/module_job:252:17)
+
+test at src\shared\files.test.ts:76:1
+✖ cancelling an outstanding chunk cannot write or commit a late response (6.0412ms)
+  SyntaxError: F:\Codync\发版工\work\z15\apps\ios\Kit\Sources\CodyncKit\Resources\Languages\ja.json: Expected ',' or '}' after property value in JSON at position 142961 (line 2153 column 3)
+      at parse (<anonymous>)
+      at ModuleLoader.jsonStrategy (node:internal/modules/esm/translators:482:21)
+      at #translate (node:internal/modules/esm/loader:451:20)
+      at afterLoad (node:internal/modules/esm/loader:507:29)
+      at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:512:12)
+      at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:555:36)
+      at afterResolve (node:internal/modules/esm/loader:603:52)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:609:12)
+      at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33)
+      at ModuleJob.link (node:internal/modules/esm/module_job:252:17)
+
+test at src\shared\host-update.test.ts:1:1
+✖ src\shared\host-update.test.ts (697.0575ms)
+  'test failed'
+
+test at src\shared\packaging.test.ts:1:1
+✖ src\shared\packaging.test.ts (504.6165ms)
+  'test failed'
+
+test at src\shared\updates-ours.test.ts:1:1
+✖ src\shared\updates-ours.test.ts (712.3126ms)
+  'test failed'
+
+test at src\shared\updates.test.ts:1:1
+✖ src\shared\updates.test.ts (590.3427ms)
+  'test failed'
+
+test at src\shared\verify-build.test.ts:1:1
+✖ src\shared\verify-build.test.ts (476.9797ms)
+  'test failed'
+
+test at src\shared\windows-update-feed.test.ts:1:1
+✖ src\shared\windows-update-feed.test.ts (225.6607ms)
+  'test failed'
